@@ -9,11 +9,13 @@ namespace LegaciesBot.Discord
     {
         private readonly LobbyService _lobbyService;
         private readonly GameService _gameService;
+        private readonly PlayerDataService _playerData;
 
-        public LobbyCommands(LobbyService lobbyService, GameService gameService)
+        public LobbyCommands(LobbyService lobbyService, GameService gameService, PlayerDataService playerData)
         {
             _lobbyService = lobbyService;
             _gameService = gameService;
+            _playerData = playerData;
         }
         [Command("join")]
         [Command("j")]

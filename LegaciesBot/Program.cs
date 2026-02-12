@@ -23,6 +23,9 @@ var client = new GatewayClient(
 
 var lobbyService = new LobbyService();
 var gameService = new GameService(client);
+var playerDataService = new PlayerDataService();
+
+
 
 var commandService = new CommandService<CommandContext>();
 commandService.AddModule<LobbyCommands>();
@@ -37,7 +40,7 @@ client.MessageCreate += async message =>
     await commandService.ExecuteAsync(
         1,
         ctx,
-        new SimpleServiceProvider(lobbyService, gameService)
+        new SimpleServiceProvider(lobbyService, gameService, playerDataService)
     );
 };
 
@@ -63,17 +66,21 @@ public class SimpleServiceProvider : IServiceProvider
 {
     private readonly LobbyService _lobbyService;
     private readonly GameService _gameService;
+    private readonly PlayerDataService _playerDataService;
 
-    public SimpleServiceProvider(LobbyService lobbyService, GameService gameService)
+
+    public SimpleServiceProvider(LobbyService lobbyService, GameService gameService, PlayerDataService playerDataService)
     {
         _lobbyService = lobbyService;
         _gameService = gameService;
+        _playerDataService = playerDataService;
     }
 
     public object? GetService(Type serviceType)
     {
         if (serviceType == typeof(LobbyService)) return _lobbyService;
         if (serviceType == typeof(GameService)) return _gameService;
+        if (serviceType == typeof(PlayerDataService)) return _playerDataService;
         return null;
     }
 }
