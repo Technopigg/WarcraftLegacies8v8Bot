@@ -82,7 +82,7 @@ public class GameService
         lobby.DraftStarted = true;
     }
 
-    public void SubmitScore(Game game, int scoreA, int scoreB, PlayerStatsService stats)
+    public Dictionary<ulong, int> SubmitScore(Game game, int scoreA, int scoreB, PlayerStatsService stats)
     {
         game.ScoreA = scoreA;
         game.ScoreB = scoreB;
@@ -90,17 +90,19 @@ public class GameService
 
         bool teamAWon = scoreA > scoreB;
         
-        EloService.ApplyTeamResult(
+        var changes = EloService.ApplyTeamResult(
             game.TeamA.Players,
             game.TeamB.Players,
             teamAWon,
             stats
         );
 
-   
         game.Lobby.Players.Clear();
         game.Lobby.DraftStarted = false;
+
+        return changes;
     }
+
 
 
     public List<Game> GetOngoingGames() => _games.Where(g => !g.Finished).ToList();

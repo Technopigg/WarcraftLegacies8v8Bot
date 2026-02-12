@@ -6,12 +6,14 @@ namespace LegaciesBot.Services
     {
         private const int K = 32;
 
-        public static void ApplyTeamResult(
+        public static Dictionary<ulong, int> ApplyTeamResult(
             IEnumerable<Player> teamA,
             IEnumerable<Player> teamB,
             bool teamAWon,
             PlayerStatsService statsService)
         {
+            var changes = new Dictionary<ulong, int>();
+
             var teamAList = teamA.ToList();
             var teamBList = teamB.ToList();
 
@@ -26,24 +28,34 @@ namespace LegaciesBot.Services
 
             int deltaA = (int)Math.Round(K * (scoreA - expectedA));
             int deltaB = (int)Math.Round(K * (scoreB - expectedB));
-
+            
             foreach (var p in teamAList)
             {
                 var s = statsService.GetOrCreate(p.DiscordId);
+                int oldElo = s.Elo;
+
                 s.GamesPlayed++;
                 if (teamAWon) s.Wins++; else s.Losses++;
                 s.Elo += deltaA;
+
+                changes[p.DiscordId] = s.Elo - oldElo;
                 statsService.Update(s);
             }
-
+            
             foreach (var p in teamBList)
             {
                 var s = statsService.GetOrCreate(p.DiscordId);
+                int oldElo = s.Elo;
+
                 s.GamesPlayed++;
                 if (!teamAWon) s.Wins++; else s.Losses++;
                 s.Elo += deltaB;
+
+                changes[p.DiscordId] = s.Elo - oldElo;
                 statsService.Update(s);
             }
+
+            return changes;
         }
     }
 }

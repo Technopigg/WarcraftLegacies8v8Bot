@@ -40,63 +40,83 @@ public class GameCommands : CommandModule<CommandContext>
         await ctx.Message.ReplyAsync(msg);
     }
 
-    [Command("score")]
-    public async Task SubmitScore(int gameId, int scoreA, int scoreB)
+   [Command("score")]
+public async Task SubmitScore(int gameId, int scoreA, int scoreB)
+{
+    var ctx = this.Context;
+
+    if (scoreA < 0 || scoreB < 0)
     {
-        var ctx = this.Context;
-
-        if (scoreA < 0 || scoreB < 0)
-        {
-            await ctx.Message.ReplyAsync("Scores must be non-negative integers.");
-            return;
-        }
-
-        var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
-        if (game == null)
-        {
-            await ctx.Message.ReplyAsync($"No ongoing game found with ID {gameId}.");
-            return;
-        }
-
-        var playerId = ctx.Message.Author.Id;
-        bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
-                             || game.TeamB.Players.Any(p => p.DiscordId == playerId);
-
-        if (!isParticipant)
-        {
-            await ctx.Message.ReplyAsync("You are not a participant in this game and cannot submit a score.");
-            return;
-        }
-
-        if (game.Finished)
-        {
-            await ctx.Message.ReplyAsync("This game has already been completed.");
-            return;
-        }
-
-
-        game.ScoreSubmissions[playerId] = (scoreA, scoreB);
-
-
-        int matchingVotes = game.ScoreSubmissions
-            .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
-
-        int required = (game.TeamA.Players.Count + 1) / 2; 
-
-        if (matchingVotes >= required)
-        {
-            _gameService.SubmitScore(game, scoreA, scoreB, _stats);
-
-            await ctx.Message.ReplyAsync(
-                $"Score accepted by majority vote.\n" +
-                $"Final result for Game {game.Id}: Team A {scoreA} - Team B {scoreB}"
-            );
-        }
-        else
-        {
-            await ctx.Message.ReplyAsync(
-                $"Score recorded. {matchingVotes}/{required} votes for {scoreA}-{scoreB}."
-            );
-        }
+        await ctx.Message.ReplyAsync("Scores must be non-negative integers.");
+        return;
     }
+
+    var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
+    if (game == null)
+    {
+        await ctx.Message.ReplyAsync($"No ongoing game found with ID {gameId}.");
+        return;
+    }
+
+    var playerId = ctx.Message.Author.Id;
+    bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
+                      || game.TeamB.Players.Any(p => p.DiscordId == playerId);
+
+    if (!isParticipant)
+    {
+        await ctx.Message.ReplyAsync("You are not a participant in this game and cannot submit a score.");
+        return;
+    }
+
+    if (game.Finished)
+    {
+        await ctx.Message.ReplyAsync("This game has already been completed.");
+        return;
+    }
+
+    game.ScoreSubmissions[playerId] = (scoreA, scoreB);
+
+
+    int matchingVotes = game.ScoreSubmissions
+        .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
+
+    int totalPlayers = game.TeamA.Players.Count + game.TeamB.Players.Count;
+    int required = (totalPlayers / 2) + 1; 
+
+    if (matchingVotes < required)
+    {
+        await ctx.Message.ReplyAsync(
+            $"Score recorded. {matchingVotes}/{required} votes for {scoreA}-{scoreB}."
+        );
+        return;
+    }
+
+    var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
+
+    bool teamAWon = scoreA > scoreB;
+    string winner = teamAWon ? "Team A" : "Team B";
+
+    string msg = $"🏆 **{winner} wins!**\n\n";
+    msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
+    msg += "**Elo changes:**\n\n";
+
+    msg += "**Team A:**\n";
+    foreach (var p in game.TeamA.Players)
+    {
+        int delta = changes[p.DiscordId];
+        string sign = delta >= 0 ? "+" : "";
+        msg += $"{p.Name} {sign}{delta}\n";
+    }
+
+    msg += "\n**Team B:**\n";
+    foreach (var p in game.TeamB.Players)
+    {
+        int delta = changes[p.DiscordId];
+        string sign = delta >= 0 ? "+" : "";
+        msg += $"{p.Name} {sign}{delta}\n";
+    }
+
+    await ctx.Message.ReplyAsync(msg);
+}
+
 }
