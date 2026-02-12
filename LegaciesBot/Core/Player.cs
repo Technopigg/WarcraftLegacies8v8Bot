@@ -3,8 +3,8 @@
     public class Player
     {
         public ulong DiscordId { get; } 
-        public string Name { get; set; } 
-        public int Elo { get; set; } 
+        public string Name { get; set; }
+        public int Elo { get; set; } = 800;
         public List<string> FactionPreferences { get; set; } = new(); 
         public DateTime JoinedAt { get; set; }        
         public bool IsActive { get; set; } = true;   

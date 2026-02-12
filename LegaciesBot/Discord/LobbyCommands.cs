@@ -10,18 +10,22 @@ namespace LegaciesBot.Discord
         private readonly LobbyService _lobbyService;
         private readonly GameService _gameService;
         private readonly PlayerDataService _playerData;
+        private readonly PlayerStatsService _playerStats;
 
-        public LobbyCommands(LobbyService lobbyService, GameService gameService, PlayerDataService playerData)
+
+        public LobbyCommands(LobbyService lobbyService, GameService gameService, PlayerDataService playerData, PlayerStatsService playerStats)
         {
             _lobbyService = lobbyService;
             _gameService = gameService;
             _playerData = playerData;
+            _playerStats = playerStats;
         }
         [Command("join")]
         [Command("j")]
         public async Task JoinLobby()
         {
             var ctx = this.Context;
+            
             var player = _lobbyService.CurrentLobby.Players
                 .FirstOrDefault(p => p.DiscordId == ctx.Message.Author.Id);
 
@@ -32,13 +36,13 @@ namespace LegaciesBot.Discord
             }
 
             player = _lobbyService.JoinLobby(ctx.Message.Author.Id, ctx.Message.Author.Username);
-
-            // Load saved preferences
             var savedPrefs = _playerData.GetPreferences(player.DiscordId);
             if (savedPrefs.Count > 0)
-            {
                 player.FactionPreferences = savedPrefs.ToList();
-
+            var stats = _playerStats.GetOrCreate(player.DiscordId);
+            player.Elo = stats.Elo;  
+            if (savedPrefs.Count > 0)
+            {
                 await ctx.Message.ReplyAsync(
                     $"Welcome {player.Name}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
                     $"Type `!prefs <list>` to update them."
@@ -50,10 +54,10 @@ namespace LegaciesBot.Discord
                     $"Welcome {player.Name}! Submit your faction preferences with `!prefs <list>`."
                 );
             }
-
             if (_lobbyService.CurrentLobby.IsFull && !_lobbyService.CurrentLobby.DraftStarted)
                 await _gameService.StartDraft(_lobbyService.CurrentLobby, ctx.Message.ChannelId);
         }
+
 
         
         [Command("prefs")]

@@ -24,12 +24,15 @@ var client = new GatewayClient(
 var lobbyService = new LobbyService();
 var gameService = new GameService(client);
 var playerDataService = new PlayerDataService();
+var playerStatsService = new PlayerStatsService();
+
 
 
 
 var commandService = new CommandService<CommandContext>();
 commandService.AddModule<LobbyCommands>();
 commandService.AddModule<GameCommands>();
+commandService.AddModule<StatsCommands>();
 
 client.MessageCreate += async message =>
 {
@@ -40,7 +43,7 @@ client.MessageCreate += async message =>
     await commandService.ExecuteAsync(
         1,
         ctx,
-        new SimpleServiceProvider(lobbyService, gameService, playerDataService)
+        new SimpleServiceProvider(lobbyService, gameService, playerDataService, playerStatsService)
     );
 };
 
@@ -67,13 +70,16 @@ public class SimpleServiceProvider : IServiceProvider
     private readonly LobbyService _lobbyService;
     private readonly GameService _gameService;
     private readonly PlayerDataService _playerDataService;
+    private readonly PlayerStatsService _playerStatsService;
 
-
-    public SimpleServiceProvider(LobbyService lobbyService, GameService gameService, PlayerDataService playerDataService)
+    
+    public SimpleServiceProvider(LobbyService lobbyService, GameService gameService, PlayerDataService playerDataService, PlayerStatsService playerStatsService)
     {
         _lobbyService = lobbyService;
         _gameService = gameService;
         _playerDataService = playerDataService;
+        _playerStatsService = playerStatsService;
+
     }
 
     public object? GetService(Type serviceType)
@@ -81,6 +87,7 @@ public class SimpleServiceProvider : IServiceProvider
         if (serviceType == typeof(LobbyService)) return _lobbyService;
         if (serviceType == typeof(GameService)) return _gameService;
         if (serviceType == typeof(PlayerDataService)) return _playerDataService;
+        if (serviceType == typeof(PlayerStatsService)) return _playerStatsService;
         return null;
     }
 }
