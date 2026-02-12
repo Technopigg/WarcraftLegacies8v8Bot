@@ -11,14 +11,65 @@ public class GameCommands : CommandModule<CommandContext>
     private readonly LobbyService _lobbyService;
     private readonly PlayerStatsService _stats;
     private readonly PermissionService _permissions;
+    private readonly MatchHistoryService _matchHistoryService;
 
-    public GameCommands(GameService gameService, LobbyService lobbyService, PlayerStatsService stats, PermissionService permissions)
+    public GameCommands(GameService gameService, LobbyService lobbyService, PlayerStatsService stats, PermissionService permissions, MatchHistoryService matchHistoryService)
     {
         _gameService = gameService;
         _lobbyService = lobbyService;
         _stats = stats;
         _permissions = permissions;
+        _matchHistoryService = matchHistoryService;
     }
+    
+    [Command("recent")]
+    public async Task RecentMatches()
+    {
+        var ctx = this.Context;
+
+        var history = _matchHistoryService.History;
+
+        if (history.Count == 0)
+        {
+            await ctx.Message.ReplyAsync("No matches have been recorded yet.");
+            return;
+        }
+
+        var lastMatches = history
+            .OrderByDescending(m => m.Timestamp)
+            .Take(5)
+            .ToList();
+
+        string msg = "=== RECENT MATCHES ===\n\n";
+
+        foreach (var match in lastMatches)
+        {
+            bool teamAWon = match.ScoreA > match.ScoreB;
+            bool draw = match.ScoreA == 0 && match.ScoreB == 0;
+
+            string result = draw
+                ? "Draw"
+                : teamAWon ? "Team A Win" : "Team B Win";
+
+            msg += $"**Game {match.GameId}** — {result}\n";
+            msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
+
+            msg += "Team A Elo: ";
+            msg += string.Join(", ", match.TeamA.Select(p =>
+                $"{p.Name} ({(p.EloChange >= 0 ? "+" : "")}{p.EloChange})"
+            ));
+            msg += "\n";
+
+            msg += "Team B Elo: ";
+            msg += string.Join(", ", match.TeamB.Select(p =>
+                $"{p.Name} ({(p.EloChange >= 0 ? "+" : "")}{p.EloChange})"
+            ));
+            msg += "\n\n";
+        }
+
+        await ctx.Message.ReplyAsync(msg);
+    }
+
 
     [Command("listmods")]
     public async Task ListMods()
