@@ -20,10 +20,11 @@ public static class FactionRegistry
 
       
         new("Fel Horde", TeamGroup.FelHorde),
-        new("Illidari", TeamGroup.FelHorde),
+        new("Illidari", TeamGroup.FelHorde, "IllidariSlot"),
+        new("Sunfury", TeamGroup.FelHorde, "IllidanSlot"),
         
-        new("Warsong", TeamGroup.Kalimdor, "WarsongSlot"),
-        new("Frostwolf", TeamGroup.Kalimdor, "WarsongSlot"),
+        new("Warsong", TeamGroup.Kalimdor, "ForstwolfSlot"),
+        new("Frostwolf", TeamGroup.Kalimdor, "FrostwolfSlot"),
         new("Sentinels", TeamGroup.Kalimdor, "SentinelsSlot"),
         new("The Exodar", TeamGroup.Kalimdor, "SentinelsSlot"),
         new("Druids", TeamGroup.Kalimdor),

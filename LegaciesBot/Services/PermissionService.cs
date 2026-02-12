@@ -4,12 +4,16 @@ namespace LegaciesBot.Services
 {
     public class PermissionService
     {
-        private const string FilePath = "permissions.json";
-
+        private static readonly string FilePath =
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "permissions.json"));
         public PermissionData Data { get; private set; }
 
         public PermissionService()
         {
+            Console.WriteLine("=== PermissionService Debug ===");
+            Console.WriteLine("Working directory: " + Directory.GetCurrentDirectory());
+            Console.WriteLine("Permissions file path: " + FilePath);
+
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -17,14 +21,21 @@ namespace LegaciesBot.Services
 
             if (File.Exists(FilePath))
             {
+                Console.WriteLine("permissions.json FOUND. Loading...");
+
                 string json = File.ReadAllText(FilePath);
                 Data = JsonSerializer.Deserialize<PermissionData>(json, options) ?? new PermissionData();
             }
             else
             {
+                Console.WriteLine("permissions.json NOT FOUND. Creating new file...");
                 Data = new PermissionData();
                 Save();
             }
+
+            Console.WriteLine("Loaded Admins: " + string.Join(", ", Data.Admins));
+            Console.WriteLine("Loaded Mods: " + string.Join(", ", Data.Mods));
+            Console.WriteLine("================================");
         }
 
         public bool IsAdmin(ulong userId)
