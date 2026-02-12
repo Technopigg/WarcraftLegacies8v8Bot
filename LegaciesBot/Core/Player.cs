@@ -1,0 +1,19 @@
+﻿namespace LegaciesBot.Core
+{
+    public class Player
+    {
+        public ulong DiscordId { get; } 
+        public string Name { get; set; } 
+        public int Elo { get; set; } 
+        public List<string> FactionPreferences { get; set; } = new(); 
+        public DateTime JoinedAt { get; set; }        
+        public bool IsActive { get; set; } = true;   
+
+        public Player(ulong discordId, string name, int elo = 1500)
+        {
+            DiscordId = discordId;
+            Name = name;
+            Elo = elo;
+        }
+    }
+}
