@@ -1,5 +1,6 @@
 ﻿using NetCord.Services.Commands;
 using LegaciesBot.Services;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using LegaciesBot.GameData;
@@ -66,45 +67,193 @@ namespace LegaciesBot.Discord
             if (_lobbyService.CurrentLobby.IsFull && !_lobbyService.CurrentLobby.DraftStarted)
                 await _gameService.StartDraft(_lobbyService.CurrentLobby, ctx.Message.ChannelId);
         }
+
         [Command("prefs")]
-        public async Task ShowPreferences()
+        public async Task Preferences(params string[] args)
         {
             var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            var current = _playerData.GetPreferences(userId);
-
-            if (current.Count == 0)
+            ulong callerId = ctx.Message.Author.Id;
+            
+            if (ctx.Message.MentionedUsers.Count > 0)
             {
-                await ctx.Message.ReplyAsync("You have no faction preferences set.");
-            }
-            else
-            {
-                await ctx.Message.ReplyAsync(
-                    $"Your current faction preferences are: {string.Join(", ", current)}"
-                );
-            }
-        }
-        
-        [Command("prefs")]
-        public async Task SetPreferences(params string[] rawInput)
-        {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (rawInput.Length == 0)
-            {
-                await ctx.Message.ReplyAsync("You must specify at least one faction.");
+                var mentioned = ctx.Message.MentionedUsers[0];
+                await ShowPreferencesForUser(mentioned.Id, mentioned.Username);
                 return;
             }
             
+            if (args.Length == 0)
+            {
+                await ShowPreferencesForUser(callerId, ctx.Message.Author.Username);
+                return;
+            }
+
+            var sub = args[0].ToLowerInvariant();
+
+            if (sub == "show")
+            {
+                await ShowPreferencesForUser(callerId, ctx.Message.Author.Username);
+                return;
+            }
+
+            if (sub == "clear")
+            {
+                await ClearPreferences(callerId);
+                return;
+            }
+
+            if (sub == "add")
+            {
+                await AddPreference(callerId, args.Skip(1).ToArray());
+                return;
+            }
+
+            if (sub == "remove")
+            {
+                await RemovePreference(callerId, args.Skip(1).ToArray());
+                return;
+            }
+            
+            await SetPreferencesList(callerId, args);
+        }
+
+        private async Task ShowPreferencesForUser(ulong userId, string username)
+        {
+            var prefs = _playerData.GetPreferences(userId);
+
+            if (prefs.Count == 0)
+            {
+                await Context.Message.ReplyAsync(
+                    userId == Context.Message.Author.Id
+                        ? "You have no faction preferences set."
+                        : $"{username} has no faction preferences set."
+                );
+            }
+            else
+            {
+                await Context.Message.ReplyAsync(
+                    userId == Context.Message.Author.Id
+                        ? $"Your current faction preferences are: {string.Join(", ", prefs)}"
+                        : $"{username}'s current faction preferences are: {string.Join(", ", prefs)}"
+                );
+            }
+        }
+
+        private async Task ClearPreferences(ulong userId)
+        {
+            var current = _playerData.GetPreferences(userId);
+            if (current.Count == 0)
+            {
+                await Context.Message.ReplyAsync("You have no preferences to clear.");
+                return;
+            }
+
+            _playerData.SetPreferences(userId, new System.Collections.Generic.List<string>());
+            await Context.Message.ReplyAsync("Your faction preferences have been cleared.");
+        }
+
+        private async Task AddPreference(ulong userId, string[] args)
+        {
+            if (args.Length == 0)
+            {
+                await Context.Message.ReplyAsync("Usage: `!prefs add <Faction> [Position]`");
+                return;
+            }
+            
+            string factionName = args[0];
+            int? position = null;
+
+            if (args.Length >= 2 && int.TryParse(args[1], out int pos))
+                position = pos;
+
+            var validNames = FactionRegistry.All
+                .Select(f => f.Name.ToLowerInvariant())
+                .ToHashSet();
+
+            if (!validNames.Contains(factionName.ToLowerInvariant()))
+            {
+                await Context.Message.ReplyAsync(
+                    $"`{factionName}` is not a valid faction.\n" +
+                    $"Valid factions are:\n" +
+                    $"{string.Join(", ", FactionRegistry.All.Select(x => x.Name))}"
+                );
+                return;
+            }
+
+            var prefs = _playerData.GetPreferences(userId);
+            
+            prefs = prefs
+                .Where(p => !p.Equals(factionName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (position.HasValue && position.Value > 0)
+            {
+                int index = position.Value - 1;
+                if (index >= prefs.Count)
+                    prefs.Add(factionName);
+                else
+                    prefs.Insert(index, factionName);
+            }
+            else
+            {
+                prefs.Add(factionName);
+            }
+
+            _playerData.SetPreferences(userId, prefs);
+
+            await Context.Message.ReplyAsync(
+                $"Your faction preferences have been updated to: {string.Join(", ", prefs)}"
+            );
+        }
+
+        private async Task RemovePreference(ulong userId, string[] args)
+        {
+            if (args.Length == 0)
+            {
+                await Context.Message.ReplyAsync("Usage: `!prefs remove <Faction>`");
+                return;
+            }
+
+            string factionName = args[0];
+
+            var prefs = _playerData.GetPreferences(userId);
+
+            var existing = prefs
+                .FirstOrDefault(p => p.Equals(factionName, StringComparison.OrdinalIgnoreCase));
+
+            if (existing == null)
+            {
+                await Context.Message.ReplyAsync(
+                    $"You don't have `{factionName}` in your faction preferences."
+                );
+                return;
+            }
+
+            prefs = prefs
+                .Where(p => !p.Equals(factionName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            _playerData.SetPreferences(userId, prefs);
+
+            await Context.Message.ReplyAsync(
+                $"Your faction preferences have been updated to: {string.Join(", ", prefs)}"
+            );
+        }
+
+        private async Task SetPreferencesList(ulong userId, string[] rawInput)
+        {
+            if (rawInput.Length == 0)
+            {
+                await Context.Message.ReplyAsync("You must specify at least one faction.");
+                return;
+            }
+
             var combined = string.Join(" ", rawInput);
 
             var factions = combined
                 .Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(f => f.Trim())
                 .ToList();
-            
+
             var validNames = FactionRegistry.All
                 .Select(f => f.Name.ToLowerInvariant())
                 .ToHashSet();
@@ -113,7 +262,7 @@ namespace LegaciesBot.Discord
             {
                 if (!validNames.Contains(f.ToLowerInvariant()))
                 {
-                    await ctx.Message.ReplyAsync(
+                    await Context.Message.ReplyAsync(
                         $"`{f}` is not a valid faction.\n" +
                         $"Valid factions are:\n" +
                         $"{string.Join(", ", FactionRegistry.All.Select(x => x.Name))}"
@@ -121,13 +270,13 @@ namespace LegaciesBot.Discord
                     return;
                 }
             }
+
             _playerData.SetPreferences(userId, factions);
 
-            await ctx.Message.ReplyAsync(
+            await Context.Message.ReplyAsync(
                 $"Your faction preferences have been updated to: {string.Join(", ", factions)}"
             );
         }
-
 
         [Command("leave")]
         [Command("l")]
@@ -167,7 +316,7 @@ namespace LegaciesBot.Discord
             if (player != null)
             {
                 player.IsActive = true;
-                player.JoinedAt = System.DateTime.UtcNow;
+                player.JoinedAt = DateTime.UtcNow;
                 await ctx.Message.ReplyAsync($"{player.Name}, All good!");
             }
             else
