@@ -9,22 +9,25 @@ public class GameService
 {
     private readonly List<Game> _games = new();
     private readonly GatewayClient _client;
-    private int _nextGameId = 1; 
+    private readonly MatchHistoryService _matchHistoryService;
+    private int _nextGameId = 1;
 
-    public GameService(GatewayClient client)
+    public GameService(GatewayClient client, MatchHistoryService matchHistoryService)
     {
         _client = client;
+        _matchHistoryService = matchHistoryService;
     }
 
     public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
     {
         var game = new Game
         {
-            Id = _nextGameId++, 
+            Id = _nextGameId++,
             Lobby = lobby,
             TeamA = teamA,
             TeamB = teamB
         };
+
         _games.Add(game);
         lobby.DraftStarted = true;
         return game;
@@ -58,6 +61,7 @@ public class GameService
         {
             string msg = "=== DRAFT COMPLETE ===\n";
             int teamNum = 1;
+
             foreach (var team in teams)
             {
                 msg += $"=== TEAM {teamNum} ===\n";
@@ -69,12 +73,12 @@ public class GameService
                 teamNum++;
             }
 
-           
             var game = StartGame(lobby, teams[0], teams[1]);
 
             msg += $"\n=== GAME STARTED ===\n";
             msg += $"Game ID: **{game.Id}**\n";
-            msg += $"Use `!score {game.Id} <A> <B>` to submit the final score.";
+            msg += $"Use `!score <A> <B>` to submit the final score.\n";
+            msg += $"If multiple games are active, use `!score {game.Id} <A> <B>`.";
 
             await textChannel.SendMessageAsync(msg);
         }
@@ -89,7 +93,7 @@ public class GameService
         game.Finished = true;
 
         bool teamAWon = scoreA > scoreB;
-        
+
         var changes = EloService.ApplyTeamResult(
             game.TeamA.Players,
             game.TeamB.Players,
@@ -97,13 +101,13 @@ public class GameService
             stats
         );
 
+        _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
+        
         game.Lobby.Players.Clear();
         game.Lobby.DraftStarted = false;
 
         return changes;
     }
-
-
 
     public List<Game> GetOngoingGames() => _games.Where(g => !g.Finished).ToList();
 }
