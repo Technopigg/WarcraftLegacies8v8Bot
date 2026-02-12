@@ -31,7 +31,7 @@ namespace LegaciesBot.Services
         {
             return Data.Mods.Contains(userId) || IsAdmin(userId);
         }
-
+        
         public void AddMod(ulong userId)
         {
             if (!Data.Mods.Contains(userId))
@@ -41,13 +41,44 @@ namespace LegaciesBot.Services
             }
         }
 
+        public void RemoveMod(ulong userId)
+        {
+            if (Data.Mods.Contains(userId))
+            {
+                Data.Mods.Remove(userId);
+                Save();
+            }
+        }
+
+        public void AddAdmin(ulong userId)
+        {
+            if (!Data.Admins.Contains(userId))
+            {
+                Data.Admins.Add(userId);
+                Save();
+            }
+        }
+
+        public void RemoveAdmin(ulong userId)
+        {
+            if (Data.Admins.Contains(userId))
+            {
+                Data.Admins.Remove(userId);
+                Save();
+            }
+        }
+        
         public void Save()
         {
-            string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
             File.WriteAllText(FilePath, json);
         }
     }
-
+    
     public class PermissionData
     {
         public List<ulong> Admins { get; set; } = new();

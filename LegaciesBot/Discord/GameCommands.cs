@@ -20,6 +20,59 @@ public class GameCommands : CommandModule<CommandContext>
         _stats = stats;
         _permissions = permissions;
     }
+    
+    [Command("listmods")]
+    public async Task ListMods()
+    {
+        var ctx = this.Context;
+        ulong userId = ctx.Message.Author.Id;
+
+        if (!_permissions.IsMod(userId))
+        {
+            await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+            return;
+        }
+
+        if (!_permissions.Data.Mods.Any())
+        {
+            await ctx.Message.ReplyAsync("There are currently no mods assigned.");
+            return;
+        }
+
+        string msg = "**Current Mods:**\n";
+
+        foreach (var modId in _permissions.Data.Mods)
+        {
+            msg += $"- <@{modId}>\n";
+        }
+
+        await ctx.Message.ReplyAsync(msg);
+    }
+
+    [Command("removemod")]
+    public async Task RemoveMod(ulong targetUserId)
+    {
+        var ctx = this.Context;
+        ulong userId = ctx.Message.Author.Id;
+
+        if (!_permissions.IsAdmin(userId))
+        {
+            await ctx.Message.ReplyAsync("Only admins can use this command.");
+            return;
+        }
+
+        if (!_permissions.Data.Mods.Contains(targetUserId))
+        {
+            await ctx.Message.ReplyAsync("That user is not a mod.");
+            return;
+        }
+
+        _permissions.Data.Mods.Remove(targetUserId);
+        _permissions.Save();
+
+        await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been removed from **Mod** status.");
+    }
+
     [Command("makemod")]
     public async Task MakeMod(ulong targetUserId)
     {
