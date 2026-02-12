@@ -8,12 +8,15 @@ public class GameCommands : CommandModule<CommandContext>
 {
     private readonly GameService _gameService;
     private readonly LobbyService _lobbyService;
+    private readonly PlayerStatsService _stats;
 
-    public GameCommands(GameService gameService, LobbyService lobbyService)
+    public GameCommands(GameService gameService, LobbyService lobbyService, PlayerStatsService stats)
     {
         _gameService = gameService;
         _lobbyService = lobbyService;
+        _stats = stats; 
     }
+
     [Command("games")]
     [Command("g")]
     public async Task ListGames()
@@ -70,8 +73,10 @@ public class GameCommands : CommandModule<CommandContext>
             await ctx.Message.ReplyAsync("This game has already been completed.");
             return;
         }
+        _gameService.SubmitScore(game, scoreA, scoreB, _stats);
 
-        _gameService.SubmitScore(game, scoreA, scoreB);
-        await ctx.Message.ReplyAsync($"Score submitted for Game {game.Id}: Team A {scoreA} - Team B {scoreB}");
+        await ctx.Message.ReplyAsync(
+            $"Score submitted for Game {game.Id}: Team A {scoreA} - Team B {scoreB}"
+        );
     }
 }

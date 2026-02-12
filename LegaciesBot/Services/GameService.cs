@@ -69,18 +69,39 @@ public class GameService
                 teamNum++;
             }
 
+           
+            var game = StartGame(lobby, teams[0], teams[1]);
+
+            msg += $"\n=== GAME STARTED ===\n";
+            msg += $"Game ID: **{game.Id}**\n";
+            msg += $"Use `!score {game.Id} <A> <B>` to submit the final score.";
+
             await textChannel.SendMessageAsync(msg);
         }
 
         lobby.DraftStarted = true;
     }
 
-    public void SubmitScore(Game game, int scoreA, int scoreB)
+    public void SubmitScore(Game game, int scoreA, int scoreB, PlayerStatsService stats)
     {
         game.ScoreA = scoreA;
         game.ScoreB = scoreB;
         game.Finished = true;
+
+        bool teamAWon = scoreA > scoreB;
+        
+        EloService.ApplyTeamResult(
+            game.TeamA.Players,
+            game.TeamB.Players,
+            teamAWon,
+            stats
+        );
+
+   
+        game.Lobby.Players.Clear();
+        game.Lobby.DraftStarted = false;
     }
+
 
     public List<Game> GetOngoingGames() => _games.Where(g => !g.Finished).ToList();
 }
