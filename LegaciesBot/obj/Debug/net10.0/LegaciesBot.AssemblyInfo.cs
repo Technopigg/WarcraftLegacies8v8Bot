@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LegaciesBot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+257ed011f26c0b85e0f92639456c3d84da3cf041")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b97abc761862c0fd62ce08bac4b48913d6726162")]
 [assembly: System.Reflection.AssemblyProductAttribute("LegaciesBot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LegaciesBot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
