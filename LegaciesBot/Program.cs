@@ -4,8 +4,13 @@ using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Discord;
 
-var token = "MTQ3MTUyOTIyMDAxNzc1MDA4OA.GrESoW.Beh1GiFbCzSg9oDPKHiE-gLVEnV2MSGwYGnzMM";
+string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
+if (string.IsNullOrEmpty(token))
+{
+    Console.WriteLine("Error: Discord bot token not set in environment variables!");
+    return;
+}
 var client = new GatewayClient(
     new BotToken(token),
     new GatewayClientConfiguration
