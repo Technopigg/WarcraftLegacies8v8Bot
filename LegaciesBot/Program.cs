@@ -28,6 +28,7 @@ var lobbyService = new LobbyService();
 var gameService = new GameService(client, matchHistoryService);
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
+var playerRegistryService = new PlayerRegistryService();
 
 var commandService = new CommandService<CommandContext>();
 commandService.AddModule<LobbyCommands>();
@@ -50,8 +51,10 @@ client.MessageCreate += async message =>
             playerDataService,
             playerStatsService,
             permissionService,
-            matchHistoryService
+            matchHistoryService,
+            playerRegistryService
         )
+
     );
 };
 
@@ -83,6 +86,8 @@ public class SimpleServiceProvider : IServiceProvider
     private readonly PlayerStatsService _playerStatsService;
     private readonly PermissionService _permissionService;
     private readonly MatchHistoryService _matchHistoryService;
+    private readonly PlayerRegistryService _playerRegistryService;
+
 
     public SimpleServiceProvider(
         LobbyService lobbyService,
@@ -90,7 +95,9 @@ public class SimpleServiceProvider : IServiceProvider
         PlayerDataService playerDataService,
         PlayerStatsService playerStatsService,
         PermissionService permissionService,
-        MatchHistoryService matchHistoryService)
+        MatchHistoryService matchHistoryService,
+        PlayerRegistryService playerRegistryService)
+
     {
         _lobbyService = lobbyService;
         _gameService = gameService;

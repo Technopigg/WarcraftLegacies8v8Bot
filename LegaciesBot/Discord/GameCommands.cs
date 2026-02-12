@@ -11,16 +11,47 @@ public class GameCommands : CommandModule<CommandContext>
     private readonly LobbyService _lobbyService;
     private readonly PlayerStatsService _stats;
     private readonly PermissionService _permissions;
+    private readonly PlayerDataService _playerDataService;
     private readonly MatchHistoryService _matchHistoryService;
+    private readonly PlayerRegistryService _playerRegistry;
 
-    public GameCommands(GameService gameService, LobbyService lobbyService, PlayerStatsService stats, PermissionService permissions, MatchHistoryService matchHistoryService)
+
+
+
+    public GameCommands(GameService gameService, LobbyService lobbyService, PlayerStatsService stats, PermissionService permissions, MatchHistoryService matchHistoryService, PlayerDataService playerDataService, PlayerRegistryService playerRegistry)
     {
         _gameService = gameService;
         _lobbyService = lobbyService;
         _stats = stats;
         _permissions = permissions;
+        _playerDataService = playerDataService;
         _matchHistoryService = matchHistoryService;
+        _playerRegistry = playerRegistry;
     }
+    [Command("register")]
+    [Command("reg")]
+    public async Task Register()
+    {
+        var ctx = this.Context;
+        ulong userId = ctx.Message.Author.Id;
+        string name = ctx.Message.Author.Username;
+
+        if (_playerRegistry.IsRegistered(userId))
+        {
+            await ctx.Message.ReplyAsync("You are already registered.");
+            return;
+        }
+
+        var player = _playerRegistry.RegisterPlayer(userId, name);
+
+
+        _stats.GetOrCreate(userId);
+
+        await ctx.Message.ReplyAsync(
+            $"Registration complete. Welcome, **{player.Name}**! Your starting Elo is **{player.Elo}**."
+        );
+    }
+
     
     [Command("recent")]
     public async Task RecentMatches()
