@@ -18,16 +18,24 @@ public class GameCommands : CommandModule<CommandContext>
 
 
 
-    public GameCommands(GameService gameService, LobbyService lobbyService, PlayerStatsService stats, PermissionService permissions, MatchHistoryService matchHistoryService, PlayerDataService playerDataService, PlayerRegistryService playerRegistry)
+    public GameCommands(
+        GameService gameService,
+        LobbyService lobbyService,
+        PlayerDataService playerDataService,
+        PlayerStatsService stats,
+        PermissionService permissions,
+        MatchHistoryService matchHistoryService,
+        PlayerRegistryService playerRegistry)
     {
         _gameService = gameService;
         _lobbyService = lobbyService;
+        _playerDataService = playerDataService;
         _stats = stats;
         _permissions = permissions;
-        _playerDataService = playerDataService;
         _matchHistoryService = matchHistoryService;
         _playerRegistry = playerRegistry;
     }
+
     [Command("register")]
     [Command("reg")]
     public async Task Register()

@@ -9,7 +9,7 @@
         public DateTime JoinedAt { get; set; }        
         public bool IsActive { get; set; } = true;   
 
-        public Player(ulong discordId, string name, int elo = 1500)
+        public Player(ulong discordId, string name, int elo = 800)
         {
             DiscordId = discordId;
             Name = name;

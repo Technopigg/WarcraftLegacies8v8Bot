@@ -29,7 +29,7 @@ namespace LegaciesBot.Services
             if (_players.ContainsKey(discordId))
                 return _players[discordId];
 
-            var player = new Player(discordId, name, 1500)
+            var player = new Player(discordId, name)
             {
                 JoinedAt = DateTime.UtcNow,
                 IsActive = true

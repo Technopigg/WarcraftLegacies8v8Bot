@@ -88,7 +88,6 @@ public class SimpleServiceProvider : IServiceProvider
     private readonly MatchHistoryService _matchHistoryService;
     private readonly PlayerRegistryService _playerRegistryService;
 
-
     public SimpleServiceProvider(
         LobbyService lobbyService,
         GameService gameService,
@@ -97,7 +96,6 @@ public class SimpleServiceProvider : IServiceProvider
         PermissionService permissionService,
         MatchHistoryService matchHistoryService,
         PlayerRegistryService playerRegistryService)
-
     {
         _lobbyService = lobbyService;
         _gameService = gameService;
@@ -105,6 +103,7 @@ public class SimpleServiceProvider : IServiceProvider
         _playerStatsService = playerStatsService;
         _permissionService = permissionService;
         _matchHistoryService = matchHistoryService;
+        _playerRegistryService = playerRegistryService;  
     }
 
     public object? GetService(Type serviceType)
@@ -115,6 +114,7 @@ public class SimpleServiceProvider : IServiceProvider
         if (serviceType == typeof(PlayerStatsService)) return _playerStatsService;
         if (serviceType == typeof(PermissionService)) return _permissionService;
         if (serviceType == typeof(MatchHistoryService)) return _matchHistoryService;
+        if (serviceType == typeof(PlayerRegistryService)) return _playerRegistryService; // ⭐ FIXED
 
         return null;
     }

@@ -10,10 +10,15 @@ namespace LegaciesBot.Services
 
         public PermissionService()
         {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
             if (File.Exists(FilePath))
             {
                 string json = File.ReadAllText(FilePath);
-                Data = JsonSerializer.Deserialize<PermissionData>(json) ?? new PermissionData();
+                Data = JsonSerializer.Deserialize<PermissionData>(json, options) ?? new PermissionData();
             }
             else
             {
@@ -31,7 +36,7 @@ namespace LegaciesBot.Services
         {
             return Data.Mods.Contains(userId) || IsAdmin(userId);
         }
-        
+
         public void AddMod(ulong userId)
         {
             if (!Data.Mods.Contains(userId))
@@ -67,7 +72,7 @@ namespace LegaciesBot.Services
                 Save();
             }
         }
-        
+
         public void Save()
         {
             string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions
@@ -78,7 +83,7 @@ namespace LegaciesBot.Services
             File.WriteAllText(FilePath, json);
         }
     }
-    
+
     public class PermissionData
     {
         public List<ulong> Admins { get; set; } = new();
