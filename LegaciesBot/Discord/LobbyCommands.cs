@@ -32,11 +32,29 @@ namespace LegaciesBot.Discord
             }
 
             player = _lobbyService.JoinLobby(ctx.Message.Author.Id, ctx.Message.Author.Username);
-            await ctx.Message.ReplyAsync($"Welcome {player.Name}! Submit your faction preferences with !prefs <list>.");
+
+            // Load saved preferences
+            var savedPrefs = _playerData.GetPreferences(player.DiscordId);
+            if (savedPrefs.Count > 0)
+            {
+                player.FactionPreferences = savedPrefs.ToList();
+
+                await ctx.Message.ReplyAsync(
+                    $"Welcome {player.Name}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
+                    $"Type `!prefs <list>` to update them."
+                );
+            }
+            else
+            {
+                await ctx.Message.ReplyAsync(
+                    $"Welcome {player.Name}! Submit your faction preferences with `!prefs <list>`."
+                );
+            }
 
             if (_lobbyService.CurrentLobby.IsFull && !_lobbyService.CurrentLobby.DraftStarted)
                 await _gameService.StartDraft(_lobbyService.CurrentLobby, ctx.Message.ChannelId);
         }
+
         
         [Command("prefs")]
         public async Task ShowPreferences()
@@ -112,6 +130,7 @@ namespace LegaciesBot.Discord
                 .ToList();
 
             player.FactionPreferences = newPrefs;
+            _playerData.SetPreferences(player.DiscordId, newPrefs);
 
             await ctx.Message.ReplyAsync($"Preferences updated: {string.Join(", ", player.FactionPreferences)}");
         }
