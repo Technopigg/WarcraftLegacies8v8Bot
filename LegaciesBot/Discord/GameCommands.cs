@@ -1,6 +1,8 @@
 ﻿using NetCord.Services.Commands;
 using LegaciesBot.Services;
-using System.Linq;
+
+using LegaciesBot.Core;
+
 
 namespace LegaciesBot.Discord;
 
@@ -40,25 +42,44 @@ public class GameCommands : CommandModule<CommandContext>
         await ctx.Message.ReplyAsync(msg);
     }
 
-   [Command("score")]
-public async Task SubmitScore(int gameId, int scoreA, int scoreB)
+  [Command("score")]
+public async Task SubmitScore(int scoreA, int scoreB)
 {
     var ctx = this.Context;
 
-    if (scoreA < 0 || scoreB < 0)
+
+    if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
     {
-        await ctx.Message.ReplyAsync("Scores must be non-negative integers.");
+        await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
         return;
     }
 
-    var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
-    if (game == null)
+
+    var games = _gameService.GetOngoingGames();
+
+    if (!games.Any())
     {
-        await ctx.Message.ReplyAsync($"No ongoing game found with ID {gameId}.");
+        await ctx.Message.ReplyAsync("There are no ongoing games.");
+        return;
+    }
+
+    Game game;
+
+ 
+    if (games.Count == 1)
+    {
+        game = games.First();
+    }
+    else
+    {
+        await ctx.Message.ReplyAsync(
+            "Multiple games are active. Please specify the game ID: `!score <gameId> <scoreA> <scoreB>`"
+        );
         return;
     }
 
     var playerId = ctx.Message.Author.Id;
+
     bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
                       || game.TeamB.Players.Any(p => p.DiscordId == playerId);
 
@@ -73,16 +94,14 @@ public async Task SubmitScore(int gameId, int scoreA, int scoreB)
         await ctx.Message.ReplyAsync("This game has already been completed.");
         return;
     }
-
+    
     game.ScoreSubmissions[playerId] = (scoreA, scoreB);
-
-
+    
     int matchingVotes = game.ScoreSubmissions
         .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
 
     int totalPlayers = game.TeamA.Players.Count + game.TeamB.Players.Count;
     int required = (totalPlayers / 2) + 1; 
-
     if (matchingVotes < required)
     {
         await ctx.Message.ReplyAsync(
@@ -91,12 +110,18 @@ public async Task SubmitScore(int gameId, int scoreA, int scoreB)
         return;
     }
 
+   
     var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
 
     bool teamAWon = scoreA > scoreB;
-    string winner = teamAWon ? "Team A" : "Team B";
+    bool teamBWon = scoreB > scoreA;
+    bool draw = scoreA == 0 && scoreB == 0;
 
-    string msg = $"🏆 **{winner} wins!**\n\n";
+    string resultText = draw
+        ? "🤝 **The match ends in a draw!**"
+        : teamAWon ? "🏆 **Team A wins!**" : "🏆 **Team B wins!**";
+
+    string msg = $"{resultText}\n\n";
     msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
     msg += "**Elo changes:**\n\n";
 
@@ -118,5 +143,6 @@ public async Task SubmitScore(int gameId, int scoreA, int scoreB)
 
     await ctx.Message.ReplyAsync(msg);
 }
+
 
 }
