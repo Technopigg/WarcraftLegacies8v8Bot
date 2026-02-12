@@ -14,7 +14,7 @@ public class GameCommands : CommandModule<CommandContext>
     {
         _gameService = gameService;
         _lobbyService = lobbyService;
-        _stats = stats; 
+        _stats = stats;
     }
 
     [Command("games")]
@@ -60,7 +60,7 @@ public class GameCommands : CommandModule<CommandContext>
 
         var playerId = ctx.Message.Author.Id;
         bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
-                          || game.TeamB.Players.Any(p => p.DiscordId == playerId);
+                             || game.TeamB.Players.Any(p => p.DiscordId == playerId);
 
         if (!isParticipant)
         {
@@ -73,10 +73,30 @@ public class GameCommands : CommandModule<CommandContext>
             await ctx.Message.ReplyAsync("This game has already been completed.");
             return;
         }
-        _gameService.SubmitScore(game, scoreA, scoreB, _stats);
 
-        await ctx.Message.ReplyAsync(
-            $"Score submitted for Game {game.Id}: Team A {scoreA} - Team B {scoreB}"
-        );
+
+        game.ScoreSubmissions[playerId] = (scoreA, scoreB);
+
+
+        int matchingVotes = game.ScoreSubmissions
+            .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
+
+        int required = (game.TeamA.Players.Count + 1) / 2; 
+
+        if (matchingVotes >= required)
+        {
+            _gameService.SubmitScore(game, scoreA, scoreB, _stats);
+
+            await ctx.Message.ReplyAsync(
+                $"Score accepted by majority vote.\n" +
+                $"Final result for Game {game.Id}: Team A {scoreA} - Team B {scoreB}"
+            );
+        }
+        else
+        {
+            await ctx.Message.ReplyAsync(
+                $"Score recorded. {matchingVotes}/{required} votes for {scoreA}-{scoreB}."
+            );
+        }
     }
 }
