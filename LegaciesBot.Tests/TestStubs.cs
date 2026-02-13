@@ -37,17 +37,18 @@ public class FactionAssignmentStub : IFactionAssignmentService
     {
         team.AssignedFactions.Clear();
 
-        foreach (var player in team.Players)
+        for (int i = 0; i < team.Players.Count; i++)
         {
+            var player = team.Players[i];
             var preferred = player.FactionPreferences
                 .Select(name => FactionRegistry.All.FirstOrDefault(f => f.Name == name))
                 .Where(f => f != null)
                 .ToList();
-
             var pool = preferred.Any()
                 ? preferred
                 : FactionRegistry.All.Where(f => allowedGroups.Contains(f.Group)).ToList();
-            var faction = pool.First(); 
+            var faction = pool.First();
+
             team.AssignedFactions.Add(faction);
         }
     }

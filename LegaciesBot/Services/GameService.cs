@@ -34,6 +34,29 @@ public class GameService
 
     public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
     {
+        foreach (var player in lobby.Players)
+        {
+            if (!player.FactionPreferences.Any())
+                player.FactionPreferences = _defaultPreferences.Factions.ToList();
+        }
+
+        var allowedGroupsA = teamA.Players
+            .SelectMany(p => p.FactionPreferences)
+            .Select(f => _factionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
+            .Where(g => g != null)
+            .Select(g => g!.Value)
+            .ToHashSet<TeamGroup>();
+
+        var allowedGroupsB = teamB.Players
+            .SelectMany(p => p.FactionPreferences)
+            .Select(f => _factionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
+            .Where(g => g != null)
+            .Select(g => g!.Value)
+            .ToHashSet<TeamGroup>();
+
+        _factionAssignment.AssignFactionsToTeam(teamA, allowedGroupsA);
+        _factionAssignment.AssignFactionsToTeam(teamB, allowedGroupsB);
+
         var game = new Game
         {
             Id = _nextGameId++,
@@ -50,7 +73,6 @@ public class GameService
 
     public async Task StartDraft(Lobby lobby, ulong channelId)
     {
-       
         foreach (var player in lobby.Players)
         {
             if (!player.FactionPreferences.Any())
@@ -59,7 +81,7 @@ public class GameService
 
         var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players);
         var teams = new[] { teamA, teamB };
-        
+
         foreach (var team in teams)
         {
             var allowedGroups = team.Players
@@ -69,11 +91,9 @@ public class GameService
                 .Select(g => g!.Value)
                 .ToHashSet<TeamGroup>();
 
-
             _factionAssignment.AssignFactionsToTeam(team, allowedGroups);
         }
 
-        // Send draft summary to Discord
         var channel = await _client.GetTextChannelAsync(channelId);
         if (channel != null)
         {

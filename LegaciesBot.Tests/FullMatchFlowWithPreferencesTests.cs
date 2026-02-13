@@ -1,9 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using Xunit;
-using LegaciesBot.Core;
 using LegaciesBot.GameData;
 using LegaciesBot.Services;
 
@@ -62,8 +56,7 @@ public class FullMatchFlowWithPreferencesTests
                 .ToList(),
 
             [4] = new() { "Lordaeron", "Skywall", "Stormwind" },
-
-            // Nick corrected: ONLY these three
+            
             [5] = new() { "Dalaran", "Legion", "Druids" },
 
             [6] = new()
@@ -145,23 +138,26 @@ public class FullMatchFlowWithPreferencesTests
         var stats = new PlayerStatsService();
 
         var changes = gameService.SubmitScore(game, 4, 2, stats);
+        var teamAInGame = game.TeamA;
+        var teamBInGame = game.TeamB;
 
-        foreach (var player in teamA.Players)
+        for (int i = 0; i < teamAInGame.Players.Count; i++)
         {
-            var faction = teamA.AssignedFactions
-                .FirstOrDefault(f => Prefs[player.DiscordId].Contains(f.Name));
+            var player = teamAInGame.Players[i];
+            var faction = teamAInGame.AssignedFactions[i];
 
-            Assert.NotNull(faction);
+            Assert.Contains(faction.Name, Prefs[player.DiscordId]);
         }
 
-        foreach (var player in teamB.Players)
+        for (int i = 0; i < teamBInGame.Players.Count; i++)
         {
-            var faction = teamB.AssignedFactions
-                .FirstOrDefault(f => Prefs[player.DiscordId].Contains(f.Name));
+            var player = teamBInGame.Players[i];
+            var faction = teamBInGame.AssignedFactions[i];
 
-            Assert.NotNull(faction);
+            Assert.Contains(faction.Name, Prefs[player.DiscordId]);
         }
 
+        
         Assert.True(game.Finished);
         Assert.NotEmpty(changes);
         Assert.NotEmpty(history.History);
