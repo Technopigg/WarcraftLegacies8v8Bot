@@ -1,8 +1,5 @@
 ﻿using NetCord.Services.Commands;
 using LegaciesBot.Services;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using LegaciesBot.GameData;
 
 namespace LegaciesBot.Discord
@@ -317,73 +314,59 @@ namespace LegaciesBot.Discord
                 $"Your faction preferences have been updated to: {string.Join(", ", factions)}"
             );
         }
-
         [Command("leave")]
         [Command("l")]
         public async Task LeaveLobby()
         {
             var ctx = this.Context;
-            var lobby = _lobbyService.CurrentLobby;
 
-            var player = lobby.Players
-                .FirstOrDefault(p => p.DiscordId == ctx.Message.Author.Id);
+            bool success = _lobbyService.RemovePlayer(ctx.Message.Author.Id);
 
-            if (player == null)
+            if (!success)
             {
-                await ctx.Message.ReplyAsync("You are not currently in a lobby.");
+                await ctx.Message.ReplyAsync("You are not currently in a lobby or the draft has already started.");
                 return;
             }
 
-            if (lobby.DraftStarted)
-            {
-                await ctx.Message.ReplyAsync("Cannot leave a drafting lobby.");
-                return;
-            }
-
-            lobby.Players.Remove(player);
-
-            await ctx.Message.ReplyAsync($"{player.Name} has left the lobby.");
+            await ctx.Message.ReplyAsync($"{ctx.Message.Author.Username} has left the lobby.");
         }
 
-        [Command("h")]
         [Command("here")]
+        [Command("h")]
         public async Task MarkActive()
         {
             var ctx = this.Context;
-            var player = _lobbyService.CurrentLobby.Players
-                .FirstOrDefault(p => p.DiscordId == ctx.Message.Author.Id);
 
-            if (player != null)
-            {
-                player.IsActive = true;
-                player.JoinedAt = DateTime.UtcNow;
-                await ctx.Message.ReplyAsync($"{player.Name}, All good!");
-            }
-            else
+            bool success = _lobbyService.MarkActive(ctx.Message.Author.Id);
+
+            if (!success)
             {
                 await ctx.Message.ReplyAsync("You are not currently in a lobby.");
+                return;
             }
-        }
 
+            await ctx.Message.ReplyAsync($"{ctx.Message.Author.Username}, all good!");
+        }
+        
+       
         [Command("lobby")]
         public async Task ListLobbyMembers()
         {
             var ctx = this.Context;
-            var lobby = _lobbyService.CurrentLobby;
 
-            if (!lobby.Players.Any())
+            var members = _lobbyService.GetLobbyMembers();
+
+            if (members.Count == 0)
             {
                 await ctx.Message.ReplyAsync("The lobby is currently empty.");
                 return;
             }
 
-            string msg = "Current lobby members:\n";
-            foreach (var p in lobby.Players)
-            {
-                msg += $"- {p.Name}\n";
-            }
+            string msg = "Current lobby members:\n" +
+                         string.Join("\n", members.Select(p => $"- {p.Name}"));
 
             await ctx.Message.ReplyAsync(msg);
         }
+
     }
 }

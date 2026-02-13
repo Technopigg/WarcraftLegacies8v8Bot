@@ -8,21 +8,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/.NETCoreApp,Version=v10.0.AssemblyAttributes.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.AssemblyInfo.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.AssemblyInfoInputs.cache" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.GeneratedMSBuildEditorConfig.editorconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.GlobalUsings.g.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.assets.cache" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.csproj.AssemblyReference.cache" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/Debug/net10.0/LegaciesBot.csproj.FileListAbsolute.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/LegaciesBot.csproj.nuget.dgspec.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/LegaciesBot.csproj.nuget.g.props" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/LegaciesBot.csproj.nuget.g.targets" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/project.assets.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/project.nuget.cache" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/project.packagespec.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/obj/rider.project.restore.info" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/LobbyServiceTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,7 +36,7 @@
     <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="Toolset" />
+    <option name="selectedTabId" value="SWEA" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3

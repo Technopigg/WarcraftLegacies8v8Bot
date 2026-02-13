@@ -29,12 +29,46 @@ public class LobbyService
         }
         else
         {
-            player.IsActive = true; 
+            player.IsActive = true;
         }
 
         lobby.AfkPingedAt[player.DiscordId] = DateTime.UtcNow.Add(AfkReminderDelay);
 
         return player;
+    }
+
+    public bool RemovePlayer(ulong discordId)
+    {
+        var lobby = CurrentLobby;
+
+        var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
+        if (player == null || lobby.DraftStarted)
+            return false;
+
+        lobby.Players.Remove(player);
+        lobby.AfkPingedAt.Remove(discordId);
+        return true;
+    }
+
+    public bool MarkActive(ulong discordId)
+    {
+        var player = CurrentLobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
+        if (player == null)
+            return false;
+
+        player.IsActive = true;
+        player.JoinedAt = DateTime.UtcNow;
+        return true;
+    }
+
+    public List<Player> GetLobbyMembers()
+    {
+        return CurrentLobby.Players.ToList();
+    }
+
+    public bool IsInLobby(ulong discordId)
+    {
+        return CurrentLobby.Players.Any(p => p.DiscordId == discordId);
     }
 
     public void UpdatePreferences(ulong discordId, List<string> prefs)
@@ -63,9 +97,6 @@ public class LobbyService
                     {
                         lobby.Players.Remove(player);
                         lobby.AfkPingedAt.Remove(player.DiscordId);
-                    }
-                    else if (now > pingTime)
-                    {
                     }
                 }
             }
