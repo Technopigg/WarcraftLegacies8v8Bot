@@ -4,8 +4,19 @@ namespace LegaciesBot.Services;
 
 public class RealFactionAssignmentService : IFactionAssignmentService
 {
-    public void AssignFactionsToTeam(Team team, HashSet<TeamGroup> allowedGroups)
+    private readonly FactionAssignmentService _inner = new();
+
+    public void AssignFactionsForGame(
+        Team teamA,
+        Team teamB,
+        HashSet<TeamGroup> allowedGroupsA,
+        HashSet<TeamGroup> allowedGroupsB)
     {
-        FactionAssignmentService.AssignFactionsToTeam(team, allowedGroups);
+        _inner.AssignFactionsForGame(
+            teamA,
+            teamB,
+            allowedGroupsA,
+            allowedGroupsB
+        );
     }
 }

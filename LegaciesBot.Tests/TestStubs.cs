@@ -1,6 +1,6 @@
 using LegaciesBot.Core;
-using LegaciesBot.Services;
 using LegaciesBot.GameData;
+using LegaciesBot.Services;
 
 public class DummyGatewayClient : IGatewayClient
 {
@@ -28,32 +28,50 @@ public class FactionRegistryStub : IFactionRegistry
 
 public class DefaultPreferencesStub : IDefaultPreferences
 {
-    public List<string> Factions => FactionRegistry.All.Select(f => f.Name).ToList();
+    public List<string> Factions => FactionRegistry.All
+        .Select(f => f.Name)
+        .ToList();
 }
 
 public class FactionAssignmentStub : IFactionAssignmentService
 {
-    public void AssignFactionsToTeam(Team team, HashSet<TeamGroup> allowedGroups)
+    public void AssignFactionsForGame(
+        Team teamA,
+        Team teamB,
+        HashSet<TeamGroup> allowedGroupsA,
+        HashSet<TeamGroup> allowedGroupsB)
     {
-        team.AssignedFactions.Clear();
+        teamA.AssignedFactions.Clear();
+        teamB.AssignedFactions.Clear();
+
+        AssignForSingleTeam(teamA, allowedGroupsA);
+        AssignForSingleTeam(teamB, allowedGroupsB);
+    }
+
+    private void AssignForSingleTeam(Team team, HashSet<TeamGroup> allowedGroups)
+    {
+        var all = FactionRegistry.All
+            .Where(f => allowedGroups.Contains(f.Group))
+            .ToList();
 
         for (int i = 0; i < team.Players.Count; i++)
         {
             var player = team.Players[i];
+
             var preferred = player.FactionPreferences
-                .Select(name => FactionRegistry.All.FirstOrDefault(f => f.Name == name))
+                .Select(name => all.FirstOrDefault(f =>
+                    f.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
                 .Where(f => f != null)
                 .ToList();
-            var pool = preferred.Any()
-                ? preferred
-                : FactionRegistry.All.Where(f => allowedGroups.Contains(f.Group)).ToList();
+
+            var pool = preferred.Any() ? preferred! : all;
+
             var faction = pool.First();
 
             team.AssignedFactions.Add(faction);
         }
     }
 }
-
 
 public class MatchHistoryAdapter : IMatchHistoryService
 {

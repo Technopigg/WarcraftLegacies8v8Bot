@@ -1,10 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using Xunit;
-using LegaciesBot.Core;
-using LegaciesBot.GameData;
 using LegaciesBot.Services;
 
 public class FullMatchFlowTests
@@ -34,7 +27,7 @@ public class FullMatchFlowTests
         (5, "Nick"),
         (6, "Grom"),
         (7, "Linaz"),
-        (8, "Theg"),
+        (8, "TheG"),
         (9, "Technopig"),
         (10, "Enclop"),
         (11, "Lukas"),
@@ -68,23 +61,20 @@ public class FullMatchFlowTests
 
         foreach (var (id, name) in Players)
             registry.RegisterPlayer(id, name);
-
         foreach (var (id, name) in Players)
             lobbyService.JoinLobby(id, name);
 
         var lobby = lobbyService.CurrentLobby;
-
         Assert.Equal(16, lobby.Players.Count);
+        gameService.StartDraft(lobby, 123).Wait();
 
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players);
-
-        Assert.Equal(8, teamA.Players.Count);
-        Assert.Equal(8, teamB.Players.Count);
-
-        var game = gameService.StartGame(lobby, teamA, teamB);
-
+        Assert.NotNull(lobby.TeamA);
+        Assert.NotNull(lobby.TeamB);
+        Assert.Equal(8, lobby.TeamA!.Players.Count);
+        Assert.Equal(8, lobby.TeamB!.Players.Count);
+        
+        var game = gameService.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
         var stats = new PlayerStatsService();
-
         var changes = gameService.SubmitScore(game, 5, 3, stats);
 
         Assert.True(game.Finished);

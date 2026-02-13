@@ -14,6 +14,8 @@ public class GameService
     private readonly IFactionRegistry _factionRegistry;
     private readonly IDefaultPreferences _defaultPreferences;
 
+    private readonly DraftEngine _draftEngine;
+
     private int _nextGameId = 1;
 
     public GameService(
@@ -22,7 +24,8 @@ public class GameService
         IEloService eloService,
         IFactionAssignmentService factionAssignment,
         IFactionRegistry factionRegistry,
-        IDefaultPreferences defaultPreferences)
+        IDefaultPreferences defaultPreferences,
+        Random? rng = null)
     {
         _client = client;
         _matchHistoryService = matchHistoryService;
@@ -30,33 +33,38 @@ public class GameService
         _factionAssignment = factionAssignment;
         _factionRegistry = factionRegistry;
         _defaultPreferences = defaultPreferences;
-    }
 
-    public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
+        _draftEngine = new DraftEngine(factionAssignment, rng);
+    }
+    
+    public async Task StartDraft(Lobby lobby, ulong channelId)
     {
+        if (lobby.Players.Count != 16)
+            throw new ArgumentException("Draft requires exactly 16 players.");
+
         foreach (var player in lobby.Players)
         {
             if (!player.FactionPreferences.Any())
                 player.FactionPreferences = _defaultPreferences.Factions.ToList();
         }
 
-        var allowedGroupsA = teamA.Players
-            .SelectMany(p => p.FactionPreferences)
-            .Select(f => _factionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
-            .Where(g => g != null)
-            .Select(g => g!.Value)
-            .ToHashSet<TeamGroup>();
+        var (teamA, teamB) = _draftEngine.RunDraft(lobby.Players);
 
-        var allowedGroupsB = teamB.Players
-            .SelectMany(p => p.FactionPreferences)
-            .Select(f => _factionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
-            .Where(g => g != null)
-            .Select(g => g!.Value)
-            .ToHashSet<TeamGroup>();
+        lobby.TeamA = teamA;
+        lobby.TeamB = teamB;
+        lobby.DraftStarted = true;
 
-        _factionAssignment.AssignFactionsToTeam(teamA, allowedGroupsA);
-        _factionAssignment.AssignFactionsToTeam(teamB, allowedGroupsB);
+        var channel = await _client.GetTextChannelAsync(channelId);
+        if (channel != null)
+        {
+            string msg = "=== DRAFT COMPLETE ===\n";
+            msg += "Teams have been drafted.\n";
+            await channel.SendMessageAsync(msg);
+        }
+    }
 
+    public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
+    {
         var game = new Game
         {
             Id = _nextGameId++,
@@ -66,64 +74,7 @@ public class GameService
         };
 
         _games.Add(game);
-        lobby.DraftStarted = true;
-
         return game;
-    }
-
-    public async Task StartDraft(Lobby lobby, ulong channelId)
-    {
-        foreach (var player in lobby.Players)
-        {
-            if (!player.FactionPreferences.Any())
-                player.FactionPreferences = _defaultPreferences.Factions.ToList();
-        }
-
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players);
-        var teams = new[] { teamA, teamB };
-
-        foreach (var team in teams)
-        {
-            var allowedGroups = team.Players
-                .SelectMany(p => p.FactionPreferences)
-                .Select(f => _factionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
-                .Where(g => g != null)
-                .Select(g => g!.Value)
-                .ToHashSet<TeamGroup>();
-
-            _factionAssignment.AssignFactionsToTeam(team, allowedGroups);
-        }
-
-        var channel = await _client.GetTextChannelAsync(channelId);
-        if (channel != null)
-        {
-            string msg = "=== DRAFT COMPLETE ===\n";
-            int teamNum = 1;
-
-            foreach (var team in teams)
-            {
-                msg += $"=== TEAM {teamNum} ===\n";
-                foreach (var player in team.Players)
-                {
-                    var faction = team.AssignedFactions
-                        .FirstOrDefault(f => player.FactionPreferences.Contains(f.Name));
-
-                    msg += $"{player.Name} ({player.Elo}) -> {faction?.Name ?? "No Faction"}\n";
-                }
-                teamNum++;
-            }
-
-            var game = StartGame(lobby, teams[0], teams[1]);
-
-            msg += $"\n=== GAME STARTED ===\n";
-            msg += $"Game ID: **{game.Id}**\n";
-            msg += $"Use `!score <A> <B>` to submit the final score.\n";
-            msg += $"If multiple games are active, use `!score {game.Id} <A> <B>`.";
-
-            await channel.SendMessageAsync(msg);
-        }
-
-        lobby.DraftStarted = true;
     }
 
     public Dictionary<ulong, int> SubmitScore(Game game, int scoreA, int scoreB, PlayerStatsService stats)
@@ -142,7 +93,7 @@ public class GameService
         );
 
         _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
-
+        
         game.Lobby.Players.Clear();
         game.Lobby.DraftStarted = false;
 

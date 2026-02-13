@@ -16,7 +16,7 @@ public class DraftServiceTests
     }
 
     [Fact]
-    public async Task DraftService_FullFlow_16Players_ProducesTwoTeamsOf8()
+    public async Task DraftService_FullFlow_16Players_ProducesTwoValidTeams()
     {
         var lobby = CreateLobbyWith16Players();
 
@@ -27,7 +27,14 @@ public class DraftServiceTests
 
         var history = new Mock<IMatchHistoryService>();
         var elo = new Mock<IEloService>();
+
         var assign = new Mock<IFactionAssignmentService>();
+        assign.Setup(a => a.AssignFactionsForGame(
+            It.IsAny<Team>(),
+            It.IsAny<Team>(),
+            It.IsAny<HashSet<TeamGroup>>(),
+            It.IsAny<HashSet<TeamGroup>>()
+        ));
 
         var registry = new Mock<IFactionRegistry>();
         registry.Setup(r => r.All).Returns(FactionRegistry.All);
@@ -35,22 +42,22 @@ public class DraftServiceTests
         var prefs = new Mock<IDefaultPreferences>();
         prefs.Setup(p => p.Factions).Returns(FactionRegistry.All.Select(f => f.Name).ToList());
 
-        var service = new GameService(gateway.Object, history.Object, elo.Object, assign.Object, registry.Object, prefs.Object);
+        var service = new GameService(
+            gateway.Object,
+            history.Object,
+            elo.Object,
+            assign.Object,
+            registry.Object,
+            prefs.Object
+        );
 
         await service.StartDraft(lobby, 123);
 
         Assert.True(lobby.DraftStarted);
+        var game = service.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
 
-        var teamA = new Team("Team A");
-        var teamB = new Team("Team B");
-
-        for (int i = 0; i < 8; i++)
-            teamA.AddPlayer(lobby.Players[i]);
-
-        for (int i = 8; i < 16; i++)
-            teamB.AddPlayer(lobby.Players[i]);
-
-        var game = service.StartGame(lobby, teamA, teamB);
+        Assert.NotNull(game.TeamA);
+        Assert.NotNull(game.TeamB);
 
         Assert.Equal(8, game.TeamA.Players.Count);
         Assert.Equal(8, game.TeamB.Players.Count);
@@ -58,7 +65,13 @@ public class DraftServiceTests
         var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
         Assert.Equal(16, allPlayers.Count);
         Assert.Equal(16, allPlayers.Select(p => p.DiscordId).Distinct().Count());
-
+        assign.Verify(a => a.AssignFactionsForGame(
+            It.IsAny<Team>(),
+            It.IsAny<Team>(),
+            It.IsAny<HashSet<TeamGroup>>(),
+            It.IsAny<HashSet<TeamGroup>>()
+        ), Times.Once);
+        
         channel.Verify(c => c.SendMessageAsync(It.IsAny<string>()), Times.Once);
     }
 }

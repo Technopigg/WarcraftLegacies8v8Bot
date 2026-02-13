@@ -1,111 +1,70 @@
-using Xunit;
-using Xunit.Abstractions;
-using LegaciesBot.Services;
+using LegaciesBot.Core;
 using LegaciesBot.GameData;
+using LegaciesBot.Services;
 
 public class DraftSimulationTests
 {
-    private readonly ITestOutputHelper _output;
-    private readonly Dictionary<ulong, List<string>> Prefs;
-
-    public DraftSimulationTests(ITestOutputHelper output)
+    private static List<Player> CreatePlayers(int count, int seed)
     {
-        _output = output;
+        var rng = new Random(seed);
+        var prefs = FactionRegistry.All.Select(f => f.Name).ToList();
+        var list = new List<Player>();
 
-        var all = FactionRegistry.All.Select(f => f.Name).ToList();
-
-        Prefs = new()
+        for (int i = 0; i < count; i++)
         {
-            [1] = new() { "Fel Horde", "An'qiraj", "Stormwind", "Lordaeron", "Druids", "Scourge" },
-            [2] = new() { "Warsong", "An'qiraj", "Illidari", "Sentinels", "Scourge", "Fel Horde", "Kul'tiras" },
-            [3] = all.Where(f => f != "Scourge" && f != "Gilneas" && f != "Sunfury").ToList(),
-            [4] = new() { "Lordaeron", "Skywall", "Stormwind" },
-            [5] = new() { "Dalaran", "Legion", "Druids" },
-            [6] = new()
-            {
-                "Ironforge", "Stormwind", "The Exodar", "Druids", "Lordaeron",
-                "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Black Empire", "Legion"
-            },
-            [7] = new()
-            {
-                "Skywall", "Scourge", "An'qiraj", "Sentinels", "The Exodar",
-                "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras"
-            },
-            [8] = new() { "Lordaeron", "Sentinels", "Ironforge" },
-            [9] = new() { "Dalaran", "Quel'thalas", "Kul'tiras", "Illidari", "Stormwind" },
-            [10] = new() { "Warsong", "Skywall", "Dalaran", "Scourge", "Kul'tiras" },
-            [11] = new() { "Gilneas", "Lordaeron", "Quel'thalas", "Frostwolf", "Fel Horde", "Kul'tiras" },
-            [12] = new() { "Illidari", "Legion", "Druids", "Quel'thalas", "Lordaeron" },
-            [13] = new() { "Fel Horde", "Scourge", "Frostwolf", "Kul'tiras", "Lordaeron" },
-            [14] = new() { "Kul'tiras", "Lordaeron", "Stormwind", "The Exodar", "Quel'thalas" },
-            [15] = new() { "Dalaran", "Scourge", "Fel Horde", "Warsong", "Sentinels", "Stormwind", "Sunfury" },
-            [16] = new() { "Lordaeron", "Stormwind", "Warsong", "Sunfury", "Gilneas", "Skywall", "The Exodar" }
-        };
+            var p = new Player(
+                (ulong)(i + 1),
+                $"Player{i + 1}",
+                1400 + rng.Next(-200, 201)
+            );
+
+            p.FactionPreferences = prefs
+                .OrderBy(_ => rng.Next())
+                .ToList();
+
+            list.Add(p);
+        }
+
+        return list;
     }
 
     [Fact]
-    public void SimulateTwentyDrafts_LogsOutput()
+    public void DraftRuns_MultipleTimes_NoFailures_And_ValidAssignments()
     {
-        var history = new MatchHistoryService();
-        var elo = new EloStub();
-        var factionRegistry = new FactionRegistryStub();
-        var defaultPrefs = new DefaultPreferencesStub();
-        var factionAssignment = new FactionAssignmentStub();
-
-        var gameService = new GameService(
-            new DummyGatewayClient(),
-            new MatchHistoryAdapter(history),
-            elo,
-            factionAssignment,
-            factionRegistry,
-            defaultPrefs
-        );
-
-        var players = new List<(ulong id, string name)>
+        for (int run = 0; run < 20; run++)
         {
-            (1, "Boggywoggy"), (2, "Konan"), (3, "Dia"), (4, "Helsac"),
-            (5, "Nick"), (6, "Grom"), (7, "Linaz"), (8, "Theg"),
-            (9, "Technopig"), (10, "Enclop"), (11, "Lukas"), (12, "Alan"),
-            (13, "Royce"), (14, "Petertros"), (15, "Dragozer"), (16, "Madsen")
-        };
+            var rng = new Random(1000 + run);
 
-        for (int run = 1; run <= 20; run++)
-        {
-            var registry = new PlayerRegistryService();
-            var lobbyService = new LobbyService();
+            var assignment = new FactionAssignmentService(rng);
+            var engine = new DraftEngine(assignment, rng);
 
-            foreach (var (id, name) in players)
-                registry.RegisterPlayer(id, name);
+            var players = CreatePlayers(16, 5000 + run);
 
-            foreach (var (id, name) in players)
-                lobbyService.JoinLobby(id, name);
+            var (teamA, teamB) = engine.RunDraft(players);
 
-            foreach (var (id, _) in players)
-                lobbyService.UpdatePreferences(id, Prefs[id]);
+            Assert.Equal(8, teamA.Players.Count);
+            Assert.Equal(8, teamB.Players.Count);
 
-            var (teamA, teamB) = DraftService.CreateBalancedTeams(lobbyService.CurrentLobby.Players);
+            Assert.Equal(8, teamA.AssignedFactions.Count);
+            Assert.Equal(8, teamB.AssignedFactions.Count);
 
-            var game = gameService.StartGame(lobbyService.CurrentLobby, teamA, teamB);
+            var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
+            Assert.Equal(16, all.Count);
+            Assert.Equal(16, all.Select(f => f.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
 
-            _output.WriteLine($"=== RUN {run} ===");
+            var slotIds = all.Select(f => f.SlotId).ToList();
+            Assert.Equal(slotIds.Count, slotIds.Distinct(StringComparer.OrdinalIgnoreCase).Count());
 
-            _output.WriteLine("TEAM A:");
-            for (int i = 0; i < game.TeamA.Players.Count; i++)
-            {
-                var p = game.TeamA.Players[i];
-                var f = game.TeamA.AssignedFactions[i];
-                _output.WriteLine($"{p.Name} -> {f.Name}");
-            }
+            var groupsA = teamA.AssignedFactions.Select(f => f.Group).ToHashSet();
+            var groupsB = teamB.AssignedFactions.Select(f => f.Group).ToHashSet();
 
-            _output.WriteLine("TEAM B:");
-            for (int i = 0; i < game.TeamB.Players.Count; i++)
-            {
-                var p = game.TeamB.Players[i];
-                var f = game.TeamB.AssignedFactions[i];
-                _output.WriteLine($"{p.Name} -> {f.Name}");
-            }
+            foreach (var g in groupsA)
+                foreach (var other in groupsA)
+                    Assert.True(ConstraintService.IsCompatible(new HashSet<TeamGroup> { g }, other));
 
-            _output.WriteLine("");
+            foreach (var g in groupsB)
+                foreach (var other in groupsB)
+                    Assert.True(ConstraintService.IsCompatible(new HashSet<TeamGroup> { g }, other));
         }
     }
 }

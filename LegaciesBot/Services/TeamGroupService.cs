@@ -1,49 +1,57 @@
 ﻿using LegaciesBot.Core;
 using LegaciesBot.GameData;
-using LegaciesBot.Services;
 
 namespace LegaciesBot.Services
 {
     public static class TeamGroupService
     {
-        private static readonly List<TeamGroup> AllGroups = Enum.GetValues(typeof(TeamGroup))
-            .Cast<TeamGroup>()
-            .ToList();
+        private static readonly List<(TeamGroup, TeamGroup, TeamGroup)> ValidTeamACombos =
+            new()
+            {
+                (TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.Kalimdor),
+                (TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.OldGods),
+                (TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.Kalimdor),
+                (TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.OldGods)
+            };
+
+        private static int CountSlots(TeamGroup g)
+        {
+            return FactionRegistry.All
+                .Where(f => f.Group == g)
+                .Select(f => f.SlotId ?? f.Name)   
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+        }
+
+        private static readonly List<(TeamGroup, TeamGroup, TeamGroup)> PrecomputedValid =
+            ValidTeamACombos
+                .Where(c =>
+                {
+                    var teamA = new HashSet<TeamGroup> { c.Item1, c.Item2, c.Item3 };
+                    var teamB = Enum.GetValues(typeof(TeamGroup))
+                        .Cast<TeamGroup>()
+                        .Where(g => !teamA.Contains(g))
+                        .ToHashSet();
+
+                    var slotsA = teamA.Sum(CountSlots);
+                    var slotsB = teamB.Sum(CountSlots);
+
+                    return slotsA == 8 && slotsB == 8;
+                })
+                .ToList();
 
         public static (HashSet<TeamGroup>, HashSet<TeamGroup>) GenerateValidSplit()
         {
             var rng = new Random();
-            while (true)
-            {
-                var teamA = new HashSet<TeamGroup>();
-                var teamB = new HashSet<TeamGroup>();
+            var chosen = PrecomputedValid[rng.Next(PrecomputedValid.Count)];
 
-                var shuffledGroups = AllGroups.OrderBy(_ => rng.Next()).ToList();
+            var teamA = new HashSet<TeamGroup> { chosen.Item1, chosen.Item2, chosen.Item3 };
+            var teamB = Enum.GetValues(typeof(TeamGroup))
+                .Cast<TeamGroup>()
+                .Where(g => !teamA.Contains(g))
+                .ToHashSet();
 
-                foreach (var group in shuffledGroups)
-                {
-                    if (ConstraintService.IsCompatible(teamA, group))
-                        teamA.Add(group);
-                    else
-                        teamB.Add(group);
-                }
-                
-                int teamAPlayerCount = 8; // or team.Players.Count
-                int teamBPlayerCount = 8;
-
-                int teamAFactions = FactionRegistry.All.Count(f => teamA.Contains(f.Group));
-                int teamBFactions = FactionRegistry.All.Count(f => teamB.Contains(f.Group));
-
-                if (teamAFactions >= teamAPlayerCount && teamBFactions >= teamBPlayerCount)
-                    return (teamA, teamB);
-              
-            }
-        }
-
-
-        private static int CountFactions(HashSet<TeamGroup> groups)
-        {
-            return FactionRegistry.All.Count(f => groups.Contains(f.Group));
+            return (teamA, teamB);
         }
     }
 }

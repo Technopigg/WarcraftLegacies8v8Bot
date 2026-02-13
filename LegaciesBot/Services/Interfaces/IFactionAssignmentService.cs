@@ -1,8 +1,13 @@
 using LegaciesBot.Core;
 
-namespace LegaciesBot.Services;
-
-public interface IFactionAssignmentService
+namespace LegaciesBot.Services
 {
-    void AssignFactionsToTeam(Team team, HashSet<TeamGroup> allowedGroups);
+    public interface IFactionAssignmentService
+    {
+        void AssignFactionsForGame(
+            Team teamA,
+            Team teamB,
+            HashSet<TeamGroup> allowedGroupsA,
+            HashSet<TeamGroup> allowedGroupsB);
+    }
 }

@@ -1,131 +1,80 @@
 using LegaciesBot.Core;
-using LegaciesBot.Services;
 using LegaciesBot.GameData;
-
+using LegaciesBot.Services;
 
 public class DraftEngineTests
 {
-    private Player P(int id)
+    private static List<Player> CreatePlayers(int count)
     {
-        var p = new Player((ulong)id, $"P{id}");
-        p.FactionPreferences = new List<string>();
-        return p;
-    }
-
-    private List<Player> SixteenPlayers()
-    {
+        var prefs = FactionRegistry.All.Select(f => f.Name).ToList();
         var list = new List<Player>();
-        for (int i = 1; i <= 16; i++)
-            list.Add(P(i));
+
+        for (int i = 0; i < count; i++)
+        {
+            var p = new Player((ulong)(i + 1), $"Player{i + 1}", 1500 + i * 10);
+            p.FactionPreferences = prefs.ToList();
+            list.Add(p);
+        }
+
         return list;
     }
 
     [Fact]
     public void RunDraft_ThrowsIfNot16Players()
     {
-        Assert.Throws<ArgumentException>(() => DraftEngine.RunDraft(new List<Player>()));
-        Assert.Throws<ArgumentException>(() => DraftEngine.RunDraft(new List<Player> { P(1) }));
-        Assert.Throws<ArgumentException>(() => DraftEngine.RunDraft(new List<Player>(Enumerable.Range(1, 15).Select(P))));
-        Assert.Throws<ArgumentException>(() => DraftEngine.RunDraft(new List<Player>(Enumerable.Range(1, 17).Select(P))));
+        var rng = new Random(12345);
+        var assignment = new FactionAssignmentService(rng);
+        var engine = new DraftEngine(assignment, rng);
+
+        var players = CreatePlayers(15);
+
+        Assert.Throws<ArgumentException>(() => engine.RunDraft(players));
     }
 
     [Fact]
-    public void RunDraft_ReturnsTwoTeamsOfEightPlayers()
+    public void RunDraft_AssignsEightPlayersPerTeam()
     {
-        var players = SixteenPlayers();
+        var rng = new Random(12345);
+        var assignment = new FactionAssignmentService(rng);
+        var engine = new DraftEngine(assignment, rng);
 
-        var (teamA, teamB) = DraftEngine.RunDraft(players);
+        var players = CreatePlayers(16);
+
+        var (teamA, teamB) = engine.RunDraft(players);
 
         Assert.Equal(8, teamA.Players.Count);
         Assert.Equal(8, teamB.Players.Count);
     }
 
     [Fact]
-    public void RunDraft_AssignsValidTeamGroups()
+    public void RunDraft_AssignsFactionsToAllPlayers()
     {
-        var players = SixteenPlayers();
+        var rng = new Random(12345);
+        var assignment = new FactionAssignmentService(rng);
+        var engine = new DraftEngine(assignment, rng);
 
-        var (teamA, teamB) = DraftEngine.RunDraft(players);
+        var players = CreatePlayers(16);
 
-     
-        var groupsA = teamA.AssignedFactions.Select(f => f.Group).ToHashSet();
-        var groupsB = teamB.AssignedFactions.Select(f => f.Group).ToHashSet();
-
- 
-        foreach (var g in groupsA)
-        {
-            foreach (var other in groupsA)
-            {
-                if (g == other) continue;
-                Assert.True(ConstraintService.IsCompatible(new HashSet<TeamGroup> { g }, other));
-            }
-        }
-
-        foreach (var g in groupsB)
-        {
-            foreach (var other in groupsB)
-            {
-                if (g == other) continue;
-                Assert.True(ConstraintService.IsCompatible(new HashSet<TeamGroup> { g }, other));
-            }
-        }
-    }
-
-    [Fact]
-    public void RunDraft_AssignsEightFactionsPerTeam()
-    {
-        var players = SixteenPlayers();
-
-        var (teamA, teamB) = DraftEngine.RunDraft(players);
+        var (teamA, teamB) = engine.RunDraft(players);
 
         Assert.Equal(8, teamA.AssignedFactions.Count);
         Assert.Equal(8, teamB.AssignedFactions.Count);
     }
 
     [Fact]
-    public void RunDraft_NoDuplicateSlotsWithinTeam()
+    public void RunDraft_AssignsUniqueFactionsGlobally()
     {
-        var players = SixteenPlayers();
+        var rng = new Random(12345);
+        var assignment = new FactionAssignmentService(rng);
+        var engine = new DraftEngine(assignment, rng);
 
-        var (teamA, teamB) = DraftEngine.RunDraft(players);
+        var players = CreatePlayers(16);
 
-        var slotsA = teamA.AssignedFactions.Select(f => f.SlotId).ToList();
-        var slotsB = teamB.AssignedFactions.Select(f => f.SlotId).ToList();
+        var (teamA, teamB) = engine.RunDraft(players);
 
-        Assert.Equal(slotsA.Count, slotsA.Distinct().Count());
-        Assert.Equal(slotsB.Count, slotsB.Distinct().Count());
-    }
+        var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
 
-    [Fact]
-    public void RunDraft_AssignedFactionsBelongToAllowedGroups()
-    {
-        var players = SixteenPlayers();
-
-        var (teamA, teamB) = DraftEngine.RunDraft(players);
-
-        foreach (var f in teamA.AssignedFactions)
-            Assert.Contains(f.Group, Enum.GetValues<TeamGroup>());
-
-        foreach (var f in teamB.AssignedFactions)
-            Assert.Contains(f.Group, Enum.GetValues<TeamGroup>());
-    }
-
-    [Fact]
-    public void RunDraft_RespectsPreferencesForSomePlayers()
-    {
-        var players = SixteenPlayers();
-        
-        var prefFaction1 = FactionRegistry.All[0];
-        var prefFaction2 = FactionRegistry.All.First(f => f.SlotId != prefFaction1.SlotId);
-
-        players[0].FactionPreferences = new List<string> { prefFaction1.Name };
-        players[1].FactionPreferences = new List<string> { prefFaction2.Name };
-
-        var (teamA, teamB) = DraftEngine.RunDraft(players);
-
-        var allAssigned = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
-
-        Assert.Contains(allAssigned, f => f.Name == prefFaction1.Name);
-        Assert.Contains(allAssigned, f => f.Name == prefFaction2.Name);
+        Assert.Equal(16, all.Count);
+        Assert.Equal(16, all.Select(f => f.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 }

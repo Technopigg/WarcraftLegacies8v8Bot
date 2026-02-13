@@ -48,54 +48,23 @@ public class FullMatchFlowWithPreferencesTests
         Prefs = new()
         {
             [1] = new() { "Fel Horde", "An'qiraj", "Stormwind", "Lordaeron", "Druids", "Scourge" },
-
             [2] = new() { "Warsong", "An'qiraj", "Illidari", "Sentinels", "Scourge", "Fel Horde", "Kul'tiras" },
-
-            [3] = all
-                .Where(f => f != "Scourge" && f != "Gilneas" && f != "Sunfury")
-                .ToList(),
-
+            [3] = all.Where(f => f != "Scourge" && f != "Gilneas" && f != "Sunfury").ToList(),
             [4] = new() { "Lordaeron", "Skywall", "Stormwind" },
-            
             [5] = new() { "Dalaran", "Legion", "Druids" },
-
-            [6] = new()
-            {
-                "Ironforge", "Stormwind", "The Exodar", "Druids", "Lordaeron",
-                "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Black Empire", "Legion"
-            },
-
-            [7] = new()
-            {
-                "Skywall", "Scourge", "An'qiraj", "Sentinels", "The Exodar",
-                "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras"
-            },
-
+            [6] = new() { "Ironforge", "Stormwind", "The Exodar", "Druids", "Lordaeron",
+                          "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Black Empire", "Legion" },
+            [7] = new() { "Skywall", "Scourge", "An'qiraj", "Sentinels", "The Exodar",
+                          "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras" },
             [8] = new() { "Lordaeron", "Sentinels", "Ironforge" },
-
             [9] = new() { "Dalaran", "Quel'thalas", "Kul'tiras", "Illidari", "Stormwind" },
-
             [10] = new() { "Warsong", "Skywall", "Dalaran", "Scourge", "Kul'tiras" },
-
             [11] = new() { "Gilneas", "Lordaeron", "Quel'thalas", "Frostwolf", "Fel Horde", "Kul'tiras" },
-
             [12] = new() { "Illidari", "Legion", "Druids", "Quel'thalas", "Lordaeron" },
-
             [13] = new() { "Fel Horde", "Scourge", "Frostwolf", "Kul'tiras", "Lordaeron" },
-
             [14] = new() { "Kul'tiras", "Lordaeron", "Stormwind", "The Exodar", "Quel'thalas" },
-
-            [15] = new()
-            {
-                "Dalaran", "Scourge", "Fel Horde", "Warsong",
-                "Sentinels", "Stormwind", "Sunfury"
-            },
-
-            [16] = new()
-            {
-                "Lordaeron", "Stormwind", "Warsong", "Sunfury",
-                "Gilneas", "Skywall", "The Exodar"
-            }
+            [15] = new() { "Dalaran", "Scourge", "Fel Horde", "Warsong", "Sentinels", "Stormwind", "Sunfury" },
+            [16] = new() { "Lordaeron", "Stormwind", "Warsong", "Sunfury", "Gilneas", "Skywall", "The Exodar" }
         };
     }
 
@@ -122,42 +91,37 @@ public class FullMatchFlowWithPreferencesTests
 
         foreach (var (id, name) in Players)
             registry.RegisterPlayer(id, name);
-
         foreach (var (id, name) in Players)
             lobbyService.JoinLobby(id, name);
-
         foreach (var (id, _) in Players)
             lobbyService.UpdatePreferences(id, Prefs[id]);
 
         var lobby = lobbyService.CurrentLobby;
+        gameService.StartDraft(lobby, 123).Wait();
 
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players);
+        Assert.NotNull(lobby.TeamA);
+        Assert.NotNull(lobby.TeamB);
 
-        var game = gameService.StartGame(lobby, teamA, teamB);
-
-        var stats = new PlayerStatsService();
-
-        var changes = gameService.SubmitScore(game, 4, 2, stats);
-        var teamAInGame = game.TeamA;
-        var teamBInGame = game.TeamB;
-
-        for (int i = 0; i < teamAInGame.Players.Count; i++)
+        var teamA = lobby.TeamA!;
+        var teamB = lobby.TeamB!;
+        for (int i = 0; i < teamA.Players.Count; i++)
         {
-            var player = teamAInGame.Players[i];
-            var faction = teamAInGame.AssignedFactions[i];
-
+            var player = teamA.Players[i];
+            var faction = teamA.AssignedFactions[i];
             Assert.Contains(faction.Name, Prefs[player.DiscordId]);
         }
 
-        for (int i = 0; i < teamBInGame.Players.Count; i++)
+        for (int i = 0; i < teamB.Players.Count; i++)
         {
-            var player = teamBInGame.Players[i];
-            var faction = teamBInGame.AssignedFactions[i];
-
+            var player = teamB.Players[i];
+            var faction = teamB.AssignedFactions[i];
             Assert.Contains(faction.Name, Prefs[player.DiscordId]);
         }
-
         
+        var game = gameService.StartGame(lobby, teamA, teamB);
+        var stats = new PlayerStatsService();
+        var changes = gameService.SubmitScore(game, 4, 2, stats);
+
         Assert.True(game.Finished);
         Assert.NotEmpty(changes);
         Assert.NotEmpty(history.History);

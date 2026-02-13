@@ -1,20 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
 using LegaciesBot.Core;
 using LegaciesBot.GameData;
 using LegaciesBot.Services;
-using Xunit;
 
 public class FactionAssignmentServiceTests
 {
-    private Player P(ulong id, params string[] prefs)
-    {
-        var p = new Player(id, $"P{id}");
-        p.FactionPreferences = prefs.ToList();
-        return p;
-    }
-
-    private Team MakeTeam(string name, params Player[] players)
+    private static Team CreateTeam(string name, IEnumerable<Player> players)
     {
         var t = new Team(name);
         foreach (var p in players)
@@ -22,108 +12,99 @@ public class FactionAssignmentServiceTests
         return t;
     }
 
-    private Faction AnyFactionInGroups(params TeamGroup[] groups)
-        => FactionRegistry.All.First(f => groups.Contains(f.Group));
-
-    [Fact]
-    public void AssignFactions_RespectsAllowedGroups()
+    private static List<Player> CreatePlayers(int count)
     {
-        var allowed = new HashSet<TeamGroup>
+        var prefs = FactionRegistry.All.Select(f => f.Name).ToList();
+        var list = new List<Player>();
+
+        for (int i = 0; i < count; i++)
         {
-            TeamGroup.NorthAlliance,
-            TeamGroup.SouthAlliance
-        };
+            var p = new Player((ulong)(i + 1), $"Player{i + 1}", 1500);
+            p.FactionPreferences = prefs.ToList();
+            list.Add(p);
+        }
 
-        var f1 = AnyFactionInGroups(TeamGroup.NorthAlliance);
-        var f2 = AnyFactionInGroups(TeamGroup.SouthAlliance);
-
-        var team = MakeTeam("A",
-            P(1, f1.Name),
-            P(2, f2.Name)
-        );
-
-        FactionAssignmentService.AssignFactionsToTeam(team, allowed);
-
-        Assert.All(team.AssignedFactions, f => Assert.Contains(f.Group, allowed));
+        return list;
     }
 
     [Fact]
-    public void AssignFactions_UsesPlayerPreferencesWhenAvailable()
+    public void AssignsFactionToAllPlayers()
     {
-        var allowed = new HashSet<TeamGroup>(FactionRegistry.All.Select(f => f.Group));
+        var rng = new Random(12345);
+        var service = new FactionAssignmentService(rng);
 
-        var pref1 = FactionRegistry.All[0];
-        var pref2 = FactionRegistry.All.First(f => f.SlotId != pref1.SlotId);
+        var teamA = CreateTeam("A", CreatePlayers(8));
+        var teamB = CreateTeam("B", CreatePlayers(8));
 
-        var team = MakeTeam("A",
-            P(1, pref1.Name),
-            P(2, pref2.Name)
-        );
+        var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        FactionAssignmentService.AssignFactionsToTeam(team, allowed);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
 
-        Assert.Contains(team.AssignedFactions, f => f.Name == pref1.Name);
-        Assert.Contains(team.AssignedFactions, f => f.Name == pref2.Name);
+        Assert.Equal(8, teamA.AssignedFactions.Count);
+        Assert.Equal(8, teamB.AssignedFactions.Count);
     }
 
     [Fact]
-    public void AssignFactions_FallsBackWhenPreferencesUnavailable()
+    public void AssignsUniqueFactionsGlobally()
     {
-        var allowed = new HashSet<TeamGroup>(FactionRegistry.All.Select(f => f.Group));
+        var rng = new Random(12345);
+        var service = new FactionAssignmentService(rng);
 
-        var team = MakeTeam("A",
-            P(1, "NonexistentFaction")
-        );
+        var teamA = CreateTeam("A", CreatePlayers(8));
+        var teamB = CreateTeam("B", CreatePlayers(8));
 
-        FactionAssignmentService.AssignFactionsToTeam(team, allowed);
+        var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        Assert.Single(team.AssignedFactions);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
+
+        var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
+
+        Assert.Equal(16, all.Count);
+        Assert.Equal(16, all.Select(f => f.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]
-    public void AssignFactions_EnforcesSlotExclusivity()
+    public void RespectsSlotExclusivity()
     {
-        var sharedSlot = FactionRegistry.All
-            .GroupBy(f => f.SlotId)
-            .First(g => g.Count() > 1)
-            .ToList();
+        var rng = new Random(12345);
+        var service = new FactionAssignmentService(rng);
 
-        var f1 = sharedSlot[0];
-        var f2 = sharedSlot[1];
+        var teamA = CreateTeam("A", CreatePlayers(8));
+        var teamB = CreateTeam("B", CreatePlayers(8));
 
-        var allowed = new HashSet<TeamGroup>(FactionRegistry.All.Select(f => f.Group));
+        var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        var team = MakeTeam("A",
-            P(1, f1.Name),
-            P(2, f2.Name)
-        );
+        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
 
-        FactionAssignmentService.AssignFactionsToTeam(team, allowed);
-        
-        var assignedFromSharedSlot = team.AssignedFactions
-            .Count(f => f.SlotId == f1.SlotId);
+        var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
 
-        Assert.Equal(1, assignedFromSharedSlot);
+        var slotIds = all.Select(f => f.SlotId).ToList();
+
+        Assert.Equal(slotIds.Count, slotIds.Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
-
     [Fact]
-    public void AssignFactions_AssignsOneFactionPerPlayer()
+    public void RespectsGroupCompatibility()
     {
-        var allowed = new HashSet<TeamGroup>(FactionRegistry.All.Select(f => f.Group));
+        var rng = new Random(12345);
+        var service = new FactionAssignmentService(rng);
 
-        var f1 = FactionRegistry.All[0];
-        var f2 = FactionRegistry.All[1];
-        var f3 = FactionRegistry.All[2];
+        var teamA = CreateTeam("A", CreatePlayers(8));
+        var teamB = CreateTeam("B", CreatePlayers(8));
 
-        var team = MakeTeam("A",
-            P(1, f1.Name),
-            P(2, f2.Name),
-            P(3, f3.Name)
-        );
+        var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        FactionAssignmentService.AssignFactionsToTeam(team, allowed);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
 
-        Assert.Equal(3, team.AssignedFactions.Count);
+        var groupsAUsed = teamA.AssignedFactions.Select(f => f.Group).ToHashSet();
+        var groupsBUsed = teamB.AssignedFactions.Select(f => f.Group).ToHashSet();
+
+        foreach (var g in groupsAUsed)
+            foreach (var other in groupsAUsed)
+                Assert.True(ConstraintService.IsCompatible(new HashSet<TeamGroup> { g }, other));
+
+        foreach (var g in groupsBUsed)
+            foreach (var other in groupsBUsed)
+                Assert.True(ConstraintService.IsCompatible(new HashSet<TeamGroup> { g }, other));
     }
 }

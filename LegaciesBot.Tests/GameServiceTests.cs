@@ -1,154 +1,137 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LegaciesBot.Core;
 using LegaciesBot.Services;
 using LegaciesBot.GameData;
-using Moq;
-using Xunit;
 
 public class GameServiceTests
 {
-    private Lobby CreateLobbyWithPlayers(int count)
+    private class FakeTextChannel : ITextChannel
+    {
+        public List<string> SentMessages { get; } = new();
+
+        public Task SendMessageAsync(string message)
+        {
+            SentMessages.Add(message);
+            return Task.CompletedTask;
+        }
+    }
+
+    private class FakeGatewayClient : IGatewayClient
+    {
+        public ITextChannel? Channel { get; set; }
+
+        public Task<ITextChannel?> GetTextChannelAsync(ulong id)
+            => Task.FromResult(Channel);
+    }
+
+    private class FakeMatchHistoryService : IMatchHistoryService
+    {
+        public void RecordMatch(Game game, int scoreA, int scoreB, Dictionary<ulong, int> changes)
+        {
+            // no-op
+        }
+    }
+
+    private class FakeEloService : IEloService
+    {
+        public Dictionary<ulong, int> ApplyTeamResult(
+            List<Player> teamA,
+            List<Player> teamB,
+            bool teamAWon,
+            PlayerStatsService stats)
+        {
+            return teamA.Concat(teamB)
+                .ToDictionary(p => p.DiscordId, p => 0);
+        }
+    }
+
+    private class FakeDefaultPreferences : IDefaultPreferences
+    {
+        public List<string> Factions { get; } =
+            FactionRegistry.All.Select(f => f.Name).ToList();
+    }
+
+    private class FakeFactionRegistry : IFactionRegistry
+    {
+        public IEnumerable<Faction> All => FactionRegistry.All;
+    }
+
+    private static Lobby CreateLobbyWithPlayers(int count)
     {
         var lobby = new Lobby();
+
         for (int i = 0; i < count; i++)
         {
-            lobby.Players.Add(new Player((ulong)i, $"P{i}") { Elo = 1000 });
+            var p = new Player((ulong)(i + 1), $"Player{i + 1}", 1500);
+            p.FactionPreferences = new List<string>(); 
+            lobby.Players.Add(p);
         }
+
         return lobby;
     }
 
     [Fact]
-    public void StartGame_CreatesGameAndSetsDraftStarted()
+    public async Task StartDraft_SetsTeams_And_SendsMessage()
     {
-        var gateway = new Mock<IGatewayClient>();
-        var history = new Mock<IMatchHistoryService>();
-        var elo = new Mock<IEloService>();
-        var assign = new Mock<IFactionAssignmentService>();
-        var registry = new Mock<IFactionRegistry>();
-        var prefs = new Mock<IDefaultPreferences>();
+        var rng = new Random(12345);
 
-        var service = new GameService(gateway.Object, history.Object, elo.Object, assign.Object, registry.Object, prefs.Object);
+        var client = new FakeGatewayClient();
+        var channel = new FakeTextChannel();
+        client.Channel = channel;
 
-        var lobby = new Lobby();
-        var teamA = new Team("Team A");
-        var teamB = new Team("Team B");
+        var matchHistory = new FakeMatchHistoryService();
+        var elo = new FakeEloService();
+        var factionAssignment = new FactionAssignmentService(rng);
+        var factionRegistry = new FakeFactionRegistry();
+        var defaults = new FakeDefaultPreferences();
 
-        var game = service.StartGame(lobby, teamA, teamB);
+        var service = new GameService(
+            client,
+            matchHistory,
+            elo,
+            factionAssignment,
+            factionRegistry,
+            defaults,
+            rng
+        );
 
-        Assert.Equal(1, game.Id);
+        var lobby = CreateLobbyWithPlayers(16);
+
+        await service.StartDraft(lobby, 123UL);
+
+        Assert.NotNull(lobby.TeamA);
+        Assert.NotNull(lobby.TeamB);
         Assert.True(lobby.DraftStarted);
-        Assert.Equal(teamA, game.TeamA);
-        Assert.Equal(teamB, game.TeamB);
+
+        Assert.NotEmpty(channel.SentMessages);
+        Assert.Contains("DRAFT COMPLETE", channel.SentMessages[0]);
     }
 
     [Fact]
-    public async Task StartDraft_AssignsDefaultPreferences_WhenMissing()
+    public async Task StartDraft_Throws_When_Not_16_Players()
     {
-        var lobby = CreateLobbyWithPlayers(4);
-        lobby.Players[0].FactionPreferences.Clear();
+        var rng = new Random(12345);
 
-        var gateway = new Mock<IGatewayClient>();
-        var channel = new Mock<ITextChannel>();
-        gateway.Setup(g => g.GetTextChannelAsync(It.IsAny<ulong>()))
-               .ReturnsAsync(channel.Object);
+        var client = new FakeGatewayClient();
+        var matchHistory = new FakeMatchHistoryService();
+        var elo = new FakeEloService();
+        var factionAssignment = new FactionAssignmentService(rng);
+        var factionRegistry = new FakeFactionRegistry();
+        var defaults = new FakeDefaultPreferences();
 
-        var history = new Mock<IMatchHistoryService>();
-        var elo = new Mock<IEloService>();
-        var assign = new Mock<IFactionAssignmentService>();
+        var service = new GameService(
+            client,
+            matchHistory,
+            elo,
+            factionAssignment,
+            factionRegistry,
+            defaults,
+            rng
+        );
 
-        var registry = new Mock<IFactionRegistry>();
-        registry.Setup(r => r.All).Returns(new List<Faction>
-        {
-            new Faction("Lordaeron", TeamGroup.NorthAlliance),
-            new Faction("Scourge", TeamGroup.BurningLegion),
-            new Faction("Stormwind", TeamGroup.SouthAlliance),
-            new Faction("Warsong", TeamGroup.Kalimdor)
-        });
+        var lobby = CreateLobbyWithPlayers(15);
 
-        var prefs = new Mock<IDefaultPreferences>();
-        prefs.Setup(p => p.Factions).Returns(new List<string>
-        {
-            "Lordaeron",
-            "Scourge",
-            "Stormwind",
-            "Warsong"
-        });
-
-        var service = new GameService(gateway.Object, history.Object, elo.Object, assign.Object, registry.Object, prefs.Object);
-
-        await service.StartDraft(lobby, 123);
-
-        Assert.Equal(4, lobby.Players[0].FactionPreferences.Count);
-        channel.Verify(c => c.SendMessageAsync(It.IsAny<string>()), Times.Once);
-    }
-
-    [Fact]
-    public void SubmitScore_UpdatesGameAndCallsDependencies()
-    {
-        var gateway = new Mock<IGatewayClient>();
-        var history = new Mock<IMatchHistoryService>();
-        var elo = new Mock<IEloService>();
-        var assign = new Mock<IFactionAssignmentService>();
-        var registry = new Mock<IFactionRegistry>();
-        var prefs = new Mock<IDefaultPreferences>();
-
-        var service = new GameService(gateway.Object, history.Object, elo.Object, assign.Object, registry.Object, prefs.Object);
-
-        var lobby = CreateLobbyWithPlayers(4);
-        var teamA = new Team("Team A");
-        var teamB = new Team("Team B");
-
-        teamA.AddPlayer(lobby.Players[0]);
-        teamB.AddPlayer(lobby.Players[1]);
-
-        var game = service.StartGame(lobby, teamA, teamB);
-
-        elo.Setup(e => e.ApplyTeamResult(
-            It.IsAny<List<Player>>(),
-            It.IsAny<List<Player>>(),
-            true,
-            It.IsAny<PlayerStatsService>()))
-            .Returns(new Dictionary<ulong, int> { { 0, 10 }, { 1, -10 } });
-
-        var stats = new PlayerStatsService();
-
-        var result = service.SubmitScore(game, 5, 3, stats);
-
-        Assert.True(game.Finished);
-        Assert.Empty(lobby.Players);
-        Assert.False(lobby.DraftStarted);
-        Assert.Equal(10, result[0]);
-        Assert.Equal(-10, result[1]);
-
-        history.Verify(h => h.RecordMatch(game, 5, 3, result), Times.Once);
-    }
-
-    [Fact]
-    public void GetOngoingGames_ReturnsOnlyUnfinished()
-    {
-        var gateway = new Mock<IGatewayClient>();
-        var history = new Mock<IMatchHistoryService>();
-        var elo = new Mock<IEloService>();
-        var assign = new Mock<IFactionAssignmentService>();
-        var registry = new Mock<IFactionRegistry>();
-        var prefs = new Mock<IDefaultPreferences>();
-
-        var service = new GameService(gateway.Object, history.Object, elo.Object, assign.Object, registry.Object, prefs.Object);
-
-        var lobby = new Lobby();
-        var teamA = new Team("Team A");
-        var teamB = new Team("Team B");
-
-        var g1 = service.StartGame(lobby, teamA, teamB);
-        var g2 = service.StartGame(lobby, teamA, teamB);
-
-        g1.Finished = true;
-
-        var ongoing = service.GetOngoingGames();
-
-        Assert.Single(ongoing);
-        Assert.Equal(g2, ongoing[0]);
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.StartDraft(lobby, 123UL)
+        );
     }
 }

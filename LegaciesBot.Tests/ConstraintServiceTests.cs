@@ -1,5 +1,9 @@
+using System.Collections.Generic;
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using Xunit;
+
+namespace LegaciesBot.Tests;
 
 public class ConstraintServiceTests
 {
@@ -18,24 +22,35 @@ public class ConstraintServiceTests
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.NorthAlliance },
             TeamGroup.BurningLegion));
+
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.FelHorde },
             TeamGroup.BurningLegion));
+
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.BurningLegion },
             TeamGroup.NorthAlliance));
+
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.SouthAlliance },
             TeamGroup.FelHorde));
+
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.BurningLegion },
             TeamGroup.FelHorde));
+
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.Kalimdor },
             TeamGroup.OldGods));
+
         Assert.False(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.OldGods },
             TeamGroup.Kalimdor));
+
+        // NorthAlliance and SouthAlliance are incompatible by design
+        Assert.False(ConstraintService.IsCompatible(
+            new HashSet<TeamGroup> { TeamGroup.NorthAlliance },
+            TeamGroup.SouthAlliance));
     }
 
     [Fact]
@@ -43,7 +58,7 @@ public class ConstraintServiceTests
     {
         Assert.True(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.NorthAlliance },
-            TeamGroup.SouthAlliance));
+            TeamGroup.Kalimdor));
 
         Assert.True(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.FelHorde },
@@ -64,12 +79,12 @@ public class ConstraintServiceTests
         var teamGroups = new HashSet<TeamGroup>
         {
             TeamGroup.NorthAlliance,
-            TeamGroup.SouthAlliance
+            TeamGroup.Kalimdor
         };
 
-        Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.FelHorde));
         Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.BurningLegion));
-        Assert.True(ConstraintService.IsCompatible(teamGroups, TeamGroup.Kalimdor));
+        Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.SouthAlliance));
+        Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.OldGods)); 
     }
 
     [Fact]
@@ -77,9 +92,10 @@ public class ConstraintServiceTests
     {
         Assert.True(ConstraintService.IsCompatible(
             new HashSet<TeamGroup> { TeamGroup.NorthAlliance },
-            TeamGroup.SouthAlliance));
+            TeamGroup.OldGods));
+
         Assert.True(ConstraintService.IsCompatible(
-            new HashSet<TeamGroup> { TeamGroup.NorthAlliance },
+            new HashSet<TeamGroup> { TeamGroup.FelHorde },
             TeamGroup.Kalimdor));
     }
 }
