@@ -8,7 +8,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -105,7 +104,7 @@
       <workItem from="1770994184977" duration="818000" />
       <workItem from="1771019558544" duration="2513000" />
       <workItem from="1771022199936" duration="1121000" />
-      <workItem from="1771023346216" duration="1353000" />
+      <workItem from="1771023346216" duration="2269000" />
     </task>
     <servers />
   </component>
@@ -142,6 +141,19 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs</url>
+          <line>136</line>
+          <properties documentPath="C:\Users\alber\RiderProjects\LegaciesBot\LegaciesBot.Tests\DraftSimulationOutput.cs" containingFunctionPresentation="Method 'CreatePlayers'">
+            <startOffsets>
+              <option value="4029" />
+            </startOffsets>
+            <endOffsets>
+              <option value="4235" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
