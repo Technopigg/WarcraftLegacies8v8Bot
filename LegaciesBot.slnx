@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LegaciesBot.Tests\LegaciesBot.Tests.csproj" Type="Classic C#" />
+  <Project Path="LegaciesBot/LegaciesBot.csproj" />
+</Solution>
