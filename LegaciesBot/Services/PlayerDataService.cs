@@ -2,16 +2,16 @@
 
 public class PlayerDataService
 {
-    private const string FilePath = "playerprefs.json";
+    private readonly string _filePath;
 
     private Dictionary<ulong, List<string>> _prefs 
         = new Dictionary<ulong, List<string>>();
 
-    public PlayerDataService()
+    public PlayerDataService(string? filePath = null)
     {
+        _filePath = filePath ?? "playerprefs.json";
         Load();
     }
-
     public List<string> GetPreferences(ulong discordId)
     {
         return _prefs.TryGetValue(discordId, out var prefs)
@@ -27,10 +27,10 @@ public class PlayerDataService
 
     private void Load()
     {
-        if (!File.Exists(FilePath))
+        if (!File.Exists(_filePath))
             return;
 
-        var json = File.ReadAllText(FilePath);
+        var json = File.ReadAllText(_filePath);
         _prefs = JsonSerializer.Deserialize<Dictionary<ulong, List<string>>>(json)
                  ?? new Dictionary<ulong, List<string>>();
     }
@@ -42,6 +42,6 @@ public class PlayerDataService
             WriteIndented = true
         });
 
-        File.WriteAllText(FilePath, json);
+        File.WriteAllText(_filePath, json);
     }
 }
