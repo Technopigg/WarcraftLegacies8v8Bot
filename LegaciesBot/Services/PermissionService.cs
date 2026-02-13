@@ -1,14 +1,29 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 
 namespace LegaciesBot.Services
 {
     public class PermissionService
     {
-        private static readonly string FilePath =
-            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "permissions.json"));
+        private string FilePath = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "permissions.json"));
+
         public PermissionData Data { get; private set; }
 
         public PermissionService()
+        {
+            Load();
+        }
+        
+        public PermissionService(string filePath)
+        {
+            FilePath = filePath;
+            Load();
+        }
+        
+        private void Load()
         {
             Console.WriteLine("=== PermissionService Debug ===");
             Console.WriteLine("Working directory: " + Directory.GetCurrentDirectory());
