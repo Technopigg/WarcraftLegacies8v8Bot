@@ -5,11 +5,13 @@ namespace LegaciesBot.Services
 {
     public class PlayerStatsService
     {
-        private readonly string _filePath = "playerstats.json";
+        private readonly string _filePath;
         private readonly Dictionary<ulong, PlayerStats> _stats = new();
 
-        public PlayerStatsService()
+        public PlayerStatsService(string? filePath = null)
         {
+            _filePath = filePath ?? "playerstats.json";
+
             if (File.Exists(_filePath))
             {
                 var json = File.ReadAllText(_filePath);
