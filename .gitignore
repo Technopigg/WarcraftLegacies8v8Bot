@@ -1,0 +1,20 @@
+# Build artifacts
+bin/
+obj/
+
+# Rider / IntelliJ
+.idea/
+
+# User-specific files
+*.user
+*.DotSettings.user
+
+# Test results
+TestResults/
+
+# Coverage
+*.coverage
+*.coveragexml
+
+# Logs
+*.log
