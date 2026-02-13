@@ -67,6 +67,46 @@ namespace LegaciesBot.Discord
             if (_lobbyService.CurrentLobby.IsFull && !_lobbyService.CurrentLobby.DraftStarted)
                 await _gameService.StartDraft(_lobbyService.CurrentLobby, ctx.Message.ChannelId);
         }
+        
+        [Command("debugfill")]
+        public async Task DebugFill()
+        {
+            var ctx = this.Context;
+            var lobby = _lobbyService.CurrentLobby;
+
+            if (lobby.Players.Count >= 16)
+            {
+                await ctx.Message.ReplyAsync("Lobby is already full.");
+                return;
+            }
+
+            var allFactions = FactionRegistry.All.Select(f => f.Name).ToList();
+            var rand = new Random();
+
+            int needed = 16 - lobby.Players.Count;
+
+            for (int i = 0; i < needed; i++)
+            {
+                ulong fakeId = (ulong)rand.NextInt64();
+                string name = $"TestPlayer{i + 1}";
+
+                var player = _lobbyService.JoinLobby(fakeId, name);
+
+                player.Elo = rand.Next(1000, 2000);
+                
+                int prefCount = rand.Next(1, 5);
+                player.FactionPreferences = allFactions
+                    .OrderBy(_ => rand.Next())
+                    .Take(prefCount)
+                    .ToList();
+            }
+
+            await ctx.Message.ReplyAsync($"Filled lobby with {needed} test players.");
+
+            if (lobby.IsFull && !lobby.DraftStarted)
+                await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
+        }
+
 
         [Command("prefs")]
         public async Task Preferences(params string[] args)
