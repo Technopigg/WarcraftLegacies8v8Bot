@@ -8,9 +8,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/IDefaultPreferences.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/IEloService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/IFactionAssignmentService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/IFactionRegistry.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/IGatewayClient.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/IMatchHistoryService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/ITextChannel.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealDefaultPreferences.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealEloService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealFactionAssignmentService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealFactionRegistry.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealGatewayClient.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealMatchHistoryService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Services/Interfaces/RealTextChannel.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/DraftService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/DraftService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/LegaciesBot.Tests.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/LegaciesBot.Tests.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/LegaciesBot.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/LegaciesBot.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/GameService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/GameService.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

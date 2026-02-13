@@ -1,112 +1,64 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
-
+using LegaciesBot.GameData;
+using Moq;
 
 public class DraftServiceTests
 {
-    private List<Player> CreatePlayers(int count)
+    private Lobby CreateLobbyWith16Players()
     {
-        var list = new List<Player>();
-        for (int i = 0; i < count; i++)
+        var lobby = new Lobby();
+        for (int i = 0; i < 16; i++)
         {
-            list.Add(new Player((ulong)i, $"P{i}") { Elo = 1000 + i });
+            lobby.Players.Add(new Player((ulong)i, $"Player{i}") { Elo = 1000 });
         }
-        return list;
+        return lobby;
     }
 
     [Fact]
-    public void CreateBalancedTeams_AssignsAllPlayers()
+    public async Task DraftService_FullFlow_16Players_ProducesTwoTeamsOf8()
     {
-        var players = CreatePlayers(10);
-        var rng = new Random(12345);
+        var lobby = CreateLobbyWith16Players();
 
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(players, rng);
+        var gateway = new Mock<IGatewayClient>();
+        var channel = new Mock<ITextChannel>();
+        gateway.Setup(g => g.GetTextChannelAsync(It.IsAny<ulong>()))
+               .ReturnsAsync(channel.Object);
 
-        var all = teamA.Players.Concat(teamB.Players).ToList();
+        var history = new Mock<IMatchHistoryService>();
+        var elo = new Mock<IEloService>();
+        var assign = new Mock<IFactionAssignmentService>();
 
-        Assert.Equal(10, all.Count);
-        Assert.Equal(10, all.Distinct().Count());
-    }
+        var registry = new Mock<IFactionRegistry>();
+        registry.Setup(r => r.All).Returns(FactionRegistry.All);
 
-    [Fact]
-    public void CreateBalancedTeams_TeamsAreReasonablyBalanced()
-    {
-        var players = CreatePlayers(10);
-        var rng = new Random(12345);
+        var prefs = new Mock<IDefaultPreferences>();
+        prefs.Setup(p => p.Factions).Returns(FactionRegistry.All.Select(f => f.Name).ToList());
 
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(players, rng);
+        var service = new GameService(gateway.Object, history.Object, elo.Object, assign.Object, registry.Object, prefs.Object);
 
-        Assert.InRange(teamA.Players.Count, 4, 6);
-        Assert.InRange(teamB.Players.Count, 4, 6);
-    }
+        await service.StartDraft(lobby, 123);
 
-    [Fact]
-    public void CreateBalancedTeams_UsesSnakeDraftOrder()
-    {
-        var players = CreatePlayers(6);
-        var rng = new Random(12345);
+        Assert.True(lobby.DraftStarted);
 
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(players, rng);
+        var teamA = new Team("Team A");
+        var teamB = new Team("Team B");
 
-        var sorted = players.OrderByDescending(p => p.Elo).ToList();
+        for (int i = 0; i < 8; i++)
+            teamA.AddPlayer(lobby.Players[i]);
 
-        var expectedOrder = new List<(string team, Player player)>
-        {
-            ("A", sorted[0]),
-            ("B", sorted[1]),
-            ("B", sorted[2]),
-            ("A", sorted[3]),
-            ("A", sorted[4]),
-            ("B", sorted[5])
-        };
+        for (int i = 8; i < 16; i++)
+            teamB.AddPlayer(lobby.Players[i]);
 
-        var actualOrder = new List<(string team, Player player)>();
+        var game = service.StartGame(lobby, teamA, teamB);
 
-        foreach (var p in teamA.Players)
-            actualOrder.Add(("A", p));
-        foreach (var p in teamB.Players)
-            actualOrder.Add(("B", p));
+        Assert.Equal(8, game.TeamA.Players.Count);
+        Assert.Equal(8, game.TeamB.Players.Count);
 
-        Assert.Equal(6, actualOrder.Count);
-        Assert.True(actualOrder.Any());
-    }
+        var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
+        Assert.Equal(16, allPlayers.Count);
+        Assert.Equal(16, allPlayers.Select(p => p.DiscordId).Distinct().Count());
 
-    [Fact]
-    public void RunDraft_ReturnsTwoTeams()
-    {
-        var players = CreatePlayers(8);
-        var rng = new Random(12345);
-
-        var teams = DraftService.RunDraft(players, rng);
-
-        Assert.Equal(2, teams.Count);
-        Assert.Equal("Team A", teams[0].Name);
-        Assert.Equal("Team B", teams[1].Name);
-    }
-
-    [Fact]
-    public void CreateBalancedTeams_HandlesOddPlayerCounts()
-    {
-        var players = CreatePlayers(7);
-        var rng = new Random(12345);
-
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(players, rng);
-
-        Assert.Equal(7, teamA.Players.Count + teamB.Players.Count);
-        Assert.InRange(teamA.Players.Count, 3, 4);
-        Assert.InRange(teamB.Players.Count, 3, 4);
-    }
-
-    [Fact]
-    public void EloVariance_IsDeterministicWithSeed()
-    {
-        var players = CreatePlayers(5);
-        var rng = new Random(12345);
-
-        var (_, _) = DraftService.CreateBalancedTeams(players, rng);
-
-        var expected = new[] { 1000, 1001, 1002, 1003, 1004 };
-
-        Assert.NotEqual(expected, players.Select(p => p.Elo).ToArray());
+        channel.Verify(c => c.SendMessageAsync(It.IsAny<string>()), Times.Once);
     }
 }

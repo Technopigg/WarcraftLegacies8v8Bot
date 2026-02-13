@@ -1,21 +1,35 @@
 ﻿using LegaciesBot.Core;
 using LTeam = LegaciesBot.Core.Team;
-using LegaciesBot.GameData;
-using NetCord.Gateway;
 
 namespace LegaciesBot.Services;
 
 public class GameService
 {
     private readonly List<Game> _games = new();
-    private readonly GatewayClient _client;
-    private readonly MatchHistoryService _matchHistoryService;
+
+    private readonly IGatewayClient _client;
+    private readonly IMatchHistoryService _matchHistoryService;
+    private readonly IEloService _eloService;
+    private readonly IFactionAssignmentService _factionAssignment;
+    private readonly IFactionRegistry _factionRegistry;
+    private readonly IDefaultPreferences _defaultPreferences;
+
     private int _nextGameId = 1;
 
-    public GameService(GatewayClient client, MatchHistoryService matchHistoryService)
+    public GameService(
+        IGatewayClient client,
+        IMatchHistoryService matchHistoryService,
+        IEloService eloService,
+        IFactionAssignmentService factionAssignment,
+        IFactionRegistry factionRegistry,
+        IDefaultPreferences defaultPreferences)
     {
         _client = client;
         _matchHistoryService = matchHistoryService;
+        _eloService = eloService;
+        _factionAssignment = factionAssignment;
+        _factionRegistry = factionRegistry;
+        _defaultPreferences = defaultPreferences;
     }
 
     public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
@@ -30,34 +44,38 @@ public class GameService
 
         _games.Add(game);
         lobby.DraftStarted = true;
+
         return game;
     }
 
     public async Task StartDraft(Lobby lobby, ulong channelId)
     {
+       
         foreach (var player in lobby.Players)
         {
             if (!player.FactionPreferences.Any())
-                player.FactionPreferences = DefaultPreferences.Factions.ToList();
+                player.FactionPreferences = _defaultPreferences.Factions.ToList();
         }
 
-        var draftTeamsTuple = DraftService.CreateBalancedTeams(lobby.Players);
-        var teams = new LTeam[] { draftTeamsTuple.Item1, draftTeamsTuple.Item2 };
-
+        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players);
+        var teams = new[] { teamA, teamB };
+        
         foreach (var team in teams)
         {
             var allowedGroups = team.Players
                 .SelectMany(p => p.FactionPreferences)
-                .Select(f => FactionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
+                .Select(f => _factionRegistry.All.FirstOrDefault(x => x.Name == f)?.Group)
                 .Where(g => g != null)
-                .Select(g => g.Value)
-                .ToHashSet();
+                .Select(g => g!.Value)
+                .ToHashSet<TeamGroup>();
 
-            FactionAssignmentService.AssignFactionsToTeam(team, allowedGroups);
+
+            _factionAssignment.AssignFactionsToTeam(team, allowedGroups);
         }
 
-        var channelModel = await _client.Rest.GetChannelAsync(channelId);
-        if (channelModel is NetCord.TextChannel textChannel)
+        // Send draft summary to Discord
+        var channel = await _client.GetTextChannelAsync(channelId);
+        if (channel != null)
         {
             string msg = "=== DRAFT COMPLETE ===\n";
             int teamNum = 1;
@@ -67,7 +85,9 @@ public class GameService
                 msg += $"=== TEAM {teamNum} ===\n";
                 foreach (var player in team.Players)
                 {
-                    var faction = team.AssignedFactions.FirstOrDefault(f => player.FactionPreferences.Contains(f.Name));
+                    var faction = team.AssignedFactions
+                        .FirstOrDefault(f => player.FactionPreferences.Contains(f.Name));
+
                     msg += $"{player.Name} ({player.Elo}) -> {faction?.Name ?? "No Faction"}\n";
                 }
                 teamNum++;
@@ -80,7 +100,7 @@ public class GameService
             msg += $"Use `!score <A> <B>` to submit the final score.\n";
             msg += $"If multiple games are active, use `!score {game.Id} <A> <B>`.";
 
-            await textChannel.SendMessageAsync(msg);
+            await channel.SendMessageAsync(msg);
         }
 
         lobby.DraftStarted = true;
@@ -94,7 +114,7 @@ public class GameService
 
         bool teamAWon = scoreA > scoreB;
 
-        var changes = EloService.ApplyTeamResult(
+        var changes = _eloService.ApplyTeamResult(
             game.TeamA.Players,
             game.TeamB.Players,
             teamAWon,
@@ -102,12 +122,13 @@ public class GameService
         );
 
         _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
-        
+
         game.Lobby.Players.Clear();
         game.Lobby.DraftStarted = false;
 
         return changes;
     }
 
-    public List<Game> GetOngoingGames() => _games.Where(g => !g.Finished).ToList();
+    public List<Game> GetOngoingGames() =>
+        _games.Where(g => !g.Finished).ToList();
 }

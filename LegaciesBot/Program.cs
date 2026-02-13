@@ -25,10 +25,25 @@ var client = new GatewayClient(
 var permissionService = new PermissionService();
 var matchHistoryService = new MatchHistoryService();
 var lobbyService = new LobbyService();
-var gameService = new GameService(client, matchHistoryService);
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
 var playerRegistryService = new PlayerRegistryService();
+
+var gateway = new RealGatewayClient(client);
+var matchHistory = new RealMatchHistoryService(matchHistoryService);
+var elo = new RealEloService();
+var factionAssignment = new RealFactionAssignmentService();
+var factionRegistry = new RealFactionRegistry();
+var defaultPreferences = new RealDefaultPreferences();
+
+var gameService = new GameService(
+    gateway,
+    matchHistory,
+    elo,
+    factionAssignment,
+    factionRegistry,
+    defaultPreferences
+);
 
 var commandService = new CommandService<CommandContext>();
 commandService.AddModule<LobbyCommands>();
@@ -54,7 +69,6 @@ client.MessageCreate += async message =>
             matchHistoryService,
             playerRegistryService
         )
-
     );
 };
 
@@ -64,7 +78,6 @@ client.Ready += args =>
     return new ValueTask();
 };
 
-// AFK checker loop
 _ = Task.Run(async () =>
 {
     while (true)
@@ -76,7 +89,6 @@ _ = Task.Run(async () =>
 
 await client.StartAsync();
 await Task.Delay(-1);
-
 
 public class SimpleServiceProvider : IServiceProvider
 {
@@ -103,7 +115,7 @@ public class SimpleServiceProvider : IServiceProvider
         _playerStatsService = playerStatsService;
         _permissionService = permissionService;
         _matchHistoryService = matchHistoryService;
-        _playerRegistryService = playerRegistryService;  
+        _playerRegistryService = playerRegistryService;
     }
 
     public object? GetService(Type serviceType)
@@ -114,7 +126,7 @@ public class SimpleServiceProvider : IServiceProvider
         if (serviceType == typeof(PlayerStatsService)) return _playerStatsService;
         if (serviceType == typeof(PermissionService)) return _permissionService;
         if (serviceType == typeof(MatchHistoryService)) return _matchHistoryService;
-        if (serviceType == typeof(PlayerRegistryService)) return _playerRegistryService; // ⭐ FIXED
+        if (serviceType == typeof(PlayerRegistryService)) return _playerRegistryService;
 
         return null;
     }
