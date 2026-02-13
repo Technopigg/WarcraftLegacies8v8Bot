@@ -4,10 +4,10 @@ namespace LegaciesBot.Services;
 
 public static class DraftService
 {
-    public static (Team, Team) CreateBalancedTeams(List<Player> players)
+    public static (Team, Team) CreateBalancedTeams(List<Player> players, Random? rng = null)
     {
-        var rng = new Random();
-        
+        rng ??= new Random();
+
         foreach (var player in players)
         {
             player.Elo += rng.Next(-10, 11);
@@ -41,9 +41,9 @@ public static class DraftService
         return (teamA, teamB);
     }
 
-    public static List<Team> RunDraft(List<Player> players)
+    public static List<Team> RunDraft(List<Player> players, Random? rng = null)
     {
-        var (teamA, teamB) = CreateBalancedTeams(players);
+        var (teamA, teamB) = CreateBalancedTeams(players, rng);
         return new List<Team> { teamA, teamB };
     }
 }
