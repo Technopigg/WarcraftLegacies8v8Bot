@@ -1,3 +1,4 @@
+using Xunit;
 using Xunit.Abstractions;
 using LegaciesBot.Services;
 using LegaciesBot.GameData;
@@ -45,10 +46,7 @@ public class DraftSimulationTests
     [Fact]
     public void SimulateTwentyDrafts_LogsOutput()
     {
-        var registry = new PlayerRegistryService();
-        var lobbyService = new LobbyService();
         var history = new MatchHistoryService();
-
         var elo = new EloStub();
         var factionRegistry = new FactionRegistryStub();
         var defaultPrefs = new DefaultPreferencesStub();
@@ -71,17 +69,20 @@ public class DraftSimulationTests
             (13, "Royce"), (14, "Petertros"), (15, "Dragozer"), (16, "Madsen")
         };
 
-        foreach (var (id, name) in players)
-            registry.RegisterPlayer(id, name);
-
-        foreach (var (id, name) in players)
-            lobbyService.JoinLobby(id, name);
-
-        foreach (var (id, _) in players)
-            lobbyService.UpdatePreferences(id, Prefs[id]);
-
         for (int run = 1; run <= 20; run++)
         {
+            var registry = new PlayerRegistryService();
+            var lobbyService = new LobbyService();
+
+            foreach (var (id, name) in players)
+                registry.RegisterPlayer(id, name);
+
+            foreach (var (id, name) in players)
+                lobbyService.JoinLobby(id, name);
+
+            foreach (var (id, _) in players)
+                lobbyService.UpdatePreferences(id, Prefs[id]);
+
             var (teamA, teamB) = DraftService.CreateBalancedTeams(lobbyService.CurrentLobby.Players);
 
             var game = gameService.StartGame(lobbyService.CurrentLobby, teamA, teamB);
