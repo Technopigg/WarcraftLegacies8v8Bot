@@ -8,7 +8,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowWithPreferencesTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
