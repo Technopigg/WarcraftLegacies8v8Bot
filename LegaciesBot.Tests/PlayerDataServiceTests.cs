@@ -7,20 +7,11 @@ public class PlayerDataServiceTests
         return path;
     }
 
-    private PlayerDataService CreateServiceWithFile(string filePath)
-    {
-        typeof(PlayerDataService)
-            .GetField("FilePath", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
-            .SetValue(null, filePath);
-
-        return new PlayerDataService();
-    }
-
     [Fact]
     public void GetPreferences_ReturnsEmptyList_WhenUserNotFound()
     {
         string file = CreateTempPrefsFile();
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         var prefs = service.GetPreferences(123);
 
@@ -31,7 +22,7 @@ public class PlayerDataServiceTests
     public void SetPreferences_SavesToFile()
     {
         string file = CreateTempPrefsFile();
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         service.SetPreferences(1, new() { "A", "B" });
 
@@ -44,7 +35,7 @@ public class PlayerDataServiceTests
     public void SetPreferences_OverwritesExisting()
     {
         string file = CreateTempPrefsFile(@"{ ""1"": [""Old""] }");
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         service.SetPreferences(1, new() { "New1", "New2" });
 
@@ -61,7 +52,7 @@ public class PlayerDataServiceTests
     {
         string file = CreateTempPrefsFile(@"{ ""5"": [""X"", ""Y""] }");
 
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         var prefs = service.GetPreferences(5);
 
@@ -77,7 +68,7 @@ public class PlayerDataServiceTests
         if (File.Exists(file))
             File.Delete(file);
 
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         Assert.Empty(service.GetPreferences(1));
         Assert.False(File.Exists(file)); 
@@ -87,7 +78,7 @@ public class PlayerDataServiceTests
     public void MultipleUsers_AreStoredIndependently()
     {
         string file = CreateTempPrefsFile();
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         service.SetPreferences(1, new() { "A" });
         service.SetPreferences(2, new() { "B", "C" });
@@ -106,7 +97,7 @@ public class PlayerDataServiceTests
     public void Save_WritesIndentedJson()
     {
         string file = CreateTempPrefsFile();
-        var service = CreateServiceWithFile(file);
+        var service = new PlayerDataService(file);
 
         service.SetPreferences(1, new() { "A" });
 
