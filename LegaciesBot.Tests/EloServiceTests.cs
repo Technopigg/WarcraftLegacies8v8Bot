@@ -1,18 +1,29 @@
+using System.Collections.Generic;
+using System.Linq;
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using Xunit;
 
 public class EloServiceTests
 {
-    private Player P(ulong id, int elo)
-        => new Player(id, $"P{id}", elo);
+    private Player P(ulong id, int elo, PlayerStatsService stats)
+    {
+        var p = new Player(id, $"P{id}", elo);
+
+        var s = stats.GetOrCreate(id);
+        s.Elo = elo;
+        stats.Update(s);
+
+        return p;
+    }
 
     [Fact]
     public void ApplyTeamResult_WinningTeamGainsLosingTeamLoses()
     {
         var stats = new PlayerStatsService();
 
-        var teamA = new List<Player> { P(1, 1000), P(2, 1000) };
-        var teamB = new List<Player> { P(3, 1000), P(4, 1000) };
+        var teamA = new List<Player> { P(1, 1000, stats), P(2, 1000, stats) };
+        var teamB = new List<Player> { P(3, 1000, stats), P(4, 1000, stats) };
 
         var result = EloService.ApplyTeamResult(teamA, teamB, true, stats);
 
@@ -27,8 +38,8 @@ public class EloServiceTests
     {
         var stats = new PlayerStatsService();
 
-        var teamA = new List<Player> { P(1, 1200), P(2, 1200) };
-        var teamB = new List<Player> { P(3, 800), P(4, 800) };
+        var teamA = new List<Player> { P(1, 1200, stats), P(2, 1200, stats) };
+        var teamB = new List<Player> { P(3, 800, stats), P(4, 800, stats) };
 
         var result = EloService.ApplyTeamResult(teamA, teamB, true, stats);
 
@@ -41,8 +52,8 @@ public class EloServiceTests
     {
         var stats = new PlayerStatsService();
 
-        var teamA = new List<Player> { P(1, 800), P(2, 800) };
-        var teamB = new List<Player> { P(3, 1200), P(4, 1200) };
+        var teamA = new List<Player> { P(1, 800, stats), P(2, 800, stats) };
+        var teamB = new List<Player> { P(3, 1200, stats), P(4, 1200, stats) };
 
         var result = EloService.ApplyTeamResult(teamA, teamB, true, stats);
 
@@ -55,16 +66,16 @@ public class EloServiceTests
     {
         var stats = new PlayerStatsService();
 
-        var teamA = new List<Player> { P(1, 1000), P(2, 1000), P(3, 1000) };
-        var teamB = new List<Player> { P(4, 1000), P(5, 1000), P(6, 1000) };
+        var teamA = new List<Player> { P(1, 1000, stats), P(2, 1000, stats), P(3, 1000, stats) };
+        var teamB = new List<Player> { P(4, 1000, stats), P(5, 1000, stats), P(6, 1000, stats) };
 
         var result = EloService.ApplyTeamResult(teamA, teamB, true, stats);
 
         var aChanges = new[] { result[1], result[2], result[3] };
-        Assert.True(aChanges.Distinct().Count() == 1);
+        Assert.Equal(1, aChanges.Distinct().Count());
 
         var bChanges = new[] { result[4], result[5], result[6] };
-        Assert.True(bChanges.Distinct().Count() == 1);
+        Assert.Equal(1, bChanges.Distinct().Count());
     }
 
     [Fact]
@@ -72,8 +83,8 @@ public class EloServiceTests
     {
         var stats = new PlayerStatsService();
 
-        var teamA = new List<Player> { P(1, 1000), P(2, 1000) };
-        var teamB = new List<Player> { P(3, 1000), P(4, 1000) };
+        var teamA = new List<Player> { P(1, 1000, stats), P(2, 1000, stats) };
+        var teamB = new List<Player> { P(3, 1000, stats), P(4, 1000, stats) };
 
         var result = EloService.ApplyTeamResult(teamA, teamB, true, stats);
 
