@@ -35,15 +35,24 @@ public class FactionAssignmentStub : IFactionAssignmentService
 {
     public void AssignFactionsToTeam(Team team, HashSet<TeamGroup> allowedGroups)
     {
-        var factions = FactionRegistry.All
-            .Where(f => allowedGroups.Contains(f.Group))
-            .Take(team.Players.Count)
-            .ToList();
-
         team.AssignedFactions.Clear();
-        team.AssignedFactions.AddRange(factions);
+
+        foreach (var player in team.Players)
+        {
+            var preferred = player.FactionPreferences
+                .Select(name => FactionRegistry.All.FirstOrDefault(f => f.Name == name))
+                .Where(f => f != null)
+                .ToList();
+
+            var pool = preferred.Any()
+                ? preferred
+                : FactionRegistry.All.Where(f => allowedGroups.Contains(f.Group)).ToList();
+            var faction = pool.First(); 
+            team.AssignedFactions.Add(faction);
+        }
     }
 }
+
 
 public class MatchHistoryAdapter : IMatchHistoryService
 {
