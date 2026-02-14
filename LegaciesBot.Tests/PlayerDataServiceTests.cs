@@ -71,7 +71,7 @@ public class PlayerDataServiceTests
         var service = new PlayerDataService(file);
 
         Assert.Empty(service.GetPreferences(1));
-        Assert.False(File.Exists(file)); 
+        Assert.False(File.Exists(file));
     }
 
     [Fact]
@@ -103,6 +103,6 @@ public class PlayerDataServiceTests
 
         string json = File.ReadAllText(file);
 
-        Assert.Contains("\n", json); 
+        Assert.Contains("\n", json);
     }
 }

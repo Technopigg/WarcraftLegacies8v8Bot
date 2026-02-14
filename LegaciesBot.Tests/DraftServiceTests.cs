@@ -71,7 +71,7 @@ public class DraftServiceTests
             It.IsAny<HashSet<TeamGroup>>(),
             It.IsAny<HashSet<TeamGroup>>()
         ), Times.Once);
-        
+
         channel.Verify(c => c.SendMessageAsync(It.IsAny<string>()), Times.Once);
     }
 }

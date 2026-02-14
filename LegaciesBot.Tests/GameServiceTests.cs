@@ -62,7 +62,7 @@ public class GameServiceTests
         for (int i = 0; i < count; i++)
         {
             var p = new Player((ulong)(i + 1), $"Player{i + 1}", 1500);
-            p.FactionPreferences = new List<string>(); 
+            p.FactionPreferences = new List<string>();
             lobby.Players.Add(p);
         }
 

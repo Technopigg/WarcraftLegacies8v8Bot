@@ -28,7 +28,7 @@ namespace LegaciesBot.Services
 
             int deltaA = (int)Math.Round(K * (scoreA - expectedA));
             int deltaB = (int)Math.Round(K * (scoreB - expectedB));
-            
+
             foreach (var p in teamAList)
             {
                 var s = statsService.GetOrCreate(p.DiscordId);
@@ -41,7 +41,7 @@ namespace LegaciesBot.Services
                 changes[p.DiscordId] = s.Elo - oldElo;
                 statsService.Update(s);
             }
-            
+
             foreach (var p in teamBList)
             {
                 var s = statsService.GetOrCreate(p.DiscordId);

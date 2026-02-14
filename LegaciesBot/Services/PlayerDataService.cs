@@ -4,7 +4,7 @@ public class PlayerDataService
 {
     private readonly string _filePath;
 
-    private Dictionary<ulong, List<string>> _prefs 
+    private Dictionary<ulong, List<string>> _prefs
         = new Dictionary<ulong, List<string>>();
 
     public PlayerDataService(string? filePath = null)

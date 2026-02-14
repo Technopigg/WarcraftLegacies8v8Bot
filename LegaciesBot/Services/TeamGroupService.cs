@@ -18,7 +18,7 @@ namespace LegaciesBot.Services
         {
             return FactionRegistry.All
                 .Where(f => f.Group == g)
-                .Select(f => f.SlotId ?? f.Name)   
+                .Select(f => f.SlotId ?? f.Name)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count();
         }

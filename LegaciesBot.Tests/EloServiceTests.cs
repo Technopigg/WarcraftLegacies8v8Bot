@@ -72,10 +72,10 @@ public class EloServiceTests
         var result = EloService.ApplyTeamResult(teamA, teamB, true, stats);
 
         var aChanges = new[] { result[1], result[2], result[3] };
-        Assert.Equal(1, aChanges.Distinct().Count());
+        Assert.Single(aChanges.Distinct());
 
         var bChanges = new[] { result[4], result[5], result[6] };
-        Assert.Equal(1, bChanges.Distinct().Count());
+        Assert.Single(bChanges.Distinct());
     }
 
     [Fact]

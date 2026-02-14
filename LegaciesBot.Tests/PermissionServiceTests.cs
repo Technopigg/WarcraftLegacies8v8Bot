@@ -84,7 +84,7 @@ public class PermissionServiceTests
         string json = File.ReadAllText(file);
         Assert.DoesNotContain("456", json);
     }
-    
+
     [Fact]
     public void AddMod_AddsUser_AndSavesToFile()
     {

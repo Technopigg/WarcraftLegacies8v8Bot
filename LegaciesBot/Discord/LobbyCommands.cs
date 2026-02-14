@@ -64,7 +64,7 @@ namespace LegaciesBot.Discord
             if (_lobbyService.CurrentLobby.IsFull && !_lobbyService.CurrentLobby.DraftStarted)
                 await _gameService.StartDraft(_lobbyService.CurrentLobby, ctx.Message.ChannelId);
         }
-        
+
         [Command("debugfill")]
         public async Task DebugFill()
         {
@@ -90,7 +90,7 @@ namespace LegaciesBot.Discord
                 var player = _lobbyService.JoinLobby(fakeId, name);
 
                 player.Elo = rand.Next(1000, 2000);
-                
+
                 int prefCount = rand.Next(1, 5);
                 player.FactionPreferences = allFactions
                     .OrderBy(_ => rand.Next())
@@ -110,14 +110,14 @@ namespace LegaciesBot.Discord
         {
             var ctx = this.Context;
             ulong callerId = ctx.Message.Author.Id;
-            
+
             if (ctx.Message.MentionedUsers.Count > 0)
             {
                 var mentioned = ctx.Message.MentionedUsers[0];
                 await ShowPreferencesForUser(mentioned.Id, mentioned.Username);
                 return;
             }
-            
+
             if (args.Length == 0)
             {
                 await ShowPreferencesForUser(callerId, ctx.Message.Author.Username);
@@ -149,7 +149,7 @@ namespace LegaciesBot.Discord
                 await RemovePreference(callerId, args.Skip(1).ToArray());
                 return;
             }
-            
+
             await SetPreferencesList(callerId, args);
         }
 
@@ -195,7 +195,7 @@ namespace LegaciesBot.Discord
                 await Context.Message.ReplyAsync("Usage: `!prefs add <Faction> [Position]`");
                 return;
             }
-            
+
             string factionName = args[0];
             int? position = null;
 
@@ -217,7 +217,7 @@ namespace LegaciesBot.Discord
             }
 
             var prefs = _playerData.GetPreferences(userId);
-            
+
             prefs = prefs
                 .Where(p => !p.Equals(factionName, StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -347,8 +347,8 @@ namespace LegaciesBot.Discord
 
             await ctx.Message.ReplyAsync($"{ctx.Message.Author.Username}, all good!");
         }
-        
-       
+
+
         [Command("lobby")]
         public async Task ListLobbyMembers()
         {

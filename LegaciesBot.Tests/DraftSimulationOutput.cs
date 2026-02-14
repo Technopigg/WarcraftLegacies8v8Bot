@@ -26,7 +26,7 @@ public class DraftSimulationOutput
     private static List<Player> CreatePlayers()
     {
         // Helper to get faction names safely from registry
-        string F(string name) => FactionRegistry.All.First(f => 
+        string F(string name) => FactionRegistry.All.First(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)).Name;
 
         var allFactionNames = FactionRegistry.All.Select(f => f.Name).ToList();

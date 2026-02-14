@@ -84,7 +84,7 @@ public class ConstraintServiceTests
 
         Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.BurningLegion));
         Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.SouthAlliance));
-        Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.OldGods)); 
+        Assert.False(ConstraintService.IsCompatible(teamGroups, TeamGroup.OldGods));
     }
 
     [Fact]

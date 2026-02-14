@@ -60,7 +60,7 @@ public class GameCommands : CommandModule<CommandContext>
         );
     }
 
-    
+
     [Command("recent")]
     public async Task RecentMatches()
     {
@@ -234,7 +234,7 @@ public class GameCommands : CommandModule<CommandContext>
 
         await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
     }
-    
+
     [Command("forcescore")]
     public async Task ForceScore(int scoreA, int scoreB)
     {

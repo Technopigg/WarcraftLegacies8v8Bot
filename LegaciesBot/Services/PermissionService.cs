@@ -16,13 +16,13 @@ namespace LegaciesBot.Services
         {
             Load();
         }
-        
+
         public PermissionService(string filePath)
         {
             FilePath = filePath;
             Load();
         }
-        
+
         private void Load()
         {
             Console.WriteLine("=== PermissionService Debug ===");

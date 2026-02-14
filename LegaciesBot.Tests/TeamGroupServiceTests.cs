@@ -60,7 +60,7 @@ public class TeamGroupServiceTests
     public void GenerateValidSplit_TeamAIsOneOfTheFourValidCombos()
     {
         var (teamA, _) = TeamGroupService.GenerateValidSplit();
-        Assert.True(ValidCombos.Any(c => c.SetEquals(teamA)));
+        Assert.Contains(ValidCombos, c => c.SetEquals(teamA));
     }
 
     [Fact]

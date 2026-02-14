@@ -48,7 +48,7 @@ public class PlayerRegistryServiceTests
         var p2 = registry.RegisterPlayer(2, "Nick");
 
         Assert.Same(p1, p2);
-        Assert.Equal(1, registry.GetAllPlayers().Count);
+        Assert.Single(registry.GetAllPlayers());
     }
 
     [Fact]

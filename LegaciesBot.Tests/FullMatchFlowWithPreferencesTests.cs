@@ -117,7 +117,7 @@ public class FullMatchFlowWithPreferencesTests
             var faction = teamB.AssignedFactions[i];
             Assert.Contains(faction.Name, Prefs[player.DiscordId]);
         }
-        
+
         var game = gameService.StartGame(lobby, teamA, teamB);
         var stats = new PlayerStatsService();
         var changes = gameService.SubmitScore(game, 4, 2, stats);

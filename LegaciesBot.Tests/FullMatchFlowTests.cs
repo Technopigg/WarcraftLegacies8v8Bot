@@ -72,7 +72,7 @@ public class FullMatchFlowTests
         Assert.NotNull(lobby.TeamB);
         Assert.Equal(8, lobby.TeamA!.Players.Count);
         Assert.Equal(8, lobby.TeamB!.Players.Count);
-        
+
         var game = gameService.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
         var stats = new PlayerStatsService();
         var changes = gameService.SubmitScore(game, 5, 3, stats);

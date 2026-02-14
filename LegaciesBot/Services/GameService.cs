@@ -36,7 +36,7 @@ public class GameService
 
         _draftEngine = new DraftEngine(factionAssignment, rng);
     }
-    
+
     public async Task StartDraft(Lobby lobby, ulong channelId)
     {
         if (lobby.Players.Count != 16)
@@ -93,7 +93,7 @@ public class GameService
         );
 
         _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
-        
+
         game.Lobby.Players.Clear();
         game.Lobby.DraftStarted = false;
 
