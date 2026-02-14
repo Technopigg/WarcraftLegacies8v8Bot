@@ -1,7 +1,7 @@
 ﻿using NetCord;
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
-
+using System.Linq;
 
 namespace LegaciesBot.Discord
 {
@@ -77,9 +77,36 @@ namespace LegaciesBot.Discord
         }
 
         [Command("compare")]
-        public async Task Compare(User user1, User user2)
+        public async Task Compare(params string[] args)
         {
             var ctx = this.Context;
+
+            if (args.Length != 2)
+            {
+                await ctx.Message.ReplyAsync(
+                    "Usage: `!compare <user1> <user2>`\n" +
+                    "Examples:\n" +
+                    "`!compare @Alice @Bob`\n" +
+                    "`!compare Alice Bob`\n" +
+                    "`!compare 123456789012345678 987654321098765432`"
+                );
+                return;
+            }
+
+            var user1 = await ResolveUser(args[0], ctx);
+            var user2 = await ResolveUser(args[1], ctx);
+
+            if (user1 == null)
+            {
+                await ctx.Message.ReplyAsync($"Could not find a user matching `{args[0]}`.");
+                return;
+            }
+
+            if (user2 == null)
+            {
+                await ctx.Message.ReplyAsync($"Could not find a user matching `{args[1]}`.");
+                return;
+            }
 
             var p1 = _playerStats.GetOrCreate(user1.Id);
             var p2 = _playerStats.GetOrCreate(user2.Id);
@@ -118,5 +145,49 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync(string.Join("\n", lines));
         }
 
+        private async Task<User?> ResolveUser(string input, CommandContext ctx)
+        {
+            if (ctx.Message.MentionedUsers.Count > 0)
+            {
+                var mentioned = ctx.Message.MentionedUsers.FirstOrDefault();
+                if (mentioned != null)
+                    return mentioned;
+            }
+
+            if (ulong.TryParse(input, out ulong id))
+            {
+                try
+                {
+                    return await ctx.Client.Rest.GetUserAsync(id);
+                }
+                catch { }
+            }
+
+            if (ctx.Message.GuildId.HasValue)
+            {
+                var guild = ctx.Client.Guilds.GetValueOrDefault(ctx.Message.GuildId.Value);
+
+                if (guild != null)
+                {
+                    var members = guild.Members.Values;
+
+                    var exact = members.FirstOrDefault(m =>
+                        string.Equals(m.User.Username, input, StringComparison.OrdinalIgnoreCase) ||
+                        (m.Nick != null && string.Equals(m.Nick, input, StringComparison.OrdinalIgnoreCase)));
+
+                    if (exact != null)
+                        return exact.User;
+
+                    var partial = members.FirstOrDefault(m =>
+                        m.User.Username.Contains(input, StringComparison.OrdinalIgnoreCase) ||
+                        (m.Nick != null && m.Nick.Contains(input, StringComparison.OrdinalIgnoreCase)));
+
+                    if (partial != null)
+                        return partial.User;
+                }
+            }
+
+            return null;
+        }
     }
 }
