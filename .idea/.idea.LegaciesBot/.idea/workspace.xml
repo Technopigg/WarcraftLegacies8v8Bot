@@ -7,32 +7,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/ConstraintServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/ConstraintServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/EloServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/EloServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowWithPreferencesTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowWithPreferencesTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerDataServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerDataServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/TeamGroupServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/TeamGroupServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Faction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Faction.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Game.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Game.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Lobby.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Lobby.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/GameCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/GameCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/GameData/FactionRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/GameData/FactionRegistry.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/EloService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/EloService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/GameService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/GameService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PermissionService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PermissionService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PlayerDataService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PlayerDataService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/TeamGroupService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/TeamGroupService.cs" afterDir="false" />
-    </list>
+    <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -87,7 +62,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected=".NET Project.LegaciesBot">
+  <component name="RunManager">
     <configuration name="LegaciesBot" type="DotNetProject" factoryName=".NET Project" temporary="true">
       <option name="EXE_PATH" value="$PROJECT_DIR$/LegaciesBot/bin/Debug/net10.0/LegaciesBot.exe" />
       <option name="PROGRAM_PARAMETERS" value="" />
@@ -129,6 +104,7 @@
       <workItem from="1771022199936" duration="1121000" />
       <workItem from="1771023346216" duration="2269000" />
       <workItem from="1771037377711" duration="238000" />
+      <workItem from="1771073369109" duration="36000" />
     </task>
     <servers />
   </component>

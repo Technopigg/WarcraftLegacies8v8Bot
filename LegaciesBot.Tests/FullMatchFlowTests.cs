@@ -67,11 +67,23 @@ public class FullMatchFlowTests
         var lobby = lobbyService.CurrentLobby;
         Assert.Equal(16, lobby.Players.Count);
         gameService.StartDraft(lobby, 123).Wait();
+        
+        foreach (var p in lobby.TeamA!.Players)
+            p.AssignedFaction = "TestFactionA";
+
+        foreach (var p in lobby.TeamB!.Players)
+            p.AssignedFaction = "TestFactionB";
 
         Assert.NotNull(lobby.TeamA);
         Assert.NotNull(lobby.TeamB);
         Assert.Equal(8, lobby.TeamA!.Players.Count);
         Assert.Equal(8, lobby.TeamB!.Players.Count);
+
+        foreach (var p in lobby.TeamA!.Players)
+            Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
+
+        foreach (var p in lobby.TeamB!.Players)
+            Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
 
         var game = gameService.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
         var stats = new PlayerStatsService();
@@ -80,5 +92,17 @@ public class FullMatchFlowTests
         Assert.True(game.Finished);
         Assert.NotEmpty(changes);
         Assert.NotEmpty(history.History);
+
+        foreach (var p in lobby.TeamA!.Players)
+        {
+            var s = stats.GetOrCreate(p.DiscordId);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1);
+        }
+
+        foreach (var p in lobby.TeamB!.Players)
+        {
+            var s = stats.GetOrCreate(p.DiscordId);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Losses == 1);
+        }
     }
 }

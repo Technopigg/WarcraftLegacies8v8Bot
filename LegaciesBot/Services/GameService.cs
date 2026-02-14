@@ -92,12 +92,41 @@ public class GameService
             stats
         );
 
+        UpdateFactionStats(game.TeamA, teamAWon, stats, true);
+        UpdateFactionStats(game.TeamB, teamAWon, stats, false);
+
         _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
 
         game.Lobby.Players.Clear();
         game.Lobby.DraftStarted = false;
 
         return changes;
+    }
+
+    private void UpdateFactionStats(Team team, bool teamAWon, PlayerStatsService statsService, bool isTeamA)
+    {
+        foreach (var player in team.Players)
+        {
+            if (string.IsNullOrWhiteSpace(player.AssignedFaction))
+                continue;
+
+            var stats = statsService.GetOrCreate(player.DiscordId);
+
+            if (!stats.FactionHistory.TryGetValue(player.AssignedFaction, out var record))
+            {
+                record = new FactionRecord();
+                stats.FactionHistory[player.AssignedFaction] = record;
+            }
+
+            bool won = isTeamA == teamAWon;
+
+            if (won)
+                record.Wins++;
+            else
+                record.Losses++;
+
+            statsService.Update(stats);
+        }
     }
 
     public List<Game> GetOngoingGames() =>

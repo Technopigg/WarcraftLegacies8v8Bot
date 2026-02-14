@@ -59,6 +59,12 @@ public class DraftEngineTests
 
         Assert.Equal(8, teamA.AssignedFactions.Count);
         Assert.Equal(8, teamB.AssignedFactions.Count);
+
+        foreach (var p in teamA.Players)
+            Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
+
+        foreach (var p in teamB.Players)
+            Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
     }
 
     [Fact]
@@ -76,5 +82,23 @@ public class DraftEngineTests
 
         Assert.Equal(16, all.Count);
         Assert.Equal(16, all.Select(f => f.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    [Fact]
+    public void RunDraft_PlayerFactionMatchesAssignedFactionsList()
+    {
+        var rng = new Random(12345);
+        var assignment = new FactionAssignmentService(rng);
+        var engine = new DraftEngine(assignment, rng);
+
+        var players = CreatePlayers(16);
+
+        var (teamA, teamB) = engine.RunDraft(players);
+
+        for (int i = 0; i < 8; i++)
+            Assert.Equal(teamA.AssignedFactions[i].Name, teamA.Players[i].AssignedFaction);
+
+        for (int i = 0; i < 8; i++)
+            Assert.Equal(teamB.AssignedFactions[i].Name, teamB.Players[i].AssignedFaction);
     }
 }

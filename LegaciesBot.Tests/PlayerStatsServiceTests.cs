@@ -1,7 +1,6 @@
-using System;
-using System.IO;
 using LegaciesBot.Services;
-using Xunit;
+using LegaciesBot.Core;
+
 
 public class PlayerStatsServiceTests
 {
@@ -22,13 +21,14 @@ public class PlayerStatsServiceTests
 
         Assert.Equal((ulong)1, stats.DiscordId);
         Assert.Equal(800, stats.Elo);
+        Assert.Empty(stats.FactionHistory);
     }
 
     [Fact]
     public void GetOrCreate_LoadsExistingStats()
     {
         string file = CreateTempStatsFile(@"[
-            { ""DiscordId"": 5, ""Elo"": 800 }
+            { ""DiscordId"": 5, ""Elo"": 800, ""GamesPlayed"": 0, ""Wins"": 0, ""Losses"": 0, ""FactionHistory"": {} }
         ]");
 
         var service = new PlayerStatsService(file);
@@ -37,6 +37,7 @@ public class PlayerStatsServiceTests
 
         Assert.Equal((ulong)5, stats.DiscordId);
         Assert.Equal(800, stats.Elo);
+        Assert.Empty(stats.FactionHistory);
     }
 
     [Fact]
@@ -100,5 +101,23 @@ public class PlayerStatsServiceTests
         var all = service.GetAll();
 
         Assert.Equal(2, all.Count);
+    }
+
+    [Fact]
+    public void FactionHistory_RoundTripSerialization_Works()
+    {
+        string file = CreateTempStatsFile();
+        var service = new PlayerStatsService(file);
+
+        var stats = service.GetOrCreate(10);
+        stats.FactionHistory["Legion"] = new FactionRecord { Wins = 3, Losses = 1 };
+        service.Update(stats);
+
+        var loaded = new PlayerStatsService(file);
+        var loadedStats = loaded.GetOrCreate(10);
+
+        Assert.True(loadedStats.FactionHistory.ContainsKey("Legion"));
+        Assert.Equal(3, loadedStats.FactionHistory["Legion"].Wins);
+        Assert.Equal(1, loadedStats.FactionHistory["Legion"].Losses);
     }
 }

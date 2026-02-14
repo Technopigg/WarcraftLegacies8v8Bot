@@ -8,6 +8,8 @@
         public List<string> FactionPreferences { get; set; } = new();
         public DateTime JoinedAt { get; set; }
         public bool IsActive { get; set; } = true;
+        
+        public string? AssignedFaction { get; set; }
 
         public Player(ulong discordId, string name, int elo = 800)
         {

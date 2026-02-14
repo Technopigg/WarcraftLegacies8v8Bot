@@ -27,7 +27,6 @@ public class GameServiceTests
     {
         public void RecordMatch(Game game, int scoreA, int scoreB, Dictionary<ulong, int> changes)
         {
-            // no-op
         }
     }
 
@@ -134,4 +133,94 @@ public class GameServiceTests
             service.StartDraft(lobby, 123UL)
         );
     }
+
+    [Fact]
+    public async Task StartDraft_AssignsFactionsToPlayers()
+    {
+        var rng = new Random(12345);
+
+        var client = new FakeGatewayClient();
+        var matchHistory = new FakeMatchHistoryService();
+        var elo = new FakeEloService();
+        var factionAssignment = new FactionAssignmentService(rng);
+        var factionRegistry = new FakeFactionRegistry();
+        var defaults = new FakeDefaultPreferences();
+
+        var service = new GameService(
+            client,
+            matchHistory,
+            elo,
+            factionAssignment,
+            factionRegistry,
+            defaults,
+            rng
+        );
+
+        var lobby = CreateLobbyWithPlayers(16);
+
+        await service.StartDraft(lobby, 0);
+
+        foreach (var p in lobby.TeamA.Players)
+            Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
+
+        foreach (var p in lobby.TeamB.Players)
+            Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
+    }
+
+    [Fact]
+    public void SubmitScore_UpdatesFactionStats()
+    {
+        var rng = new Random(12345);
+
+        var client = new FakeGatewayClient();
+        var matchHistory = new FakeMatchHistoryService();
+        var elo = new FakeEloService();
+        var factionAssignment = new FactionAssignmentService(rng);
+        var factionRegistry = new FakeFactionRegistry();
+        var defaults = new FakeDefaultPreferences();
+
+        var path = Path.GetTempFileName();
+        File.WriteAllText(path, "[]");
+        var statsService = new PlayerStatsService(path);
+
+        var service = new GameService(
+            client,
+            matchHistory,
+            elo,
+            factionAssignment,
+            factionRegistry,
+            defaults,
+            rng
+        );
+
+        var lobby = CreateLobbyWithPlayers(16);
+        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
+
+        factionAssignment.AssignFactionsForGame(teamA, teamB,
+            TeamGroupService.GenerateValidSplit().Item1,
+            TeamGroupService.GenerateValidSplit().Item2);
+
+        for (int i = 0; i < teamA.Players.Count; i++)
+            teamA.Players[i].AssignedFaction = teamA.AssignedFactions[i].Name;
+
+        for (int i = 0; i < teamB.Players.Count; i++)
+            teamB.Players[i].AssignedFaction = teamB.AssignedFactions[i].Name;
+
+        var game = service.StartGame(lobby, teamA, teamB);
+
+        service.SubmitScore(game, 10, 5, statsService);
+
+        foreach (var p in teamA.Players)
+        {
+            var s = statsService.GetOrCreate(p.DiscordId);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1);
+        }
+
+        foreach (var p in teamB.Players)
+        {
+            var s = statsService.GetOrCreate(p.DiscordId);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Losses == 1);
+        }
+    }
+
 }

@@ -104,11 +104,13 @@ public class FullMatchFlowWithPreferencesTests
 
         var teamA = lobby.TeamA!;
         var teamB = lobby.TeamB!;
+
         for (int i = 0; i < teamA.Players.Count; i++)
         {
             var player = teamA.Players[i];
             var faction = teamA.AssignedFactions[i];
             Assert.Contains(faction.Name, Prefs[player.DiscordId]);
+            Assert.False(string.IsNullOrWhiteSpace(player.AssignedFaction));
         }
 
         for (int i = 0; i < teamB.Players.Count; i++)
@@ -116,6 +118,7 @@ public class FullMatchFlowWithPreferencesTests
             var player = teamB.Players[i];
             var faction = teamB.AssignedFactions[i];
             Assert.Contains(faction.Name, Prefs[player.DiscordId]);
+            Assert.False(string.IsNullOrWhiteSpace(player.AssignedFaction));
         }
 
         var game = gameService.StartGame(lobby, teamA, teamB);
@@ -125,5 +128,17 @@ public class FullMatchFlowWithPreferencesTests
         Assert.True(game.Finished);
         Assert.NotEmpty(changes);
         Assert.NotEmpty(history.History);
+
+        foreach (var p in teamA.Players)
+        {
+            var s = stats.GetOrCreate(p.DiscordId);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1);
+        }
+
+        foreach (var p in teamB.Players)
+        {
+            var s = stats.GetOrCreate(p.DiscordId);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Losses == 1);
+        }
     }
 }

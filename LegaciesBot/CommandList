@@ -1,0 +1,38 @@
+GENERAL / PLAYER COMMANDS
+
+!register
+!reg
+!recent
+
+LOBBY COMMANDS
+
+!join
+!j
+!leave
+!l
+!here
+!h
+!lobby
+!debugfill
+
+PREFERENCE COMMANDS
+
+!prefs
+!prefs show
+!prefs clear
+!prefs add <Faction> [Position]
+!prefs remove <Faction>
+!prefs <list of factions>
+
+STATS COMMANDS
+
+!stats
+!leaderboard [count]
+!compare <user1> <user2>
+
+MODERATION COMMANDS
+
+!listmods
+!makemod <userId>
+!removemod <userId>
+!kill
