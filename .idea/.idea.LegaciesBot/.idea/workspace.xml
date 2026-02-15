@@ -7,7 +7,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="" />
+    <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftEngineTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftEngineTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -32,6 +37,7 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
@@ -62,7 +68,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager">
+  <component name="RunManager" selected=".NET Project.LegaciesBot">
     <configuration name="LegaciesBot" type="DotNetProject" factoryName=".NET Project" temporary="true">
       <option name="EXE_PATH" value="$PROJECT_DIR$/LegaciesBot/bin/Debug/net10.0/LegaciesBot.exe" />
       <option name="PROGRAM_PARAMETERS" value="" />
@@ -105,6 +111,7 @@
       <workItem from="1771023346216" duration="2269000" />
       <workItem from="1771037377711" duration="238000" />
       <workItem from="1771073369109" duration="36000" />
+      <workItem from="1771172024263" duration="1109000" />
     </task>
     <servers />
   </component>
@@ -143,13 +150,13 @@
         </breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs</url>
-          <line>136</line>
+          <line>128</line>
           <properties documentPath="C:\Users\alber\RiderProjects\LegaciesBot\LegaciesBot.Tests\DraftSimulationOutput.cs" containingFunctionPresentation="Method 'CreatePlayers'">
             <startOffsets>
-              <option value="4028" />
+              <option value="3383" />
             </startOffsets>
             <endOffsets>
-              <option value="4234" />
+              <option value="3589" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="4" />

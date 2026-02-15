@@ -3,6 +3,7 @@ using LegaciesBot.Services;
 using LegaciesBot.GameData;
 using Moq;
 
+namespace LegaciesBot.Tests;
 public class DraftServiceTests
 {
     private Lobby CreateLobbyWith16Players()

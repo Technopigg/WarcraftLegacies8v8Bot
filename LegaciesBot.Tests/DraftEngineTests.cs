@@ -2,6 +2,7 @@ using LegaciesBot.Core;
 using LegaciesBot.GameData;
 using LegaciesBot.Services;
 
+namespace LegaciesBot.Tests;
 public class DraftEngineTests
 {
     private static List<Player> CreatePlayers(int count)

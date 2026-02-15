@@ -25,7 +25,7 @@ public class DraftSimulationOutput
 
     private static List<Player> CreatePlayers()
     {
-        // Helper to get faction names safely from registry
+
         string F(string name) => FactionRegistry.All.First(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)).Name;
 
@@ -34,8 +34,7 @@ public class DraftSimulationOutput
         var players = new List<Player>();
 
         ulong id = 1;
-
-        // 1. Nick – overridden: Dalaran, Legion, Druids
+        
         players.Add(CreatePlayer(id++, "Nick", 1500, new[]
         {
             F("Dalaran"),
@@ -43,7 +42,6 @@ public class DraftSimulationOutput
             F("Druids")
         }));
 
-        // 2. Boggywoggy (fel aq sw lord Druids scourge)
         players.Add(CreatePlayer(id++, "Boggywoggy", 1450, new[]
         {
             F("Fel Horde"),
@@ -54,7 +52,6 @@ public class DraftSimulationOutput
             F("Scourge")
         }));
 
-        // 3. Konan (warsong AQ Illidan sents scourge fel kt)
         players.Add(CreatePlayer(id++, "Konan", 1500, new[]
         {
             F("Warsong"),
@@ -66,7 +63,6 @@ public class DraftSimulationOutput
             F("Kul'tiras")
         }));
 
-        // 4. Dia (everything except scourge gilneas and sunfury)
         var diaPrefs = allFactionNames
             .Where(n =>
                 !string.Equals(n, "Scourge", StringComparison.OrdinalIgnoreCase) &&
@@ -74,8 +70,7 @@ public class DraftSimulationOutput
                 !string.Equals(n, "Sunfury", StringComparison.OrdinalIgnoreCase))
             .ToList();
         players.Add(CreatePlayer(id++, "Dia", 1550, diaPrefs));
-
-        // 5. Helsac (lord skywall sw)
+        
         players.Add(CreatePlayer(id++, "Helsac", 1400, new[]
         {
             F("Lordaeron"),
@@ -83,7 +78,6 @@ public class DraftSimulationOutput
             F("Stormwind")
         }));
 
-        // 6. Grom (dwarfs, sw, dranaei Druids lord kt Illidan gilneas sents BE legion)
         players.Add(CreatePlayer(id++, "Grom", 1520, new[]
         {
             F("Ironforge"),
@@ -99,7 +93,6 @@ public class DraftSimulationOutput
             F("Legion")
         }));
 
-        // 7. Linaz (skywall scourge aq sents dranaei quel Illidan fel dalaran dwarfs kt)
         players.Add(CreatePlayer(id++, "Linaz", 1480, new[]
         {
             F("Skywall"),
@@ -115,7 +108,7 @@ public class DraftSimulationOutput
             F("Kul'tiras")
         }));
 
-        // 8. Theg (lord sents dwarfs)
+      
         players.Add(CreatePlayer(id++, "Theg", 1420, new[]
         {
             F("Lordaeron"),
@@ -123,7 +116,6 @@ public class DraftSimulationOutput
             F("Ironforge")
         }));
 
-        // 9. Technopig (dalaran quel kt Illidan sw)
         players.Add(CreatePlayer(id++, "Technopig", 1490, new[]
         {
             F("Dalaran"),
@@ -133,7 +125,7 @@ public class DraftSimulationOutput
             F("Stormwind")
         }));
 
-        // 10. Enclop (warsong skywall dalaran scourge kt)
+
         players.Add(CreatePlayer(id++, "Enclop", 1460, new[]
         {
             F("Warsong"),
@@ -143,7 +135,7 @@ public class DraftSimulationOutput
             F("Kul'tiras")
         }));
 
-        // 11. Lukas (gilneas lord quel fw fel Kt)
+
         players.Add(CreatePlayer(id++, "Lukas", 1440, new[]
         {
             F("Gilneas"),
@@ -154,7 +146,7 @@ public class DraftSimulationOutput
             F("Kul'tiras")
         }));
 
-        // 12. Alan (Illidan legion Druids quel lord)
+     
         players.Add(CreatePlayer(id++, "Alan", 1510, new[]
         {
             F("Illidari"),
@@ -164,7 +156,7 @@ public class DraftSimulationOutput
             F("Lordaeron")
         }));
 
-        // 13. Royce (fel scourge cows Kt lord)
+    
         players.Add(CreatePlayer(id++, "Royce", 1470, new[]
         {
             F("Fel Horde"),
@@ -173,8 +165,7 @@ public class DraftSimulationOutput
             F("Kul'tiras"),
             F("Lordaeron")
         }));
-
-        // 14. Petertros (Kt lord sw dranaei quel)
+        
         players.Add(CreatePlayer(id++, "Petertros", 1430, new[]
         {
             F("Kul'tiras"),
@@ -183,8 +174,7 @@ public class DraftSimulationOutput
             F("The Exodar"),
             F("Quel'thalas")
         }));
-
-        // 15. Dragozer (dalaran scourge fel warsong sents sw sunfur)
+        
         players.Add(CreatePlayer(id++, "Dragozer", 1505, new[]
         {
             F("Dalaran"),
@@ -195,8 +185,7 @@ public class DraftSimulationOutput
             F("Stormwind"),
             F("Sunfury")
         }));
-
-        // 16. Madsen (lord sw warsong sunfury gilneas skywall dranaei)
+        
         players.Add(CreatePlayer(id++, "Madsen", 1455, new[]
         {
             F("Lordaeron"),
