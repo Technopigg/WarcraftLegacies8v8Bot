@@ -1,4 +1,5 @@
-﻿using NetCord.Services.Commands;
+﻿using LegaciesBot.Core;
+using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.GameData;
 
@@ -10,17 +11,20 @@ namespace LegaciesBot.Discord
         private readonly GameService _gameService;
         private readonly PlayerDataService _playerData;
         private readonly PlayerStatsService _playerStats;
+        private readonly PlayerRegistryService _playerRegistry;
 
         public LobbyCommands(
             LobbyService lobbyService,
             GameService gameService,
             PlayerDataService playerData,
-            PlayerStatsService playerStats)
+            PlayerStatsService playerStats,
+            PlayerRegistryService playerRegistry)
         {
             _lobbyService = lobbyService;
             _gameService = gameService;
             _playerData = playerData;
             _playerStats = playerStats;
+            _playerRegistry = playerRegistry;
         }
 
         [Command("join")]
@@ -34,7 +38,7 @@ namespace LegaciesBot.Discord
 
             if (player != null)
             {
-                await ctx.Message.ReplyAsync($"{player.Name}, you are already in the lobby.");
+                await ctx.Message.ReplyAsync($"{player.DisplayName()}, you are already in the lobby.");
                 return;
             }
 
@@ -47,17 +51,19 @@ namespace LegaciesBot.Discord
             var stats = _playerStats.GetOrCreate(player.DiscordId);
             player.Elo = stats.Elo;
 
+            string display = player.DisplayName();
+
             if (savedPrefs.Count > 0)
             {
                 await ctx.Message.ReplyAsync(
-                    $"Welcome {player.Name}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
+                    $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
                     $"Type `!prefs <list>` to update them."
                 );
             }
             else
             {
                 await ctx.Message.ReplyAsync(
-                    $"Welcome {player.Name}! Submit your faction preferences with `!prefs <list>`."
+                    $"Welcome {display}! Submit your faction preferences with `!prefs <list>`."
                 );
             }
 
@@ -104,7 +110,6 @@ namespace LegaciesBot.Discord
                 await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
         }
 
-
         [Command("prefs")]
         public async Task Preferences(params string[] args)
         {
@@ -114,13 +119,19 @@ namespace LegaciesBot.Discord
             if (ctx.Message.MentionedUsers.Count > 0)
             {
                 var mentioned = ctx.Message.MentionedUsers[0];
-                await ShowPreferencesForUser(mentioned.Id, mentioned.Username);
+                var reg = _playerRegistry.GetPlayer(mentioned.Id);
+                string display = reg?.DisplayName() ?? mentioned.Username;
+
+                await ShowPreferencesForUser(mentioned.Id, display);
                 return;
             }
 
             if (args.Length == 0)
             {
-                await ShowPreferencesForUser(callerId, ctx.Message.Author.Username);
+                var reg = _playerRegistry.GetPlayer(callerId);
+                string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
+
+                await ShowPreferencesForUser(callerId, display);
                 return;
             }
 
@@ -128,7 +139,10 @@ namespace LegaciesBot.Discord
 
             if (sub == "show")
             {
-                await ShowPreferencesForUser(callerId, ctx.Message.Author.Username);
+                var reg = _playerRegistry.GetPlayer(callerId);
+                string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
+
+                await ShowPreferencesForUser(callerId, display);
                 return;
             }
 
@@ -153,7 +167,7 @@ namespace LegaciesBot.Discord
             await SetPreferencesList(callerId, args);
         }
 
-        private async Task ShowPreferencesForUser(ulong userId, string username)
+        private async Task ShowPreferencesForUser(ulong userId, string displayName)
         {
             var prefs = _playerData.GetPreferences(userId);
 
@@ -162,7 +176,7 @@ namespace LegaciesBot.Discord
                 await Context.Message.ReplyAsync(
                     userId == Context.Message.Author.Id
                         ? "You have no faction preferences set."
-                        : $"{username} has no faction preferences set."
+                        : $"{displayName} has no faction preferences set."
                 );
             }
             else
@@ -170,7 +184,7 @@ namespace LegaciesBot.Discord
                 await Context.Message.ReplyAsync(
                     userId == Context.Message.Author.Id
                         ? $"Your current faction preferences are: {string.Join(", ", prefs)}"
-                        : $"{username}'s current faction preferences are: {string.Join(", ", prefs)}"
+                        : $"{displayName}'s current faction preferences are: {string.Join(", ", prefs)}"
                 );
             }
         }
@@ -184,7 +198,7 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            _playerData.SetPreferences(userId, new System.Collections.Generic.List<string>());
+            _playerData.SetPreferences(userId, new List<string>());
             await Context.Message.ReplyAsync("Your faction preferences have been cleared.");
         }
 
@@ -314,6 +328,7 @@ namespace LegaciesBot.Discord
                 $"Your faction preferences have been updated to: {string.Join(", ", factions)}"
             );
         }
+
         [Command("leave")]
         [Command("l")]
         public async Task LeaveLobby()
@@ -328,7 +343,10 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            await ctx.Message.ReplyAsync($"{ctx.Message.Author.Username} has left the lobby.");
+            var reg = _playerRegistry.GetPlayer(ctx.Message.Author.Id);
+            string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
+
+            await ctx.Message.ReplyAsync($"{display} has left the lobby.");
         }
 
         [Command("here")]
@@ -345,9 +363,11 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            await ctx.Message.ReplyAsync($"{ctx.Message.Author.Username}, all good!");
-        }
+            var reg = _playerRegistry.GetPlayer(ctx.Message.Author.Id);
+            string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
 
+            await ctx.Message.ReplyAsync($"{display}, all good!");
+        }
 
         [Command("lobby")]
         public async Task ListLobbyMembers()
@@ -363,10 +383,9 @@ namespace LegaciesBot.Discord
             }
 
             string msg = "Current lobby members:\n" +
-                         string.Join("\n", members.Select(p => $"- {p.Name}"));
+                         string.Join("\n", members.Select(p => $"- {p.DisplayName()}"));
 
             await ctx.Message.ReplyAsync(msg);
         }
-
     }
 }

@@ -175,7 +175,7 @@ public class GameServiceTests
         var client = new FakeGatewayClient();
         var matchHistory = new FakeMatchHistoryService();
         var elo = new FakeEloService();
-        var factionAssignment = new FactionAssignmentService(rng);
+        var factionAssignment = new FactionAssignmentStub();
         var factionRegistry = new FakeFactionRegistry();
         var defaults = new FakeDefaultPreferences();
 
@@ -222,5 +222,4 @@ public class GameServiceTests
             Assert.True(s.FactionHistory[p.AssignedFaction].Losses == 1);
         }
     }
-
 }

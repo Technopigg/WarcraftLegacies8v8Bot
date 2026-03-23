@@ -8,10 +8,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/NicknameTests.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LegaciesBot/Extensions/PlayerExtensions.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftEngineTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftEngineTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/TestStubs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/TestStubs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/GameCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/GameCommands.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/StatsCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/StatsCommands.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/FactionAssignmentService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/FactionAssignmentService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/MatchHistoryService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/MatchHistoryService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PlayerRegistryService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PlayerRegistryService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PlayerStatsService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PlayerStatsService.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,8 +49,9 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationTests.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="SWEA" />
@@ -112,6 +125,10 @@
       <workItem from="1771037377711" duration="238000" />
       <workItem from="1771073369109" duration="36000" />
       <workItem from="1771172024263" duration="1109000" />
+      <workItem from="1771369093377" duration="1535000" />
+      <workItem from="1774273042383" duration="2470000" />
+      <workItem from="1774275547589" duration="7000" />
+      <workItem from="1774275571394" duration="4962000" />
     </task>
     <servers />
   </component>
@@ -160,6 +177,19 @@
             </endOffsets>
           </properties>
           <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/LegaciesBot.Tests/TeamGroupServiceTests.cs</url>
+          <line>55</line>
+          <properties documentPath="C:\Users\alber\RiderProjects\LegaciesBot\LegaciesBot.Tests\TeamGroupServiceTests.cs" containingFunctionPresentation="Method 'GenerateValidSplit_AllGroupsAssignedExactlyOnce'">
+            <startOffsets>
+              <option value="1930" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1973" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

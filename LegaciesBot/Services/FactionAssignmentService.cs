@@ -55,7 +55,7 @@ namespace LegaciesBot.Services
                     .ToList();
 
                 if (!availableFactions.Any())
-                    throw new Exception($"No available factions left for team {team.Name} before assigning player {player.Name}");
+                    throw new Exception($"No available factions left for team {team.Name} before assigning player {player.DisplayName()}");
 
                 Faction? assigned = null;
 
@@ -87,7 +87,7 @@ namespace LegaciesBot.Services
                 }
 
                 if (assigned == null)
-                    throw new Exception($"No available faction to assign for player {player.Name} in team {team.Name}");
+                    throw new Exception($"No available faction to assign for player {player.DisplayName()} in team {team.Name}");
 
                 team.AssignedFactions.Add(assigned);
                 usedFactionNames.Add(assigned.Name);

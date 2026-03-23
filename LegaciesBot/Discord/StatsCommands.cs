@@ -1,28 +1,35 @@
-﻿using NetCord;
+﻿using LegaciesBot.Core;
+using NetCord;
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
-
 
 namespace LegaciesBot.Discord
 {
     public class StatsCommands : CommandModule<CommandContext>
     {
         private readonly PlayerStatsService _playerStats;
+        private readonly PlayerRegistryService _playerRegistry;
 
-        public StatsCommands(PlayerStatsService playerStats)
+        public StatsCommands(PlayerStatsService playerStats, PlayerRegistryService playerRegistry)
         {
             _playerStats = playerStats;
+            _playerRegistry = playerRegistry;
         }
-
+        
         [Command("stats")]
         public async Task Stats()
         {
             var ctx = this.Context;
-            var stats = _playerStats.GetOrCreate(ctx.Message.Author.Id);
+            var playerId = ctx.Message.Author.Id;
+
+            var reg = _playerRegistry.GetPlayer(playerId);
+            string displayName = reg?.DisplayName() ?? ctx.Message.Author.Username;
+
+            var stats = _playerStats.GetOrCreate(playerId);
 
             var lines = new List<string>
             {
-                $"Stats for {ctx.Message.Author.Username}:",
+                $"Stats for **{displayName}**:",
                 $"- Elo: {stats.Elo}",
                 $"- Games: {stats.GamesPlayed}",
                 $"- Wins: {stats.Wins}",
@@ -47,7 +54,7 @@ namespace LegaciesBot.Discord
 
             await ctx.Message.ReplyAsync(string.Join("\n", lines));
         }
-
+        
         [Command("leaderboard")]
         public async Task Leaderboard(int count = 10)
         {
@@ -67,9 +74,13 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            var lines = all
-                .Select((s, i) =>
-                    $"{i + 1}. <@{s.DiscordId}> — Elo: {s.Elo} (W:{s.Wins}/L:{s.Losses})");
+            var lines = all.Select((s, i) =>
+            {
+                var reg = _playerRegistry.GetPlayer(s.DiscordId);
+                string name = reg?.DisplayName() ?? $"<@{s.DiscordId}>";
+
+                return $"{i + 1}. {name} — Elo: {s.Elo} (W:{s.Wins}/L:{s.Losses})";
+            });
 
             var msg = "Leaderboard:\n" + string.Join("\n", lines);
 
@@ -84,10 +95,16 @@ namespace LegaciesBot.Discord
             var p1 = _playerStats.GetOrCreate(user1.Id);
             var p2 = _playerStats.GetOrCreate(user2.Id);
 
+            var r1 = _playerRegistry.GetPlayer(user1.Id);
+            var r2 = _playerRegistry.GetPlayer(user2.Id);
+
+            string name1 = r1?.DisplayName() ?? user1.Username;
+            string name2 = r2?.DisplayName() ?? user2.Username;
+
             var lines = new List<string>
             {
                 $"Comparison:",
-                $"{user1.Username} vs {user2.Username}",
+                $"{name1} vs {name2}",
                 "",
                 "Overall:",
                 $"- {p1.Elo} Elo vs {p2.Elo} Elo",
@@ -104,10 +121,10 @@ namespace LegaciesBot.Discord
 
                 foreach (var faction in shared.OrderBy(f => f))
                 {
-                    var r1 = p1.FactionHistory[faction];
-                    var r2 = p2.FactionHistory[faction];
+                    var f1 = p1.FactionHistory[faction];
+                    var f2 = p2.FactionHistory[faction];
 
-                    lines.Add($"- {faction}: {r1.WinRate:F1}% vs {r2.WinRate:F1}%");
+                    lines.Add($"- {faction}: {f1.WinRate:F1}% vs {f2.WinRate:F1}%");
                 }
             }
             else
@@ -117,6 +134,5 @@ namespace LegaciesBot.Discord
 
             await ctx.Message.ReplyAsync(string.Join("\n", lines));
         }
-
     }
 }

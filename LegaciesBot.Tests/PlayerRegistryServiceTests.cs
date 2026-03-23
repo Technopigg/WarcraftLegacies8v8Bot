@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using LegaciesBot.Core;
 using LegaciesBot.Services;
 using Xunit;
 
@@ -33,7 +34,7 @@ public class PlayerRegistryServiceTests
 
         Assert.NotNull(p);
         Assert.Equal((ulong)1, p.DiscordId);
-        Assert.Equal("Techno", p.Name);
+        Assert.Equal("Techno", p.DisplayName());
         Assert.True(p.IsActive);
         Assert.True(p.JoinedAt <= DateTime.UtcNow);
     }
@@ -78,11 +79,11 @@ public class PlayerRegistryServiceTests
         var all = registry.GetAllPlayers();
 
         Assert.Equal(5, all.Count);
-        Assert.Contains(all, p => p.Name == "Techno");
-        Assert.Contains(all, p => p.Name == "Nick");
-        Assert.Contains(all, p => p.Name == "Vamp");
-        Assert.Contains(all, p => p.Name == "Madsen");
-        Assert.Contains(all, p => p.Name == "Yak");
+        Assert.Contains(all, p => p.DisplayName() == "Techno");
+        Assert.Contains(all, p => p.DisplayName() == "Nick");
+        Assert.Contains(all, p => p.DisplayName() == "Vamp");
+        Assert.Contains(all, p => p.DisplayName() == "Madsen");
+        Assert.Contains(all, p => p.DisplayName() == "Yak");
     }
 
     [Fact]

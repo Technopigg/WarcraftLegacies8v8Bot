@@ -96,7 +96,7 @@ public class FullMatchFlowTests
         foreach (var p in lobby.TeamA!.Players)
         {
             var s = stats.GetOrCreate(p.DiscordId);
-            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1);
+            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1); 
         }
 
         foreach (var p in lobby.TeamB!.Players)

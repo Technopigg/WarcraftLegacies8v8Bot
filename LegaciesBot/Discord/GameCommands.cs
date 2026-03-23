@@ -1,455 +1,579 @@
 ﻿using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Core;
-using System.Linq;
 
-namespace LegaciesBot.Discord;
-
-public class GameCommands : CommandModule<CommandContext>
+namespace LegaciesBot.Discord
 {
-    private readonly GameService _gameService;
-    private readonly LobbyService _lobbyService;
-    private readonly PlayerStatsService _stats;
-    private readonly PermissionService _permissions;
-    private readonly PlayerDataService _playerDataService;
-    private readonly MatchHistoryService _matchHistoryService;
-    private readonly PlayerRegistryService _playerRegistry;
-
-
-
-
-    public GameCommands(
-        GameService gameService,
-        LobbyService lobbyService,
-        PlayerDataService playerDataService,
-        PlayerStatsService stats,
-        PermissionService permissions,
-        MatchHistoryService matchHistoryService,
-        PlayerRegistryService playerRegistry)
+    public class GameCommands : CommandModule<CommandContext>
     {
-        _gameService = gameService;
-        _lobbyService = lobbyService;
-        _playerDataService = playerDataService;
-        _stats = stats;
-        _permissions = permissions;
-        _matchHistoryService = matchHistoryService;
-        _playerRegistry = playerRegistry;
-    }
+        private readonly GameService _gameService;
+        private readonly LobbyService _lobbyService;
+        private readonly PlayerStatsService _stats;
+        private readonly PermissionService _permissions;
+        private readonly PlayerDataService _playerDataService;
+        private readonly MatchHistoryService _matchHistoryService;
+        private readonly PlayerRegistryService _playerRegistry;
 
-    [Command("register")]
-    [Command("reg")]
-    public async Task Register()
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-        string name = ctx.Message.Author.Username;
-
-        if (_playerRegistry.IsRegistered(userId))
+        public GameCommands(
+            GameService gameService,
+            LobbyService lobbyService,
+            PlayerDataService playerDataService,
+            PlayerStatsService stats,
+            PermissionService permissions,
+            MatchHistoryService matchHistoryService,
+            PlayerRegistryService playerRegistry)
         {
-            await ctx.Message.ReplyAsync("You are already registered.");
-            return;
+            _gameService = gameService;
+            _lobbyService = lobbyService;
+            _playerDataService = playerDataService;
+            _stats = stats;
+            _permissions = permissions;
+            _matchHistoryService = matchHistoryService;
+            _playerRegistry = playerRegistry;
         }
 
-        var player = _playerRegistry.RegisterPlayer(userId, name);
-
-
-        _stats.GetOrCreate(userId);
-
-        await ctx.Message.ReplyAsync(
-            $"Registration complete. Welcome, **{player.Name}**! Your starting Elo is **{player.Elo}**."
-        );
-    }
-
-
-    [Command("recent")]
-    public async Task RecentMatches()
-    {
-        var ctx = this.Context;
-
-        var history = _matchHistoryService.History;
-
-        if (history.Count == 0)
+        // ============================================================
+        //  REGISTER
+        // ============================================================
+        [Command("register")]
+        [Command("reg")]
+        public async Task Register()
         {
-            await ctx.Message.ReplyAsync("No matches have been recorded yet.");
-            return;
-        }
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+            string name = ctx.Message.Author.Username;
 
-        var lastMatches = history
-            .OrderByDescending(m => m.Timestamp)
-            .Take(5)
-            .ToList();
+            if (_playerRegistry.IsRegistered(userId))
+            {
+                await ctx.Message.ReplyAsync("You are already registered.");
+                return;
+            }
 
-        string msg = "=== RECENT MATCHES ===\n\n";
+            var player = _playerRegistry.RegisterPlayer(userId, name);
 
-        foreach (var match in lastMatches)
-        {
-            bool teamAWon = match.ScoreA > match.ScoreB;
-            bool draw = match.ScoreA == 0 && match.ScoreB == 0;
+            _stats.GetOrCreate(userId);
 
-            string result = draw
-                ? "Draw"
-                : teamAWon ? "Team A Win" : "Team B Win";
-
-            msg += $"**Game {match.GameId}** — {result}\n";
-            msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
-
-            msg += "Team A Elo: ";
-            msg += string.Join(", ", match.TeamA.Select(p =>
-                $"{p.Name} ({(p.EloChange >= 0 ? "+" : "")}{p.EloChange})"
-            ));
-            msg += "\n";
-
-            msg += "Team B Elo: ";
-            msg += string.Join(", ", match.TeamB.Select(p =>
-                $"{p.Name} ({(p.EloChange >= 0 ? "+" : "")}{p.EloChange})"
-            ));
-            msg += "\n\n";
-        }
-
-        await ctx.Message.ReplyAsync(msg);
-    }
-
-
-    [Command("listmods")]
-    public async Task ListMods()
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsMod(userId))
-        {
-            await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        if (!_permissions.Data.Mods.Any())
-        {
-            await ctx.Message.ReplyAsync("There are currently no mods assigned.");
-            return;
-        }
-
-        string msg = "**Current Mods:**\n";
-
-        foreach (var modId in _permissions.Data.Mods)
-            msg += $"- <@{modId}>\n";
-
-        await ctx.Message.ReplyAsync(msg);
-    }
-
-    [Command("removemod")]
-    public async Task RemoveMod(ulong targetUserId)
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsAdmin(userId))
-        {
-            await ctx.Message.ReplyAsync("Only admins can use this command.");
-            return;
-        }
-
-        if (!_permissions.Data.Mods.Contains(targetUserId))
-        {
-            await ctx.Message.ReplyAsync("That user is not a mod.");
-            return;
-        }
-
-        _permissions.RemoveMod(targetUserId);
-
-        await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been removed from **Mod** status.");
-    }
-
-    [Command("makemod")]
-    public async Task MakeMod(ulong targetUserId)
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsAdmin(userId))
-        {
-            await ctx.Message.ReplyAsync("Only admins can use this command.");
-            return;
-        }
-
-        _permissions.AddMod(targetUserId);
-
-        await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been added as a **Mod**.");
-    }
-    [Command("kill")]
-    public async Task KillGame()
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsMod(userId))
-        {
-            await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        var games = _gameService.GetOngoingGames();
-        if (!games.Any())
-        {
-            await ctx.Message.ReplyAsync("There are no ongoing games to kill.");
-            return;
-        }
-
-        if (games.Count > 1)
-        {
-            await ctx.Message.ReplyAsync("Multiple games active. Use: `!kill <gameId>`");
-            return;
-        }
-
-        var game = games.First();
-        game.Lobby.Players.Clear();
-        game.Lobby.DraftStarted = false;
-        game.Finished = true;
-
-        await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
-    }
-
-    [Command("kill")]
-    public async Task KillGame(int gameId)
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsMod(userId))
-        {
-            await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
-
-        if (game == null)
-        {
-            await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
-            return;
-        }
-
-        game.Lobby.Players.Clear();
-        game.Lobby.DraftStarted = false;
-        game.Finished = true;
-
-        await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
-    }
-
-    [Command("forcescore")]
-    public async Task ForceScore(int scoreA, int scoreB)
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsMod(userId))
-        {
-            await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
-        {
-            await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
-            return;
-        }
-
-        var games = _gameService.GetOngoingGames();
-        if (!games.Any())
-        {
-            await ctx.Message.ReplyAsync("There are no ongoing games.");
-            return;
-        }
-
-        if (games.Count > 1)
-        {
-            await ctx.Message.ReplyAsync("Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
-            return;
-        }
-
-        await FinalizeForcedScore(games.First(), scoreA, scoreB);
-    }
-
-    [Command("forcescore")]
-    public async Task ForceScore(int gameId, int scoreA, int scoreB)
-    {
-        var ctx = this.Context;
-        ulong userId = ctx.Message.Author.Id;
-
-        if (!_permissions.IsMod(userId))
-        {
-            await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
-        {
-            await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
-            return;
-        }
-
-        var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
-
-        if (game == null)
-        {
-            await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
-            return;
-        }
-
-        await FinalizeForcedScore(game, scoreA, scoreB);
-    }
-
-    private async Task FinalizeForcedScore(Game game, int scoreA, int scoreB)
-    {
-        var ctx = this.Context;
-
-        var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
-
-        bool teamAWon = scoreA > scoreB;
-        bool draw = scoreA == 0 && scoreB == 0;
-
-        string resultText = draw
-            ? "🤝 **The match ends in a draw!**"
-            : teamAWon ? "🏆 **Team A wins!**" : "🏆 **Team B wins!**";
-
-        string msg = $"{resultText}\n\n";
-        msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
-        msg += "**Elo changes:**\n\n";
-
-        msg += "**Team A:**\n";
-        foreach (var p in game.TeamA.Players)
-        {
-            int delta = changes[p.DiscordId];
-            string sign = delta >= 0 ? "+" : "";
-            msg += $"{p.Name} {sign}{delta}\n";
-        }
-
-        msg += "\n**Team B:**\n";
-        foreach (var p in game.TeamB.Players)
-        {
-            int delta = changes[p.DiscordId];
-            string sign = delta >= 0 ? "+" : "";
-            msg += $"{p.Name} {sign}{delta}\n";
-        }
-
-        await ctx.Message.ReplyAsync(msg);
-    }
-
-    [Command("games")]
-    [Command("g")]
-    public async Task ListGames()
-    {
-        var ctx = this.Context;
-
-        var games = _gameService.GetOngoingGames();
-        if (!games.Any())
-        {
-            await ctx.Message.ReplyAsync("There are no ongoing games.");
-            return;
-        }
-
-        string msg = "=== ONGOING GAMES ===\n";
-        foreach (var game in games)
-        {
-            msg += $"Game {game.Id}: Team A ({string.Join(", ", game.TeamA.Players.Select(p => p.Name))}) " +
-                   $"vs Team B ({string.Join(", ", game.TeamB.Players.Select(p => p.Name))})\n";
-        }
-
-        await ctx.Message.ReplyAsync(msg);
-    }
-
-    [Command("score")]
-    public async Task SubmitScore(int scoreA, int scoreB)
-    {
-        var ctx = this.Context;
-
-        if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
-        {
-            await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
-            return;
-        }
-
-        var games = _gameService.GetOngoingGames();
-
-        if (!games.Any())
-        {
-            await ctx.Message.ReplyAsync("There are no ongoing games.");
-            return;
-        }
-
-        Game game;
-
-        if (games.Count == 1)
-            game = games.First();
-        else
-        {
             await ctx.Message.ReplyAsync(
-                "Multiple games are active. Please specify the game ID: `!score <gameId> <scoreA> <scoreB>`"
+                $"Registration complete. Welcome, **{player.DisplayName()}**! Your starting Elo is **{player.Elo}**."
             );
-            return;
         }
 
-        var playerId = ctx.Message.Author.Id;
 
-        bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
-                          || game.TeamB.Players.Any(p => p.DiscordId == playerId);
-
-        if (!isParticipant)
+        [Command("recent")]
+        public async Task RecentMatches()
         {
-            await ctx.Message.ReplyAsync("You are not a participant in this game and cannot submit a score.");
-            return;
-        }
+            var ctx = this.Context;
 
-        if (game.Finished)
+            var history = _matchHistoryService.History;
+
+            if (history.Count == 0)
+            {
+                await ctx.Message.ReplyAsync("No matches have been recorded yet.");
+                return;
+            }
+
+            var lastMatches = history
+                .OrderByDescending(m => m.Timestamp)
+                .Take(5)
+                .ToList();
+
+            string msg = "=== RECENT MATCHES ===\n\n";
+
+            foreach (var match in lastMatches)
+            {
+                bool teamAWon = match.ScoreA > match.ScoreB;
+                bool draw = match.ScoreA == 0 && match.ScoreB == 0;
+
+                string result = draw
+                    ? "Draw"
+                    : teamAWon
+                        ? "Team A Win"
+                        : "Team B Win";
+
+                msg += $"**Game {match.GameId}** — {result}\n";
+                msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
+
+      
+                msg += "Team A Elo: ";
+                msg += string.Join(", ",
+                    match.TeamA.Select(p =>
+                    {
+                        var sign = p.EloChange >= 0 ? "+" : "";
+                        return $"{p.DisplayName()} ({sign}{p.EloChange})";
+                    })
+                );
+                msg += "\n";
+
+            
+                msg += "Team B Elo: ";
+                msg += string.Join(", ",
+                    match.TeamB.Select(p =>
+                    {
+                        var sign = p.EloChange >= 0 ? "+" : "";
+                        return $"{p.DisplayName()} ({sign}{p.EloChange})";
+                    })
+                );
+                msg += "\n\n";
+            }
+
+            await ctx.Message.ReplyAsync(msg);
+        }
+        
+        [Command("listmods")]
+        public async Task ListMods()
         {
-            await ctx.Message.ReplyAsync("This game has already been completed.");
-            return;
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsMod(userId))
+            {
+                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
+            if (!_permissions.Data.Mods.Any())
+            {
+                await ctx.Message.ReplyAsync("There are currently no mods assigned.");
+                return;
+            }
+
+            string msg = "**Current Mods:**\n";
+
+            foreach (var modId in _permissions.Data.Mods)
+                msg += $"- <@{modId}>\n";
+
+            await ctx.Message.ReplyAsync(msg);
         }
 
-        game.ScoreSubmissions[playerId] = (scoreA, scoreB);
-
-        int matchingVotes = game.ScoreSubmissions
-            .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
-
-        int totalPlayers = game.TeamA.Players.Count + game.TeamB.Players.Count;
-        int required = (totalPlayers / 2) + 1;
-
-        if (matchingVotes < required)
+        [Command("removemod")]
+        public async Task RemoveMod(ulong targetUserId)
         {
-            await ctx.Message.ReplyAsync(
-                $"Score recorded. {matchingVotes}/{required} votes for {scoreA}-{scoreB}."
-            );
-            return;
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsAdmin(userId))
+            {
+                await ctx.Message.ReplyAsync("Only admins can use this command.");
+                return;
+            }
+
+            if (!_permissions.Data.Mods.Contains(targetUserId))
+            {
+                await ctx.Message.ReplyAsync("That user is not a mod.");
+                return;
+            }
+
+            _permissions.RemoveMod(targetUserId);
+
+            await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been removed from **Mod** status.");
         }
 
-        var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
-
-        bool teamAWon = scoreA > scoreB;
-        bool draw = scoreA == 0 && scoreB == 0;
-
-        string resultText = draw
-            ? "🤝 **The match ends in a draw!**"
-            : teamAWon ? "🏆 **Team A wins!**" : "🏆 **Team B wins!**";
-
-        string msg = $"{resultText}\n\n";
-        msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
-        msg += "**Elo changes:**\n\n";
-
-        msg += "**Team A:**\n";
-        foreach (var p in game.TeamA.Players)
+        [Command("makemod")]
+        public async Task MakeMod(ulong targetUserId)
         {
-            int delta = changes[p.DiscordId];
-            string sign = delta >= 0 ? "+" : "";
-            msg += $"{p.Name} {sign}{delta}\n";
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsAdmin(userId))
+            {
+                await ctx.Message.ReplyAsync("Only admins can use this command.");
+                return;
+            }
+
+            _permissions.AddMod(targetUserId);
+
+            await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been added as a **Mod**.");
         }
 
-        msg += "\n**Team B:**\n";
-        foreach (var p in game.TeamB.Players)
+        // ============================================================
+        //  KILL GAME
+        // ============================================================
+        [Command("kill")]
+        public async Task KillGame()
         {
-            int delta = changes[p.DiscordId];
-            string sign = delta >= 0 ? "+" : "";
-            msg += $"{p.Name} {sign}{delta}\n";
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsMod(userId))
+            {
+                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
+            var games = _gameService.GetOngoingGames();
+            if (!games.Any())
+            {
+                await ctx.Message.ReplyAsync("There are no ongoing games to kill.");
+                return;
+            }
+
+            if (games.Count > 1)
+            {
+                await ctx.Message.ReplyAsync("Multiple games active. Use: `!kill <gameId>`");
+                return;
+            }
+
+            var game = games.First();
+            game.Lobby.Players.Clear();
+            game.Lobby.DraftStarted = false;
+            game.Finished = true;
+
+            await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
         }
 
-        await ctx.Message.ReplyAsync(msg);
+        [Command("kill")]
+        public async Task KillGame(int gameId)
+        {
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsMod(userId))
+            {
+                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
+            var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
+
+            if (game == null)
+            {
+                await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
+                return;
+            }
+
+            game.Lobby.Players.Clear();
+            game.Lobby.DraftStarted = false;
+            game.Finished = true;
+
+            await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
+        }
+
+        // ============================================================
+        //  FORCE SCORE
+        // ============================================================
+        [Command("forcescore")]
+        public async Task ForceScore(int scoreA, int scoreB)
+        {
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsMod(userId))
+            {
+                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
+            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
+            {
+                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
+                return;
+            }
+
+            var games = _gameService.GetOngoingGames();
+            if (!games.Any())
+            {
+                await ctx.Message.ReplyAsync("There are no ongoing games.");
+                return;
+            }
+
+            if (games.Count > 1)
+            {
+                await ctx.Message.ReplyAsync("Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
+                return;
+            }
+
+            await FinalizeForcedScore(games.First(), scoreA, scoreB);
+        }
+
+        [Command("forcescore")]
+        public async Task ForceScore(int gameId, int scoreA, int scoreB)
+        {
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsMod(userId))
+            {
+                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
+            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
+            {
+                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
+                return;
+            }
+
+            var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
+
+            if (game == null)
+            {
+                await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
+                return;
+            }
+
+            await FinalizeForcedScore(game, scoreA, scoreB);
+        }
+
+        private async Task FinalizeForcedScore(Game game, int scoreA, int scoreB)
+        {
+            var ctx = this.Context;
+
+            var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
+
+            bool teamAWon = scoreA > scoreB;
+            bool draw = scoreA == 0 && scoreB == 0;
+
+            string resultText = draw
+                ? "🤝 **The match ends in a draw!**"
+                : teamAWon
+                    ? "🏆 **Team A wins!**"
+                    : "🏆 **Team B wins!**";
+
+            string msg = $"{resultText}\n\n";
+            msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
+            msg += "**Elo changes:**\n\n";
+
+            msg += "**Team A:**\n";
+            foreach (var p in game.TeamA.Players)
+            {
+                int delta = changes[p.DiscordId];
+                string sign = delta >= 0 ? "+" : "";
+                msg += $"{p.DisplayName()} {sign}{delta}\n";
+            }
+
+            msg += "\n**Team B:**\n";
+            foreach (var p in game.TeamB.Players)
+            {
+                int delta = changes[p.DiscordId];
+                string sign = delta >= 0 ? "+" : "";
+                msg += $"{p.DisplayName()} {sign}{delta}\n";
+            }
+
+            await ctx.Message.ReplyAsync(msg);
+        }
+
+        // ============================================================
+        //  LIST GAMES
+        // ============================================================
+        [Command("games")]
+        [Command("g")]
+        public async Task ListGames()
+        {
+            var ctx = this.Context;
+
+            var games = _gameService.GetOngoingGames();
+            if (!games.Any())
+            {
+                await ctx.Message.ReplyAsync("There are no ongoing games.");
+                return;
+            }
+
+            string msg = "=== ONGOING GAMES ===\n";
+            foreach (var game in games)
+            {
+                msg +=
+                    $"Game {game.Id}: Team A ({string.Join(", ", game.TeamA.Players.Select(p => p.DisplayName()))}) " +
+                    $"vs Team B ({string.Join(", ", game.TeamB.Players.Select(p => p.DisplayName()))})\n";
+            }
+
+            await ctx.Message.ReplyAsync(msg);
+        }
+
+        // ============================================================
+        //  SUBMIT SCORE
+        // ============================================================
+        [Command("score")]
+        public async Task SubmitScore(int scoreA, int scoreB)
+        {
+            var ctx = this.Context;
+
+            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
+            {
+                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
+                return;
+            }
+
+            var games = _gameService.GetOngoingGames();
+
+            if (!games.Any())
+            {
+                await ctx.Message.ReplyAsync("There are no ongoing games.");
+                return;
+            }
+
+            Game game;
+
+            if (games.Count == 1)
+                game = games.First();
+            else
+            {
+                await ctx.Message.ReplyAsync(
+                    "Multiple games are active. Please specify the game ID: `!score <gameId> <scoreA> <scoreB>`"
+                );
+                return;
+            }
+
+            var playerId = ctx.Message.Author.Id;
+
+            bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
+                                 || game.TeamB.Players.Any(p => p.DiscordId == playerId);
+
+            if (!isParticipant)
+            {
+                await ctx.Message.ReplyAsync("You are not a participant in this game and cannot submit a score.");
+                return;
+            }
+
+            if (game.Finished)
+            {
+                await ctx.Message.ReplyAsync("This game has already been completed.");
+                return;
+            }
+
+            game.ScoreSubmissions[playerId] = (scoreA, scoreB);
+
+            int matchingVotes = game.ScoreSubmissions
+                .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
+
+            int totalPlayers = game.TeamA.Players.Count + game.TeamB.Players.Count;
+            int required = (totalPlayers / 2) + 1;
+
+            if (matchingVotes < required)
+            {
+                await ctx.Message.ReplyAsync(
+                    $"Score recorded. {matchingVotes}/{required} votes for {scoreA}-{scoreB}."
+                );
+                return;
+            }
+
+            var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
+
+            bool teamAWon = scoreA > scoreB;
+            bool draw = scoreA == 0 && scoreB == 0;
+
+            string resultText = draw
+                ? "🤝 **The match ends in a draw!**"
+                : teamAWon
+                    ? "🏆 **Team A wins!**"
+                    : "🏆 **Team B wins!**";
+
+            string msg = $"{resultText}\n\n";
+            msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
+            msg += "**Elo changes:**\n\n";
+
+            msg += "**Team A:**\n";
+            foreach (var p in game.TeamA.Players)
+            {
+                int delta = changes[p.DiscordId];
+                string sign = delta >= 0 ? "+" : "";
+                msg += $"{p.DisplayName()} {sign}{delta}\n";
+            }
+
+            msg += "\n**Team B:**\n";
+            foreach (var p in game.TeamB.Players)
+            {
+                int delta = changes[p.DiscordId];
+                string sign = delta >= 0 ? "+" : "";
+                msg += $"{p.DisplayName()} {sign}{delta}\n";
+            }
+
+            await ctx.Message.ReplyAsync(msg);
+        }
+
+        // ============================================================
+        //  NICKNAME COMMAND
+        // ============================================================
+        [Command("nickname")]
+        public async Task NicknameAsync(string targetOrNickname, string? newNickname = null)
+        {
+            var ctx = this.Context;
+            var callerId = ctx.Message.Author.Id;
+
+            bool isAdmin = _permissions.IsMod(callerId) || _permissions.IsAdmin(callerId);
+
+            // User setting their own nickname
+            if (newNickname == null)
+            {
+                if (!_playerRegistry.IsRegistered(callerId))
+                {
+                    await ctx.Message.ReplyAsync("You are not registered. Use `!register` first.");
+                    return;
+                }
+
+                string nickname = targetOrNickname;
+
+                if (!ValidateNickname(nickname, out var error))
+                {
+                    await ctx.Message.ReplyAsync(error);
+                    return;
+                }
+
+                try
+                {
+                    _playerRegistry.SetNickname(callerId, nickname);
+                    await ctx.Message.ReplyAsync($"Your nickname has been set to **{nickname}**.");
+                }
+                catch (InvalidOperationException)
+                {
+                    await ctx.Message.ReplyAsync("That nickname is already taken by another player.");
+                }
+
+                return;
+            }
+
+            // Admin changing someone else's nickname
+            if (!isAdmin)
+            {
+                await ctx.Message.ReplyAsync("You do not have permission to change other players' nicknames.");
+                return;
+            }
+
+            string targetName = targetOrNickname;
+            string adminNickname = newNickname;
+
+            var targetPlayer = _playerRegistry.Resolve(targetName);
+            if (targetPlayer == null)
+            {
+                await ctx.Message.ReplyAsync($"No player found with name, nickname, ID, or mention **{targetName}**.");
+                return;
+            }
+
+            if (!ValidateNickname(adminNickname, out var adminError))
+            {
+                await ctx.Message.ReplyAsync(adminError);
+                return;
+            }
+
+            try
+            {
+                _playerRegistry.SetNickname(targetPlayer.DiscordId, adminNickname);
+                await ctx.Message.ReplyAsync(
+                    $"Nickname for **{targetPlayer.DisplayName()}** has been changed to **{adminNickname}**."
+                );
+            }
+            catch (InvalidOperationException)
+            {
+                await ctx.Message.ReplyAsync("That nickname is already taken by another player.");
+            }
+        }
+
+        private bool ValidateNickname(string nickname, out string error)
+        {
+            error = "";
+
+            if (nickname.Length < 2 || nickname.Length > 20)
+            {
+                error = "Nickname must be between 2 and 20 characters.";
+                return false;
+            }
+
+            if (!nickname.All(char.IsLetterOrDigit))
+            {
+                error = "Nickname can only contain letters and numbers.";
+                return false;
+            }
+
+            return true;
+        }
     }
 }

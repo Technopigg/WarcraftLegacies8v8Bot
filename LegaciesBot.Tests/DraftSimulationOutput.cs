@@ -240,7 +240,7 @@ public class DraftSimulationOutput
                 : "preference rank: NOT IN LIST";
 
             _output.WriteLine(
-                $"  {p.Name} (Elo {p.Elo}) → {f.Name} " +
+                $"  {p.DisplayName()} (Elo {p.Elo}) → {f.Name} " +
                 $"[{f.Group}, Slot={f.SlotId}] — {rankText}"
             );
         }

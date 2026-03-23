@@ -50,7 +50,7 @@ public class FactionAssignmentStub : IFactionAssignmentService
 
     private void AssignForSingleTeam(Team team, HashSet<TeamGroup> allowedGroups)
     {
-        var all = FactionRegistry.All
+        var pool = FactionRegistry.All
             .Where(f => allowedGroups.Contains(f.Group))
             .ToList();
 
@@ -59,16 +59,20 @@ public class FactionAssignmentStub : IFactionAssignmentService
             var player = team.Players[i];
 
             var preferred = player.FactionPreferences
-                .Select(name => all.FirstOrDefault(f =>
+                .Select(name => pool.FirstOrDefault(f =>
                     f.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
                 .Where(f => f != null)
                 .ToList();
 
-            var pool = preferred.Any() ? preferred! : all;
+            var source = preferred.Any() ? preferred : pool;
 
-            var faction = pool.First();
+            if (!source.Any())
+                throw new Exception($"No available factions left for team {team.Name} before assigning player {player.Name}");
+
+            var faction = source.First();
 
             team.AssignedFactions.Add(faction);
+            pool.Remove(faction);
         }
     }
 }

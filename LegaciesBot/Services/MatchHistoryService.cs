@@ -30,17 +30,21 @@ namespace LegaciesBot.Services
                 Timestamp = DateTime.UtcNow,
                 ScoreA = scoreA,
                 ScoreB = scoreB,
+
                 TeamA = game.TeamA.Players.Select(p => new PlayerRecord
                 {
                     DiscordId = p.DiscordId,
-                    Name = p.Name,
+                    Name = p.DisplayName(),
+                    DisplayName = p.DisplayName(), 
                     EloChange = eloChanges[p.DiscordId],
                     Faction = p.AssignedFaction
                 }).ToList(),
+
                 TeamB = game.TeamB.Players.Select(p => new PlayerRecord
                 {
                     DiscordId = p.DiscordId,
-                    Name = p.Name,
+                    Name = p.DisplayName(),
+                    DisplayName = p.DisplayName(),  
                     EloChange = eloChanges[p.DiscordId],
                     Faction = p.AssignedFaction
                 }).ToList()
@@ -67,6 +71,7 @@ namespace LegaciesBot.Services
         public DateTime Timestamp { get; set; }
         public int ScoreA { get; set; }
         public int ScoreB { get; set; }
+
         public List<PlayerRecord> TeamA { get; set; } = new();
         public List<PlayerRecord> TeamB { get; set; } = new();
     }
@@ -75,6 +80,8 @@ namespace LegaciesBot.Services
     {
         public ulong DiscordId { get; set; }
         public string Name { get; set; }
+        public string? DisplayName { get; set; }
+
         public int EloChange { get; set; }
         public string? Faction { get; set; }
     }

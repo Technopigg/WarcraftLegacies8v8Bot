@@ -5,13 +5,52 @@ namespace LegaciesBot.Services
 {
     public class PlayerRegistryService
     {
-        private const string FilePath = "players.json";
-
+        private readonly string? _filePath;
         private readonly Dictionary<ulong, Player> _players = new();
 
-        public PlayerRegistryService()
+        public PlayerRegistryService(string? filePath = null)
         {
+            _filePath = filePath ?? "players.json";
             Load();
+        }
+
+        // ============================================================
+        //  UNIVERSAL PLAYER RESOLUTION (NICKNAME + NAME + MENTION + ID)
+        // ============================================================
+        public Player? Resolve(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            // Try nickname or real name
+            var p = FindByNameOrNickname(input);
+            if (p != null)
+                return p;
+
+            // Try Discord mention <@123> or <@!123>
+            if (input.StartsWith("<@") && input.EndsWith(">"))
+            {
+                var trimmed = input.Trim('<', '>', '@', '!');
+                if (ulong.TryParse(trimmed, out ulong idFromMention))
+                    return GetPlayer(idFromMention);
+            }
+
+            // Try raw Discord ID
+            if (ulong.TryParse(input, out ulong id))
+                return GetPlayer(id);
+
+            return null;
+        }
+
+        // ============================================================
+        //  NAME + NICKNAME LOOKUP
+        // ============================================================
+        public Player? FindByNameOrNickname(string input)
+        {
+            return _players.Values.FirstOrDefault(p =>
+                p.Name.Equals(input, StringComparison.OrdinalIgnoreCase) ||
+                (p.Nickname != null &&
+                 p.Nickname.Equals(input, StringComparison.OrdinalIgnoreCase)));
         }
 
         public Player? GetPlayer(ulong discordId)
@@ -19,6 +58,28 @@ namespace LegaciesBot.Services
             return _players.TryGetValue(discordId, out var p) ? p : null;
         }
 
+        // ============================================================
+        //  NICKNAME MANAGEMENT
+        // ============================================================
+        public bool SetNickname(ulong discordId, string nickname)
+        {
+            if (!_players.TryGetValue(discordId, out var player))
+                return false;
+
+            // Prevent duplicate nicknames
+            if (_players.Values.Any(p =>
+                    p.Nickname != null &&
+                    p.Nickname.Equals(nickname, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Nickname already taken.");
+
+            player.Nickname = nickname;
+            Save();
+            return true;
+        }
+
+        // ============================================================
+        //  REGISTRATION
+        // ============================================================
         public bool IsRegistered(ulong discordId)
         {
             return _players.ContainsKey(discordId);
@@ -41,17 +102,23 @@ namespace LegaciesBot.Services
             return player;
         }
 
+        // ============================================================
+        //  ENUMERATION
+        // ============================================================
         public IReadOnlyCollection<Player> GetAllPlayers()
         {
             return _players.Values;
         }
 
+        // ============================================================
+        //  PERSISTENCE
+        // ============================================================
         private void Load()
         {
-            if (!File.Exists(FilePath))
+            if (_filePath == null || !File.Exists(_filePath))
                 return;
 
-            var json = File.ReadAllText(FilePath);
+            var json = File.ReadAllText(_filePath);
             var list = JsonSerializer.Deserialize<List<Player>>(json);
 
             if (list != null)
@@ -63,6 +130,9 @@ namespace LegaciesBot.Services
 
         private void Save()
         {
+            if (_filePath == null)
+                return;
+
             var list = _players.Values.ToList();
 
             var json = JsonSerializer.Serialize(list, new JsonSerializerOptions
@@ -70,7 +140,7 @@ namespace LegaciesBot.Services
                 WriteIndented = true
             });
 
-            File.WriteAllText(FilePath, json);
+            File.WriteAllText(_filePath, json);
         }
     }
 }
