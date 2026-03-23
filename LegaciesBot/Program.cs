@@ -21,14 +21,12 @@ var client = new GatewayClient(
                   | GatewayIntents.MessageContent
     }
 );
-
 var permissionService = new PermissionService();
 var matchHistoryService = new MatchHistoryService();
-var lobbyService = new LobbyService();
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
 var playerRegistryService = new PlayerRegistryService();
-
+var lobbyService = new LobbyService(playerRegistryService);
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
 var elo = new RealEloService();

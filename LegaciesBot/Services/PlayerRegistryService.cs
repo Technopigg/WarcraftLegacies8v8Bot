@@ -13,21 +13,14 @@ namespace LegaciesBot.Services
             _filePath = filePath ?? "players.json";
             Load();
         }
-
-        // ============================================================
-        //  UNIVERSAL PLAYER RESOLUTION (NICKNAME + NAME + MENTION + ID)
-        // ============================================================
+        
         public Player? Resolve(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
                 return null;
-
-            // Try nickname or real name
             var p = FindByNameOrNickname(input);
             if (p != null)
                 return p;
-
-            // Try Discord mention <@123> or <@!123>
             if (input.StartsWith("<@") && input.EndsWith(">"))
             {
                 var trimmed = input.Trim('<', '>', '@', '!');
@@ -35,16 +28,13 @@ namespace LegaciesBot.Services
                     return GetPlayer(idFromMention);
             }
 
-            // Try raw Discord ID
+          
             if (ulong.TryParse(input, out ulong id))
                 return GetPlayer(id);
 
             return null;
         }
 
-        // ============================================================
-        //  NAME + NICKNAME LOOKUP
-        // ============================================================
         public Player? FindByNameOrNickname(string input)
         {
             return _players.Values.FirstOrDefault(p =>
@@ -57,16 +47,30 @@ namespace LegaciesBot.Services
         {
             return _players.TryGetValue(discordId, out var p) ? p : null;
         }
+        
+        public Player GetOrCreate(ulong discordId, string? name = null)
+        {
+            if (_players.TryGetValue(discordId, out var existing))
+                return existing;
 
-        // ============================================================
-        //  NICKNAME MANAGEMENT
-        // ============================================================
+      
+            var player = new Player(discordId, name ?? discordId.ToString())
+            {
+                JoinedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            _players[discordId] = player;
+            Save();
+
+            return player;
+        }
+
         public bool SetNickname(ulong discordId, string nickname)
         {
             if (!_players.TryGetValue(discordId, out var player))
                 return false;
-
-            // Prevent duplicate nicknames
+            
             if (_players.Values.Any(p =>
                     p.Nickname != null &&
                     p.Nickname.Equals(nickname, StringComparison.OrdinalIgnoreCase)))
@@ -76,10 +80,7 @@ namespace LegaciesBot.Services
             Save();
             return true;
         }
-
-        // ============================================================
-        //  REGISTRATION
-        // ============================================================
+        
         public bool IsRegistered(ulong discordId)
         {
             return _players.ContainsKey(discordId);
@@ -101,18 +102,12 @@ namespace LegaciesBot.Services
 
             return player;
         }
-
-        // ============================================================
-        //  ENUMERATION
-        // ============================================================
+        
         public IReadOnlyCollection<Player> GetAllPlayers()
         {
             return _players.Values;
         }
 
-        // ============================================================
-        //  PERSISTENCE
-        // ============================================================
         private void Load()
         {
             if (_filePath == null || !File.Exists(_filePath))
