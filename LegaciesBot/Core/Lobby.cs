@@ -6,8 +6,24 @@ public class Lobby
     public bool DraftStarted { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public Dictionary<ulong, DateTime> AfkPingedAt { get; set; } = new();
-
     public bool IsFull => Players.Count >= 16;
     public Team? TeamA { get; set; }
     public Team? TeamB { get; set; }
+    
+    public DraftMode DraftMode { get; set; } = DraftMode.AutoDraft_AutoFaction;
+    public ulong? CaptainA { get; set; }
+    public ulong? CaptainB { get; set; }
+
+    public List<ulong> TeamAPicks { get; set; } = new();
+    public List<ulong> TeamBPicks { get; set; } = new();
+
+    public int CurrentPickIndex { get; set; } = 0;
+
+    public bool IsCaptainDraft =>
+        DraftMode == DraftMode.CaptainDraft_AutoFaction ||
+        DraftMode == DraftMode.CaptainDraft_ManualFaction;
+    public Dictionary<ulong, string> ManualFactionAssignments { get; set; } = new();
+
+    public bool ManualFactionComplete =>
+        ManualFactionAssignments.Count == 16;
 }

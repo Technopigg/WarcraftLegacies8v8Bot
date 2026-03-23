@@ -1,8 +1,10 @@
-﻿using NetCord;
+﻿using LegaciesBot.Commands;
+using NetCord;
 using NetCord.Gateway;
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Discord;
+using LegaciesBot.Services.CaptainDraft;
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
@@ -21,18 +23,24 @@ var client = new GatewayClient(
                   | GatewayIntents.MessageContent
     }
 );
+
 var permissionService = new PermissionService();
 var matchHistoryService = new MatchHistoryService();
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
 var playerRegistryService = new PlayerRegistryService();
 var lobbyService = new LobbyService(playerRegistryService);
+
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
 var elo = new RealEloService();
 var factionAssignment = new RealFactionAssignmentService();
 var factionRegistry = new RealFactionRegistry();
 var defaultPreferences = new RealDefaultPreferences();
+
+var nicknameService = new NicknameService(playerRegistryService);
+var captainDraftService = new CaptainDraftService();
+var factionManualAssignmentService = new FactionManualAssignmentService(factionRegistry, nicknameService);
 
 var gameService = new GameService(
     gateway,
@@ -47,6 +55,8 @@ var commandService = new CommandService<CommandContext>();
 commandService.AddModule<LobbyCommands>();
 commandService.AddModule<GameCommands>();
 commandService.AddModule<StatsCommands>();
+commandService.AddModule<CaptainCommands>();          // NEW
+commandService.AddModule<FactionCommands>();          // NEW
 
 client.MessageCreate += async message =>
 {
@@ -65,7 +75,10 @@ client.MessageCreate += async message =>
             playerStatsService,
             permissionService,
             matchHistoryService,
-            playerRegistryService
+            playerRegistryService,
+            nicknameService,
+            captainDraftService,
+            factionManualAssignmentService
         )
     );
 };
@@ -98,6 +111,10 @@ public class SimpleServiceProvider : IServiceProvider
     private readonly MatchHistoryService _matchHistoryService;
     private readonly PlayerRegistryService _playerRegistryService;
 
+    private readonly NicknameService _nicknameService;
+    private readonly CaptainDraftService _captainDraftService;
+    private readonly FactionManualAssignmentService _factionManualAssignmentService;
+
     public SimpleServiceProvider(
         LobbyService lobbyService,
         GameService gameService,
@@ -105,7 +122,10 @@ public class SimpleServiceProvider : IServiceProvider
         PlayerStatsService playerStatsService,
         PermissionService permissionService,
         MatchHistoryService matchHistoryService,
-        PlayerRegistryService playerRegistryService)
+        PlayerRegistryService playerRegistryService,
+        NicknameService nicknameService,
+        CaptainDraftService captainDraftService,
+        FactionManualAssignmentService factionManualAssignmentService)
     {
         _lobbyService = lobbyService;
         _gameService = gameService;
@@ -114,6 +134,10 @@ public class SimpleServiceProvider : IServiceProvider
         _permissionService = permissionService;
         _matchHistoryService = matchHistoryService;
         _playerRegistryService = playerRegistryService;
+
+        _nicknameService = nicknameService;
+        _captainDraftService = captainDraftService;
+        _factionManualAssignmentService = factionManualAssignmentService;
     }
 
     public object? GetService(Type serviceType)
@@ -125,6 +149,10 @@ public class SimpleServiceProvider : IServiceProvider
         if (serviceType == typeof(PermissionService)) return _permissionService;
         if (serviceType == typeof(MatchHistoryService)) return _matchHistoryService;
         if (serviceType == typeof(PlayerRegistryService)) return _playerRegistryService;
+
+        if (serviceType == typeof(NicknameService)) return _nicknameService;
+        if (serviceType == typeof(CaptainDraftService)) return _captainDraftService;
+        if (serviceType == typeof(FactionManualAssignmentService)) return _factionManualAssignmentService;
 
         return null;
     }

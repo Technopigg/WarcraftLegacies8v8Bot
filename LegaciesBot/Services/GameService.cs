@@ -48,7 +48,7 @@ public class GameService
                 player.FactionPreferences = _defaultPreferences.Factions.ToList();
         }
 
-        var (teamA, teamB) = _draftEngine.RunDraft(lobby.Players);
+        var (teamA, teamB) = _draftEngine.RunDraft(lobby);
 
         lobby.TeamA = teamA;
         lobby.TeamB = teamB;

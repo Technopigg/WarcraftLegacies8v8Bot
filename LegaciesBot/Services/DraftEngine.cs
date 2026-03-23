@@ -1,44 +1,31 @@
 ﻿using LegaciesBot.Core;
-
-
+using LegaciesBot.Services.Drafting;
 
 namespace LegaciesBot.Services
-
-// <summary>
-/// Runs a full 8v8 draft:
-/// 1. Balances players into teams
-/// 2. Generates valid TeamGroup split
-/// 3. Assigns factions based on preferences
-/// </summary>
 {
     public class DraftEngine
     {
-        private readonly IFactionAssignmentService _factionAssignment;
         private readonly Random _rng;
+        private readonly Dictionary<DraftMode, IDraftStrategy> _strategies;
 
-        public DraftEngine(IFactionAssignmentService factionAssignment, Random? rng = null)
+        public DraftEngine(
+            IFactionAssignmentService factionAssignment,
+            Random? rng = null)
         {
-            _factionAssignment = factionAssignment;
             _rng = rng ?? new Random();
+
+            _strategies = new()
+            {
+                [DraftMode.AutoDraft_AutoFaction] = new AutoDraftAutoFactionStrategy(factionAssignment),
+                [DraftMode.AutoDraft_ManualFaction] = new AutoDraftManualFactionStrategy(),
+                [DraftMode.CaptainDraft_AutoFaction] = new CaptainDraftAutoFactionStrategy(factionAssignment),
+                [DraftMode.CaptainDraft_ManualFaction] = new CaptainDraftManualFactionStrategy()
+            };
         }
 
-        public (Team teamA, Team teamB) RunDraft(List<Player> players)
+        public (Team teamA, Team teamB) RunDraft(Lobby lobby)
         {
-            if (players.Count != 16)
-                throw new ArgumentException("Draft requires exactly 16 players.");
-
-            var (teamA, teamB) = DraftService.CreateBalancedTeams(players);
-            var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
-
-            _factionAssignment.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
-
-            for (int i = 0; i < teamA.Players.Count && i < teamA.AssignedFactions.Count; i++)
-                teamA.Players[i].AssignedFaction = teamA.AssignedFactions[i].Name;
-
-            for (int i = 0; i < teamB.Players.Count && i < teamB.AssignedFactions.Count; i++)
-                teamB.Players[i].AssignedFaction = teamB.AssignedFactions[i].Name;
-
-            return (teamA, teamB);
+            return _strategies[lobby.DraftMode].RunDraft(lobby, _rng);
         }
     }
 }

@@ -143,5 +143,6 @@ namespace LegaciesBot.Services
 
             File.WriteAllText(_filePath, json);
         }
+        
     }
 }
