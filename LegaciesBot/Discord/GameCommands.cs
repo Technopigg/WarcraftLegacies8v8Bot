@@ -93,7 +93,7 @@ namespace LegaciesBot.Discord
                 {
                     var p = match.TeamA[j];
                     string sign = p.EloChange >= 0 ? "+" : "";
-                    msg += p.DisplayName() + " (" + sign + p.EloChange + ")";
+                    msg += p.DisplayName + " (" + sign + p.EloChange + ")";
                     if (j < match.TeamA.Count - 1)
                         msg += ", ";
                 }
@@ -106,7 +106,7 @@ namespace LegaciesBot.Discord
                 {
                     var p = match.TeamB[j];
                     string sign = p.EloChange >= 0 ? "+" : "";
-                    msg += p.DisplayName() + " (" + sign + p.EloChange + ")";
+                    msg += p.DisplayName + " (" + sign + p.EloChange + ")";
                     if (j < match.TeamB.Count - 1)
                         msg += ", ";
                 }
