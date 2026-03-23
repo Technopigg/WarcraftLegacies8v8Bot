@@ -8,22 +8,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/LegaciesBot.Tests/NicknameTests.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/LegaciesBot/Extensions/PlayerExtensions.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/TestStubs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/TestStubs.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/GameCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/GameCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/LobbyCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/StatsCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/StatsCommands.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/FactionAssignmentService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/FactionAssignmentService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/MatchHistoryService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/MatchHistoryService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PlayerRegistryService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PlayerRegistryService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PlayerStatsService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PlayerStatsService.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +55,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;.NET Project.LegaciesBot.executor&quot;: &quot;Run&quot;,
+    &quot;.NET Project.LegaciesBot.executor&quot;: &quot;Debug&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
@@ -81,7 +67,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected=".NET Project.LegaciesBot">
+  <component name="RunManager">
     <configuration name="LegaciesBot" type="DotNetProject" factoryName=".NET Project" temporary="true">
       <option name="EXE_PATH" value="$PROJECT_DIR$/LegaciesBot/bin/Debug/net10.0/LegaciesBot.exe" />
       <option name="PROGRAM_PARAMETERS" value="" />
@@ -129,6 +115,8 @@
       <workItem from="1774273042383" duration="2470000" />
       <workItem from="1774275547589" duration="7000" />
       <workItem from="1774275571394" duration="4962000" />
+      <workItem from="1774281331531" duration="5834000" />
+      <workItem from="1774287233536" duration="1016000" />
     </task>
     <servers />
   </component>

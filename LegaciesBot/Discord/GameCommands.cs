@@ -1,4 +1,4 @@
-﻿using NetCord.Services.Commands;
+using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Core;
 
@@ -21,7 +21,8 @@ namespace LegaciesBot.Discord
             PlayerStatsService stats,
             PermissionService permissions,
             MatchHistoryService matchHistoryService,
-            PlayerRegistryService playerRegistry)
+            PlayerRegistryService playerRegistry
+        )
         {
             _gameService = gameService;
             _lobbyService = lobbyService;
@@ -32,9 +33,6 @@ namespace LegaciesBot.Discord
             _playerRegistry = playerRegistry;
         }
 
-        // ============================================================
-        //  REGISTER
-        // ============================================================
         [Command("register")]
         [Command("reg")]
         public async Task Register()
@@ -50,20 +48,16 @@ namespace LegaciesBot.Discord
             }
 
             var player = _playerRegistry.RegisterPlayer(userId, name);
-
             _stats.GetOrCreate(userId);
 
             await ctx.Message.ReplyAsync(
-                $"Registration complete. Welcome, **{player.DisplayName()}**! Your starting Elo is **{player.Elo}**."
-            );
+                $"Registration complete. Welcome, **{player.DisplayName()}**! Your starting Elo is **{player.Elo}**.");
         }
-
 
         [Command("recent")]
         public async Task RecentMatches()
         {
             var ctx = this.Context;
-
             var history = _matchHistoryService.History;
 
             if (history.Count == 0)
@@ -72,157 +66,60 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            var lastMatches = history
-                .OrderByDescending(m => m.Timestamp)
-                .Take(5)
-                .ToList();
-
+            var lastMatches = history.OrderByDescending(m => m.Timestamp).Take(5).ToList();
             string msg = "=== RECENT MATCHES ===\n\n";
 
-            foreach (var match in lastMatches)
+            for (int i = 0; i < lastMatches.Count; i++)
             {
+                var match = lastMatches[i];
+
                 bool teamAWon = match.ScoreA > match.ScoreB;
                 bool draw = match.ScoreA == 0 && match.ScoreB == 0;
 
-                string result = draw
-                    ? "Draw"
-                    : teamAWon
-                        ? "Team A Win"
-                        : "Team B Win";
+                string result;
+                if (draw)
+                    result = "Draw";
+                else if (teamAWon)
+                    result = "Team A Win";
+                else
+                    result = "Team B Win";
 
-                msg += $"**Game {match.GameId}** — {result}\n";
-                msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
+                msg += "**Game " + match.GameId + "** — " + result + "\n";
+                msg += "Score: **" + match.ScoreA + " - " + match.ScoreB + "**\n";
 
-      
+
                 msg += "Team A Elo: ";
-                msg += string.Join(", ",
-                    match.TeamA.Select(p =>
-                    {
-                        var sign = p.EloChange >= 0 ? "+" : "";
-                        return $"{p.DisplayName()} ({sign}{p.EloChange})";
-                    })
-                );
+                for (int j = 0; j < match.TeamA.Count; j++)
+                {
+                    var p = match.TeamA[j];
+                    string sign = p.EloChange >= 0 ? "+" : "";
+                    msg += p.DisplayName() + " (" + sign + p.EloChange + ")";
+                    if (j < match.TeamA.Count - 1)
+                        msg += ", ";
+                }
+
                 msg += "\n";
 
-            
+
                 msg += "Team B Elo: ";
-                msg += string.Join(", ",
-                    match.TeamB.Select(p =>
-                    {
-                        var sign = p.EloChange >= 0 ? "+" : "";
-                        return $"{p.DisplayName()} ({sign}{p.EloChange})";
-                    })
-                );
+                for (int j = 0; j < match.TeamB.Count; j++)
+                {
+                    var p = match.TeamB[j];
+                    string sign = p.EloChange >= 0 ? "+" : "";
+                    msg += p.DisplayName() + " (" + sign + p.EloChange + ")";
+                    if (j < match.TeamB.Count - 1)
+                        msg += ", ";
+                }
+
                 msg += "\n\n";
+
             }
 
             await ctx.Message.ReplyAsync(msg);
         }
-        
-        [Command("listmods")]
-        public async Task ListMods()
-        {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (!_permissions.IsMod(userId))
-            {
-                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-                return;
-            }
-
-            if (!_permissions.Data.Mods.Any())
-            {
-                await ctx.Message.ReplyAsync("There are currently no mods assigned.");
-                return;
-            }
-
-            string msg = "**Current Mods:**\n";
-
-            foreach (var modId in _permissions.Data.Mods)
-                msg += $"- <@{modId}>\n";
-
-            await ctx.Message.ReplyAsync(msg);
-        }
-
-        [Command("removemod")]
-        public async Task RemoveMod(ulong targetUserId)
-        {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (!_permissions.IsAdmin(userId))
-            {
-                await ctx.Message.ReplyAsync("Only admins can use this command.");
-                return;
-            }
-
-            if (!_permissions.Data.Mods.Contains(targetUserId))
-            {
-                await ctx.Message.ReplyAsync("That user is not a mod.");
-                return;
-            }
-
-            _permissions.RemoveMod(targetUserId);
-
-            await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been removed from **Mod** status.");
-        }
-
-        [Command("makemod")]
-        public async Task MakeMod(ulong targetUserId)
-        {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (!_permissions.IsAdmin(userId))
-            {
-                await ctx.Message.ReplyAsync("Only admins can use this command.");
-                return;
-            }
-
-            _permissions.AddMod(targetUserId);
-
-            await ctx.Message.ReplyAsync($"User <@{targetUserId}> has been added as a **Mod**.");
-        }
-
-        // ============================================================
-        //  KILL GAME
-        // ============================================================
-        [Command("kill")]
-        public async Task KillGame()
-        {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (!_permissions.IsMod(userId))
-            {
-                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-                return;
-            }
-
-            var games = _gameService.GetOngoingGames();
-            if (!games.Any())
-            {
-                await ctx.Message.ReplyAsync("There are no ongoing games to kill.");
-                return;
-            }
-
-            if (games.Count > 1)
-            {
-                await ctx.Message.ReplyAsync("Multiple games active. Use: `!kill <gameId>`");
-                return;
-            }
-
-            var game = games.First();
-            game.Lobby.Players.Clear();
-            game.Lobby.DraftStarted = false;
-            game.Finished = true;
-
-            await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
-        }
 
         [Command("kill")]
-        public async Task KillGame(int gameId)
+        public async Task KillGame(params int[] args)
         {
             var ctx = this.Context;
             ulong userId = ctx.Message.Author.Id;
@@ -230,42 +127,6 @@ namespace LegaciesBot.Discord
             if (!_permissions.IsMod(userId))
             {
                 await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-                return;
-            }
-
-            var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
-
-            if (game == null)
-            {
-                await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
-                return;
-            }
-
-            game.Lobby.Players.Clear();
-            game.Lobby.DraftStarted = false;
-            game.Finished = true;
-
-            await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
-        }
-
-        // ============================================================
-        //  FORCE SCORE
-        // ============================================================
-        [Command("forcescore")]
-        public async Task ForceScore(int scoreA, int scoreB)
-        {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (!_permissions.IsMod(userId))
-            {
-                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-                return;
-            }
-
-            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
-            {
-                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
                 return;
             }
 
@@ -276,17 +137,37 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            if (games.Count > 1)
+            Game game;
+
+            if (args.Length == 0)
             {
-                await ctx.Message.ReplyAsync("Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
-                return;
+                if (games.Count > 1)
+                {
+                    await ctx.Message.ReplyAsync("Multiple games active. Use: `!kill <gameId>`");
+                    return;
+                }
+
+                game = games.First();
+            }
+            else
+            {
+                int gameId = args[0];
+                game = games.FirstOrDefault(g => g.Id == gameId);
+                if (game == null)
+                {
+                    await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
+                    return;
+                }
             }
 
-            await FinalizeForcedScore(games.First(), scoreA, scoreB);
+            game.Lobby.Players.Clear();
+            game.Lobby.DraftStarted = false;
+            game.Finished = true;
+            await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
         }
 
         [Command("forcescore")]
-        public async Task ForceScore(int gameId, int scoreA, int scoreB)
+        public async Task ForceScore(params int[] args)
         {
             var ctx = this.Context;
             ulong userId = ctx.Message.Author.Id;
@@ -297,17 +178,51 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
+            var ongoingGames = _gameService.GetOngoingGames();
+            if (!ongoingGames.Any())
             {
-                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
+                await ctx.Message.ReplyAsync("There are no ongoing games.");
                 return;
             }
 
-            var game = _gameService.GetOngoingGames().FirstOrDefault(g => g.Id == gameId);
+            int scoreA, scoreB;
+            Game game;
 
-            if (game == null)
+            if (args.Length == 2)
             {
-                await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
+                scoreA = args[0];
+                scoreB = args[1];
+                if (ongoingGames.Count > 1)
+                {
+                    await ctx.Message.ReplyAsync(
+                        "Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
+                    return;
+                }
+
+                game = ongoingGames.First();
+            }
+            else if (args.Length == 3)
+            {
+                int gameId = args[0];
+                scoreA = args[1];
+                scoreB = args[2];
+                game = ongoingGames.FirstOrDefault(g => g.Id == gameId);
+                if (game == null)
+                {
+                    await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
+                    return;
+                }
+            }
+            else
+            {
+                await ctx.Message.ReplyAsync(
+                    "Invalid arguments. Use `!forcescore <scoreA> <scoreB>` or `!forcescore <gameId> <scoreA> <scoreB>`");
+                return;
+            }
+
+            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
+            {
+                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
                 return;
             }
 
@@ -317,17 +232,14 @@ namespace LegaciesBot.Discord
         private async Task FinalizeForcedScore(Game game, int scoreA, int scoreB)
         {
             var ctx = this.Context;
-
             var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
 
             bool teamAWon = scoreA > scoreB;
             bool draw = scoreA == 0 && scoreB == 0;
 
-            string resultText = draw
-                ? "🤝 **The match ends in a draw!**"
-                : teamAWon
-                    ? "🏆 **Team A wins!**"
-                    : "🏆 **Team B wins!**";
+            string resultText = draw ? "🤝 **The match ends in a draw!**" :
+                teamAWon ? "🏆 **Team A wins!**" :
+                "🏆 **Team B wins!**";
 
             string msg = $"{resultText}\n\n";
             msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
@@ -351,17 +263,13 @@ namespace LegaciesBot.Discord
 
             await ctx.Message.ReplyAsync(msg);
         }
-
-        // ============================================================
-        //  LIST GAMES
-        // ============================================================
-        [Command("games")]
+        
         [Command("g")]
         public async Task ListGames()
         {
             var ctx = this.Context;
-
             var games = _gameService.GetOngoingGames();
+
             if (!games.Any())
             {
                 await ctx.Message.ReplyAsync("There are no ongoing games.");
@@ -379,119 +287,13 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync(msg);
         }
 
-        // ============================================================
-        //  SUBMIT SCORE
-        // ============================================================
-        [Command("score")]
-        public async Task SubmitScore(int scoreA, int scoreB)
-        {
-            var ctx = this.Context;
-
-            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
-            {
-                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
-                return;
-            }
-
-            var games = _gameService.GetOngoingGames();
-
-            if (!games.Any())
-            {
-                await ctx.Message.ReplyAsync("There are no ongoing games.");
-                return;
-            }
-
-            Game game;
-
-            if (games.Count == 1)
-                game = games.First();
-            else
-            {
-                await ctx.Message.ReplyAsync(
-                    "Multiple games are active. Please specify the game ID: `!score <gameId> <scoreA> <scoreB>`"
-                );
-                return;
-            }
-
-            var playerId = ctx.Message.Author.Id;
-
-            bool isParticipant = game.TeamA.Players.Any(p => p.DiscordId == playerId)
-                                 || game.TeamB.Players.Any(p => p.DiscordId == playerId);
-
-            if (!isParticipant)
-            {
-                await ctx.Message.ReplyAsync("You are not a participant in this game and cannot submit a score.");
-                return;
-            }
-
-            if (game.Finished)
-            {
-                await ctx.Message.ReplyAsync("This game has already been completed.");
-                return;
-            }
-
-            game.ScoreSubmissions[playerId] = (scoreA, scoreB);
-
-            int matchingVotes = game.ScoreSubmissions
-                .Count(v => v.Value.scoreA == scoreA && v.Value.scoreB == scoreB);
-
-            int totalPlayers = game.TeamA.Players.Count + game.TeamB.Players.Count;
-            int required = (totalPlayers / 2) + 1;
-
-            if (matchingVotes < required)
-            {
-                await ctx.Message.ReplyAsync(
-                    $"Score recorded. {matchingVotes}/{required} votes for {scoreA}-{scoreB}."
-                );
-                return;
-            }
-
-            var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
-
-            bool teamAWon = scoreA > scoreB;
-            bool draw = scoreA == 0 && scoreB == 0;
-
-            string resultText = draw
-                ? "🤝 **The match ends in a draw!**"
-                : teamAWon
-                    ? "🏆 **Team A wins!**"
-                    : "🏆 **Team B wins!**";
-
-            string msg = $"{resultText}\n\n";
-            msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
-            msg += "**Elo changes:**\n\n";
-
-            msg += "**Team A:**\n";
-            foreach (var p in game.TeamA.Players)
-            {
-                int delta = changes[p.DiscordId];
-                string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} {sign}{delta}\n";
-            }
-
-            msg += "\n**Team B:**\n";
-            foreach (var p in game.TeamB.Players)
-            {
-                int delta = changes[p.DiscordId];
-                string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} {sign}{delta}\n";
-            }
-
-            await ctx.Message.ReplyAsync(msg);
-        }
-
-        // ============================================================
-        //  NICKNAME COMMAND
-        // ============================================================
         [Command("nickname")]
         public async Task NicknameAsync(string targetOrNickname, string? newNickname = null)
         {
             var ctx = this.Context;
             var callerId = ctx.Message.Author.Id;
-
             bool isAdmin = _permissions.IsMod(callerId) || _permissions.IsAdmin(callerId);
 
-            // User setting their own nickname
             if (newNickname == null)
             {
                 if (!_playerRegistry.IsRegistered(callerId))
@@ -501,7 +303,6 @@ namespace LegaciesBot.Discord
                 }
 
                 string nickname = targetOrNickname;
-
                 if (!ValidateNickname(nickname, out var error))
                 {
                     await ctx.Message.ReplyAsync(error);
@@ -521,7 +322,6 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            // Admin changing someone else's nickname
             if (!isAdmin)
             {
                 await ctx.Message.ReplyAsync("You do not have permission to change other players' nicknames.");
@@ -529,16 +329,16 @@ namespace LegaciesBot.Discord
             }
 
             string targetName = targetOrNickname;
-            string adminNickname = newNickname;
-
+            string adminNickname = newNickname!;
             var targetPlayer = _playerRegistry.Resolve(targetName);
+
             if (targetPlayer == null)
             {
                 await ctx.Message.ReplyAsync($"No player found with name, nickname, ID, or mention **{targetName}**.");
                 return;
             }
 
-            if (!ValidateNickname(adminNickname, out var adminError))
+            if (!ValidateNickname(adminNickname, out string adminError))
             {
                 await ctx.Message.ReplyAsync(adminError);
                 return;
@@ -548,8 +348,7 @@ namespace LegaciesBot.Discord
             {
                 _playerRegistry.SetNickname(targetPlayer.DiscordId, adminNickname);
                 await ctx.Message.ReplyAsync(
-                    $"Nickname for **{targetPlayer.DisplayName()}** has been changed to **{adminNickname}**."
-                );
+                    $"Nickname for **{targetPlayer.DisplayName()}** has been changed to **{adminNickname}**.");
             }
             catch (InvalidOperationException)
             {
@@ -560,7 +359,6 @@ namespace LegaciesBot.Discord
         private bool ValidateNickname(string nickname, out string error)
         {
             error = "";
-
             if (nickname.Length < 2 || nickname.Length > 20)
             {
                 error = "Nickname must be between 2 and 20 characters.";
