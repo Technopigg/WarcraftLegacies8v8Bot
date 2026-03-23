@@ -143,6 +143,12 @@ namespace LegaciesBot.Services
 
             File.WriteAllText(_filePath, json);
         }
+        public static void ResetForTests()
+        {
+            if (File.Exists("players.json"))
+                File.Delete("players.json");
+        }
+
         
     }
 }

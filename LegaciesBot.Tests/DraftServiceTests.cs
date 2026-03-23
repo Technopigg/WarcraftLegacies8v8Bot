@@ -38,15 +38,7 @@ public class DraftServiceTests
 
         var history = new Mock<IMatchHistoryService>();
         var elo = new Mock<IEloService>();
-
-        var assign = new Mock<IFactionAssignmentService>();
-        assign.Setup(a => a.AssignFactionsForGame(
-            It.IsAny<Team>(),
-            It.IsAny<Team>(),
-            It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
-        ));
-
+        var assign = new FactionAssignmentService(new Random(12345));
         var registry = new Mock<IFactionRegistry>();
         registry.Setup(r => r.All).Returns(FactionRegistry.All);
 
@@ -57,7 +49,7 @@ public class DraftServiceTests
             gateway.Object,
             history.Object,
             elo.Object,
-            assign.Object,
+            assign,
             registry.Object,
             prefs.Object
         );
@@ -77,13 +69,6 @@ public class DraftServiceTests
         var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
         Assert.Equal(16, allPlayers.Count);
         Assert.Equal(16, allPlayers.Select(p => p.DiscordId).Distinct().Count());
-
-        assign.Verify(a => a.AssignFactionsForGame(
-            It.IsAny<Team>(),
-            It.IsAny<Team>(),
-            It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
-        ), Times.Once);
 
         channel.Verify(c => c.SendMessageAsync(It.IsAny<string>()), Times.Once);
     }

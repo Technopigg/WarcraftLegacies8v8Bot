@@ -1,6 +1,5 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
-using Moq;
 
 namespace LegaciesBot.Tests;
 
@@ -26,10 +25,11 @@ public class DraftEngineRoutingTests
     [Fact]
     public void DraftEngine_DoesNotThrow_ForAllDraftModes()
     {
-        var factionAssign = new Mock<IFactionAssignmentService>();
         var rng = new Random(12345);
+        
+        var factionAssign = new FactionAssignmentService(rng);
 
-        var engine = new DraftEngine(factionAssign.Object, rng);
+        var engine = new DraftEngine(factionAssign, rng);
 
         var modes = new[]
         {

@@ -5,10 +5,10 @@ namespace LegaciesBot.Commands
 {
     public class FactionCommands
     {
-        private readonly LobbyService _lobby;
+        private readonly ILobbyService _lobby;
         private readonly FactionManualAssignmentService _manual;
 
-        public FactionCommands(LobbyService lobby, FactionManualAssignmentService manual)
+        public FactionCommands(ILobbyService lobby, FactionManualAssignmentService manual)
         {
             _lobby = lobby;
             _manual = manual;

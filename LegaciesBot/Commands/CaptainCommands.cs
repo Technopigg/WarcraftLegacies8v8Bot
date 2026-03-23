@@ -6,10 +6,10 @@ namespace LegaciesBot.Commands
 {
     public class CaptainCommands
     {
-        private readonly LobbyService _lobby;
-        private readonly CaptainDraftService _captainDraft;
+        private readonly ILobbyService _lobby;
+        private readonly ICaptainDraftService _captainDraft;
 
-        public CaptainCommands(LobbyService lobby, CaptainDraftService captainDraft)
+        public CaptainCommands(ILobbyService lobby, ICaptainDraftService captainDraft)
         {
             _lobby = lobby;
             _captainDraft = captainDraft;
@@ -25,6 +25,7 @@ namespace LegaciesBot.Commands
 
             return "You are now a captain.";
         }
+
         [Command("d")]
         [Command("draft")]
         public string Draft(ulong captainId, ulong targetId)

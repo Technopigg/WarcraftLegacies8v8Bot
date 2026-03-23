@@ -3,17 +3,18 @@ using LegaciesBot.Services;
 
 namespace LegaciesBot.Tests;
 
+[Collection("NicknameTests")]
 public class NicknameServiceTests
 {
     private PlayerRegistryService CreateRegistry()
     {
         var registry = new PlayerRegistryService(null);
 
-        var p1 = registry.GetOrCreate(1, "Alice");
-        p1.Nickname = "ali";
+        var p1 = registry.GetOrCreate(1, "NicknameTest_Alice");
+        p1.Nickname = "ali_test";
 
-        var p2 = registry.GetOrCreate(2, "Bob");
-        p2.Nickname = "bobby";
+        var p2 = registry.GetOrCreate(2, "NicknameTest_Bob");
+        p2.Nickname = "bobby_test";
 
         return registry;
     }
@@ -24,7 +25,7 @@ public class NicknameServiceTests
         var registry = CreateRegistry();
         var service = new NicknameService(registry);
 
-        var id = service.ResolvePlayerId("ali");
+        var id = service.ResolvePlayerId("ali_test");
 
         Assert.Equal((ulong)1, id);
     }
@@ -35,7 +36,7 @@ public class NicknameServiceTests
         var registry = CreateRegistry();
         var service = new NicknameService(registry);
 
-        var id = service.ResolvePlayerId("Bob");
+        var id = service.ResolvePlayerId("NicknameTest_Bob");
 
         Assert.Equal((ulong)2, id);
     }
@@ -72,7 +73,11 @@ public class NicknameServiceTests
 
         Assert.Null(id);
     }
-
+    
+    public NicknameServiceTests()
+    {
+        PlayerRegistryService.ResetForTests();
+    }
     [Fact]
     public void ResolvePlayerId_Empty_ReturnsNull()
     {
@@ -84,3 +89,6 @@ public class NicknameServiceTests
         Assert.Null(id);
     }
 }
+
+[CollectionDefinition("NicknameTests", DisableParallelization = true)]
+public class NicknameTestCollection { }

@@ -2,7 +2,7 @@
 
 namespace LegaciesBot.Services
 {
-    public class LobbyService
+    public class LobbyService : ILobbyService
     {
         private readonly List<Lobby> _lobbies = new();
         private readonly TimeSpan AfkReminderDelay = TimeSpan.FromMinutes(30);
@@ -28,7 +28,7 @@ namespace LegaciesBot.Services
         public Player JoinLobby(ulong discordId)
         {
             var lobby = CurrentLobby;
-            
+
             var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
             if (player == null)
             {

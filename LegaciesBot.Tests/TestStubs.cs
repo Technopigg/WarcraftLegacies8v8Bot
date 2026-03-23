@@ -62,9 +62,7 @@ public class FactionAssignmentStub : IFactionAssignmentService
         allPlayers.AddRange(teamA.Players.Select(p => (teamA, p)));
         allPlayers.AddRange(teamB.Players.Select(p => (teamB, p)));
 
-        allPlayers = allPlayers
-            .OrderBy(_ => _rng.Next())
-            .ToList();
+        allPlayers = allPlayers.OrderBy(_ => _rng.Next()).ToList();
 
         var usedFactionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var usedSlotIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -84,35 +82,18 @@ public class FactionAssignmentStub : IFactionAssignmentService
                 .Where(f => !usedFactionNames.Contains(f.Name))
                 .Where(f => string.IsNullOrEmpty(f.SlotId) || !usedSlotIds.Contains(f.SlotId))
                 .ToList();
-
-            Faction? assigned = null;
-
-            foreach (var prefName in player.FactionPreferences)
+            if (availableFactions.Count == 0)
             {
-                var faction = availableFactions
-                    .FirstOrDefault(f => f.Name.Equals(prefName, StringComparison.OrdinalIgnoreCase));
-
-                if (faction == null)
-                    continue;
-
-                if (!ConstraintService.IsCompatible(groupsPerTeam[team], faction.Group))
-                    continue;
-
-                assigned = faction;
-                break;
+                availableFactions = FactionRegistry.All
+                    .Where(f => !usedFactionNames.Contains(f.Name))
+                    .Where(f => string.IsNullOrEmpty(f.SlotId) || !usedSlotIds.Contains(f.SlotId))
+                    .ToList();
             }
 
-            if (assigned == null)
-            {
-                foreach (var faction in availableFactions)
-                {
-                    if (!ConstraintService.IsCompatible(groupsPerTeam[team], faction.Group))
-                        continue;
+            if (availableFactions.Count == 0)
+                throw new Exception("Stub: No available factions for assignment.");
 
-                    assigned = faction;
-                    break;
-                }
-            }
+            var assigned = availableFactions.First();
 
             team.AssignedFactions.Add(assigned);
             usedFactionNames.Add(assigned.Name);

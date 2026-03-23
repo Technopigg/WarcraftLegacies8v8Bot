@@ -200,11 +200,17 @@ public class GameServiceTests
         );
 
         var lobby = CreateLobbyWithPlayers(16);
-        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
 
-        factionAssignment.AssignFactionsForGame(teamA, teamB,
+        var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
+        
+        teamA.AssignedFactions.Clear();
+        teamB.AssignedFactions.Clear();
+
+        factionAssignment.AssignFactionsForGame(
+            teamA, teamB,
             TeamGroupService.GenerateValidSplit().Item1,
-            TeamGroupService.GenerateValidSplit().Item2);
+            TeamGroupService.GenerateValidSplit().Item2
+        );
 
         for (int i = 0; i < teamA.Players.Count; i++)
             teamA.Players[i].AssignedFaction = teamA.AssignedFactions[i].Name;

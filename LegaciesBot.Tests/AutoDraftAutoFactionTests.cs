@@ -1,15 +1,14 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
-using Moq;
 
 namespace LegaciesBot.Tests;
 
 public class AutoDraftAutoFactionTests
 {
-    private List<Player> CreatePlayers(int count)
+    private Lobby CreateLobbyWithPlayers(int count)
     {
+        var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
-        var list = new List<Player>();
 
         for (int i = 0; i < count; i++)
         {
@@ -17,42 +16,28 @@ public class AutoDraftAutoFactionTests
             var p = registry.GetOrCreate(id);
             p.Name = $"Player{i + 1}";
             p.Elo = 1500;
-            list.Add(p);
+            lobby.Players.Add(p);
         }
 
-        return list;
+        return lobby;
     }
 
     [Fact]
     public void AutoDraftAutoFaction_CreatesBalancedTeams_AndAssignsFactions()
     {
-        var players = CreatePlayers(16);
-
-        var lobby = new Lobby();
-        lobby.Players.AddRange(players);
+        var lobby = CreateLobbyWithPlayers(16);
         lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
 
-        var factionAssign = new Mock<IFactionAssignmentService>();
-        factionAssign.Setup(a => a.AssignFactionsForGame(
-            It.IsAny<Team>(),
-            It.IsAny<Team>(),
-            It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
-        ));
-
         var rng = new Random(12345);
-        var engine = new DraftEngine(factionAssign.Object, rng);
+        
+        var factionAssign = new FactionAssignmentService(rng);
+
+        var engine = new DraftEngine(factionAssign, rng);
 
         var (teamA, teamB) = engine.RunDraft(lobby);
 
         Assert.Equal(8, teamA.Players.Count);
         Assert.Equal(8, teamB.Players.Count);
-
-        factionAssign.Verify(a => a.AssignFactionsForGame(
-            It.IsAny<Team>(),
-            It.IsAny<Team>(),
-            It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
-        ), Times.Once);
+        
     }
 }

@@ -12,8 +12,7 @@ public class FactionCommandsTests
     {
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
-
-        // Create 16 players
+        
         for (int i = 0; i < 16; i++)
         {
             ulong id = (ulong)(i + 1);
@@ -41,8 +40,7 @@ public class FactionCommandsTests
 
         var nickname = new NicknameService(registry);
         var manual = new FactionManualAssignmentService(factionRegistry.Object, nickname);
-
-        var lobbyService = new Mock<LobbyService>();
+        var lobbyService = new Mock<ILobbyService>();
         lobbyService.Setup(l => l.CurrentLobby).Returns(lobby);
 
         return new FactionCommands(lobbyService.Object, manual);

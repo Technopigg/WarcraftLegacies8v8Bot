@@ -12,8 +12,6 @@ public class CaptainCommandsTests
     {
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
-
-        // Create 16 players
         for (int i = 0; i < 16; i++)
         {
             ulong id = (ulong)(i + 1);
@@ -28,9 +26,9 @@ public class CaptainCommandsTests
         return lobby;
     }
 
-    private CaptainCommands CreateCommands(Lobby lobby, Mock<CaptainDraftService> draftMock)
+    private CaptainCommands CreateCommands(Lobby lobby, Mock<ICaptainDraftService> draftMock)
     {
-        var lobbyService = new Mock<LobbyService>();
+        var lobbyService = new Mock<ILobbyService>();
         lobbyService.Setup(l => l.CurrentLobby).Returns(lobby);
 
         return new CaptainCommands(lobbyService.Object, draftMock.Object);
@@ -41,7 +39,7 @@ public class CaptainCommandsTests
     {
         var lobby = CreateLobby();
 
-        var draftMock = new Mock<CaptainDraftService>();
+        var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.TryClaimCaptain(lobby, 1)).Returns(true);
 
         var commands = CreateCommands(lobby, draftMock);
@@ -56,7 +54,7 @@ public class CaptainCommandsTests
     {
         var lobby = CreateLobby();
 
-        var draftMock = new Mock<CaptainDraftService>();
+        var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.TryClaimCaptain(lobby, 1)).Returns(false);
 
         var commands = CreateCommands(lobby, draftMock);
@@ -71,7 +69,7 @@ public class CaptainCommandsTests
     {
         var lobby = CreateLobby();
 
-        var draftMock = new Mock<CaptainDraftService>();
+        var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(false);
 
         var commands = CreateCommands(lobby, draftMock);
@@ -86,7 +84,7 @@ public class CaptainCommandsTests
     {
         var lobby = CreateLobby();
 
-        var draftMock = new Mock<CaptainDraftService>();
+        var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(true);
         draftMock.Setup(d => d.TryPick(lobby, 1, 5)).Returns(false);
 
@@ -102,7 +100,7 @@ public class CaptainCommandsTests
     {
         var lobby = CreateLobby();
 
-        var draftMock = new Mock<CaptainDraftService>();
+        var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(true);
         draftMock.Setup(d => d.TryPick(lobby, 1, 5)).Returns(true);
         draftMock.Setup(d => d.DraftComplete(lobby)).Returns(false);
@@ -119,7 +117,7 @@ public class CaptainCommandsTests
     {
         var lobby = CreateLobby();
 
-        var draftMock = new Mock<CaptainDraftService>();
+        var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(true);
         draftMock.Setup(d => d.TryPick(lobby, 1, 5)).Returns(true);
         draftMock.Setup(d => d.DraftComplete(lobby)).Returns(true);
