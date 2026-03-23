@@ -6,21 +6,27 @@ namespace LegaciesBot.Services
     public class PlayerRegistryService
     {
         private readonly string? _filePath;
+        public string FilePath => _filePath;
         private readonly Dictionary<ulong, Player> _players = new();
+
+        public static Action<Player>? OnPlayerMutated;
 
         public PlayerRegistryService(string? filePath = null)
         {
             _filePath = filePath ?? "players.json";
             Load();
+            OnPlayerMutated = _ => Save();
         }
-        
+
         public Player? Resolve(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
                 return null;
+
             var p = FindByNameOrNickname(input);
             if (p != null)
                 return p;
+
             if (input.StartsWith("<@") && input.EndsWith(">"))
             {
                 var trimmed = input.Trim('<', '>', '@', '!');
@@ -28,7 +34,6 @@ namespace LegaciesBot.Services
                     return GetPlayer(idFromMention);
             }
 
-          
             if (ulong.TryParse(input, out ulong id))
                 return GetPlayer(id);
 
@@ -47,13 +52,12 @@ namespace LegaciesBot.Services
         {
             return _players.TryGetValue(discordId, out var p) ? p : null;
         }
-        
+
         public Player GetOrCreate(ulong discordId, string? name = null)
         {
             if (_players.TryGetValue(discordId, out var existing))
                 return existing;
 
-      
             var player = new Player(discordId, name ?? discordId.ToString())
             {
                 JoinedAt = DateTime.UtcNow,
@@ -70,7 +74,7 @@ namespace LegaciesBot.Services
         {
             if (!_players.TryGetValue(discordId, out var player))
                 return false;
-            
+
             if (_players.Values.Any(p =>
                     p.Nickname != null &&
                     p.Nickname.Equals(nickname, StringComparison.OrdinalIgnoreCase)))
@@ -80,7 +84,7 @@ namespace LegaciesBot.Services
             Save();
             return true;
         }
-        
+
         public bool IsRegistered(ulong discordId)
         {
             return _players.ContainsKey(discordId);
@@ -102,7 +106,7 @@ namespace LegaciesBot.Services
 
             return player;
         }
-        
+
         public IReadOnlyCollection<Player> GetAllPlayers()
         {
             return _players.Values;
@@ -114,8 +118,10 @@ namespace LegaciesBot.Services
                 return;
 
             var json = File.ReadAllText(_filePath);
-            var list = JsonSerializer.Deserialize<List<Player>>(json);
+            if (string.IsNullOrWhiteSpace(json))
+                return;
 
+            var list = JsonSerializer.Deserialize<List<Player>>(json);
             if (list != null)
             {
                 foreach (var p in list)

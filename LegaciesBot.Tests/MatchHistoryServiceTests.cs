@@ -1,5 +1,9 @@
+using System;
+using System.IO;
+using System.Linq;
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using LegaciesBot.GameData;
 
 public class MatchHistoryServiceTests
 {
@@ -11,21 +15,28 @@ public class MatchHistoryServiceTests
 
     private Game CreateGame()
     {
+        var registry = new PlayerRegistryService(null);
+
         var teamA = new Team("A");
         var teamB = new Team("B");
-
         for (int i = 1; i <= 2; i++)
         {
-            var p = new Player((ulong)i, $"P{i}", 800);
+            var p = registry.GetOrCreate((ulong)i);
+            p.Name = $"P{i}";
+            p.Elo = 800;
             p.AssignedFaction = $"Faction{i}";
+
             teamA.Players.Add(p);
             teamA.AssignedFactions.Add(new Faction($"Faction{i}", TeamGroup.NorthAlliance));
         }
-
+        
         for (int i = 3; i <= 4; i++)
         {
-            var p = new Player((ulong)i, $"P{i}", 800);
+            var p = registry.GetOrCreate((ulong)i);
+            p.Name = $"P{i}";
+            p.Elo = 800;
             p.AssignedFaction = $"Faction{i}";
+
             teamB.Players.Add(p);
             teamB.AssignedFactions.Add(new Faction($"Faction{i}", TeamGroup.SouthAlliance));
         }

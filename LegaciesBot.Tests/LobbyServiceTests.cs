@@ -1,14 +1,19 @@
 using LegaciesBot.Services;
 
-
 public class LobbyServiceTests
 {
+    private LobbyService CreateService()
+    {
+        var registry = new PlayerRegistryService(null);
+        return new LobbyService(registry);
+    }
+
     [Fact]
     public void JoinLobby_AddsNewPlayer()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        var p = service.JoinLobby(1, "Alice");
+        var p = service.JoinLobby(1);
 
         Assert.Single(service.CurrentLobby.Players);
         Assert.Equal((ulong)1, p.DiscordId);
@@ -17,9 +22,9 @@ public class LobbyServiceTests
     [Fact]
     public void RemovePlayer_RemovesExistingPlayer()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        service.JoinLobby(1, "Alice");
+        service.JoinLobby(1);
         bool removed = service.RemovePlayer(1);
 
         Assert.True(removed);
@@ -29,7 +34,7 @@ public class LobbyServiceTests
     [Fact]
     public void RemovePlayer_Fails_WhenNotInLobby()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
         bool removed = service.RemovePlayer(999);
 
@@ -39,9 +44,9 @@ public class LobbyServiceTests
     [Fact]
     public void MarkActive_UpdatesPlayer()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        var p = service.JoinLobby(1, "Alice");
+        var p = service.JoinLobby(1);
         p.IsActive = false;
 
         bool success = service.MarkActive(1);
@@ -53,7 +58,7 @@ public class LobbyServiceTests
     [Fact]
     public void MarkActive_Fails_WhenNotInLobby()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
         bool success = service.MarkActive(999);
 
@@ -63,10 +68,10 @@ public class LobbyServiceTests
     [Fact]
     public void GetLobbyMembers_ReturnsAllPlayers()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        service.JoinLobby(1, "Alice");
-        service.JoinLobby(2, "Bob");
+        service.JoinLobby(1);
+        service.JoinLobby(2);
 
         var members = service.GetLobbyMembers();
 
@@ -76,9 +81,9 @@ public class LobbyServiceTests
     [Fact]
     public void IsInLobby_ReturnsCorrectValue()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        service.JoinLobby(1, "Alice");
+        service.JoinLobby(1);
 
         Assert.True(service.IsInLobby(1));
         Assert.False(service.IsInLobby(999));
@@ -87,9 +92,9 @@ public class LobbyServiceTests
     [Fact]
     public void UpdatePreferences_UpdatesCorrectPlayer()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        service.JoinLobby(1, "Alice");
+        service.JoinLobby(1);
         service.UpdatePreferences(1, new() { "A", "B" });
 
         var p = service.CurrentLobby.Players.First();
@@ -100,14 +105,12 @@ public class LobbyServiceTests
     [Fact]
     public void CheckAfk_RemovesExpiredPlayers()
     {
-        var service = new LobbyService();
+        var service = CreateService();
 
-        var p = service.JoinLobby(1, "Alice");
-
+        var p = service.JoinLobby(1);
+        
         service.CurrentLobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromHours(1);
-
         service.CheckAfk();
-
         Assert.Empty(service.CurrentLobby.Players);
     }
 }

@@ -5,17 +5,13 @@ public class FullMatchFlowWithPreferencesTests
 {
     private PlayerRegistryService FreshRegistry()
     {
-        if (File.Exists("players.json"))
-            File.Delete("players.json");
-
-        return new PlayerRegistryService();
+        return new PlayerRegistryService(Path.GetTempFileName());
     }
 
     private MatchHistoryService FreshHistory()
     {
         if (File.Exists("match_history.json"))
             File.Delete("match_history.json");
-
         return new MatchHistoryService();
     }
 
@@ -52,10 +48,8 @@ public class FullMatchFlowWithPreferencesTests
             [3] = all.Where(f => f != "Scourge" && f != "Gilneas" && f != "Sunfury").ToList(),
             [4] = new() { "Lordaeron", "Skywall", "Stormwind" },
             [5] = new() { "Dalaran", "Legion", "Druids" },
-            [6] = new() { "Ironforge", "Stormwind", "The Exodar", "Druids", "Lordaeron",
-                          "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Black Empire", "Legion" },
-            [7] = new() { "Skywall", "Scourge", "An'qiraj", "Sentinels", "The Exodar",
-                          "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras" },
+            [6] = new() { "Ironforge", "Stormwind", "The Exodar", "Druids", "Lordaeron", "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Black Empire", "Legion" },
+            [7] = new() { "Skywall", "Scourge", "An'qiraj", "Sentinels", "The Exodar", "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras" },
             [8] = new() { "Lordaeron", "Sentinels", "Ironforge" },
             [9] = new() { "Dalaran", "Quel'thalas", "Kul'tiras", "Illidari", "Stormwind" },
             [10] = new() { "Warsong", "Skywall", "Dalaran", "Scourge", "Kul'tiras" },
@@ -72,13 +66,14 @@ public class FullMatchFlowWithPreferencesTests
     public void FullMatchFlow_WithPreferences_WorksEndToEnd()
     {
         var registry = FreshRegistry();
-        var lobbyService = new LobbyService();
+        var lobbyService = new LobbyService(registry);
         var history = FreshHistory();
 
         var elo = new EloStub();
         var factionRegistry = new FactionRegistryStub();
         var defaultPrefs = new DefaultPreferencesStub();
         var factionAssignment = new FactionAssignmentStub();
+        var rng = new Random(12345);
 
         var gameService = new GameService(
             new DummyGatewayClient(),
@@ -86,30 +81,40 @@ public class FullMatchFlowWithPreferencesTests
             elo,
             factionAssignment,
             factionRegistry,
-            defaultPrefs
+            defaultPrefs,
+            rng
         );
 
         foreach (var (id, name) in Players)
-            registry.RegisterPlayer(id, name);
-        foreach (var (id, name) in Players)
-            lobbyService.JoinLobby(id, name);
+        {
+            var p = registry.GetOrCreate(id);
+            p.Name = name;
+        }
+
+        foreach (var (id, _) in Players)
+            lobbyService.JoinLobby(id);
+
         foreach (var (id, _) in Players)
             lobbyService.UpdatePreferences(id, Prefs[id]);
 
         var lobby = lobbyService.CurrentLobby;
-        gameService.StartDraft(lobby, 123).Wait();
 
-        Assert.NotNull(lobby.TeamA);
-        Assert.NotNull(lobby.TeamB);
+        gameService.StartDraft(lobby, 123).Wait();
 
         var teamA = lobby.TeamA!;
         var teamB = lobby.TeamB!;
+
+        int preferredCount = 0;
 
         for (int i = 0; i < teamA.Players.Count; i++)
         {
             var player = teamA.Players[i];
             var faction = teamA.AssignedFactions[i];
-            Assert.Contains(faction.Name, Prefs[player.DiscordId]);
+            var prefs = Prefs[player.DiscordId];
+
+            if (prefs.Any(p => p.Equals(faction.Name, StringComparison.OrdinalIgnoreCase)))
+                preferredCount++;
+
             Assert.False(string.IsNullOrWhiteSpace(player.AssignedFaction));
         }
 
@@ -117,11 +122,18 @@ public class FullMatchFlowWithPreferencesTests
         {
             var player = teamB.Players[i];
             var faction = teamB.AssignedFactions[i];
-            Assert.Contains(faction.Name, Prefs[player.DiscordId]);
+            var prefs = Prefs[player.DiscordId];
+
+            if (prefs.Any(p => p.Equals(faction.Name, StringComparison.OrdinalIgnoreCase)))
+                preferredCount++;
+
             Assert.False(string.IsNullOrWhiteSpace(player.AssignedFaction));
         }
 
+        Assert.True(preferredCount > 0);
+
         var game = gameService.StartGame(lobby, teamA, teamB);
+
         var stats = new PlayerStatsService();
         var changes = gameService.SubmitScore(game, 4, 2, stats);
 

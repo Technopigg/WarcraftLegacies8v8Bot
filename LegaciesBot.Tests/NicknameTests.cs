@@ -7,7 +7,10 @@ public class NicknameTests
     public void Nickname_Lookup_Works()
     {
         var reg = new PlayerRegistryService(null);
-        reg.RegisterPlayer(1, "Boggywoggy");
+
+        var p = reg.GetOrCreate(1);
+        p.Name = "Boggywoggy";
+
         reg.SetNickname(1, "Boggy");
 
         var p1 = reg.Resolve("Boggy");

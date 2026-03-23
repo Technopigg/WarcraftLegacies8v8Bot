@@ -4,10 +4,7 @@ public class FullMatchFlowTests
 {
     private PlayerRegistryService FreshRegistry()
     {
-        if (File.Exists("players.json"))
-            File.Delete("players.json");
-
-        return new PlayerRegistryService();
+        return new PlayerRegistryService(Path.GetTempFileName());
     }
 
     private MatchHistoryService FreshHistory()
@@ -42,13 +39,14 @@ public class FullMatchFlowTests
     public void FullMatchFlow_WorksEndToEnd()
     {
         var registry = FreshRegistry();
-        var lobbyService = new LobbyService();
+        var lobbyService = new LobbyService(registry);
         var history = FreshHistory();
 
         var elo = new EloStub();
         var factionRegistry = new FactionRegistryStub();
         var defaultPrefs = new DefaultPreferencesStub();
         var factionAssignment = new FactionAssignmentStub();
+        var rng = new Random(12345);
 
         var gameService = new GameService(
             new DummyGatewayClient(),
@@ -56,18 +54,25 @@ public class FullMatchFlowTests
             elo,
             factionAssignment,
             factionRegistry,
-            defaultPrefs
+            defaultPrefs,
+            rng
         );
 
         foreach (var (id, name) in Players)
-            registry.RegisterPlayer(id, name);
-        foreach (var (id, name) in Players)
-            lobbyService.JoinLobby(id, name);
+        {
+            var p = registry.GetOrCreate(id);
+            p.Name = name;
+        }
+
+        foreach (var (id, _) in Players)
+            lobbyService.JoinLobby(id);
 
         var lobby = lobbyService.CurrentLobby;
+
         Assert.Equal(16, lobby.Players.Count);
+
         gameService.StartDraft(lobby, 123).Wait();
-        
+
         foreach (var p in lobby.TeamA!.Players)
             p.AssignedFaction = "TestFactionA";
 
@@ -96,7 +101,7 @@ public class FullMatchFlowTests
         foreach (var p in lobby.TeamA!.Players)
         {
             var s = stats.GetOrCreate(p.DiscordId);
-            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1); 
+            Assert.True(s.FactionHistory[p.AssignedFaction].Wins == 1);
         }
 
         foreach (var p in lobby.TeamB!.Players)

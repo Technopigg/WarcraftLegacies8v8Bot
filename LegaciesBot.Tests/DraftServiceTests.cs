@@ -4,15 +4,25 @@ using LegaciesBot.GameData;
 using Moq;
 
 namespace LegaciesBot.Tests;
+
 public class DraftServiceTests
 {
     private Lobby CreateLobbyWith16Players()
     {
         var lobby = new Lobby();
+        var registry = new PlayerRegistryService(null);
+
         for (int i = 0; i < 16; i++)
         {
-            lobby.Players.Add(new Player((ulong)i, $"Player{i}") { Elo = 1000 });
+            ulong id = (ulong)i;
+
+            var p = registry.GetOrCreate(id);
+            p.Name = $"Player{i}";
+            p.Elo = 1000;
+
+            lobby.Players.Add(p);
         }
+
         return lobby;
     }
 
@@ -55,6 +65,7 @@ public class DraftServiceTests
         await service.StartDraft(lobby, 123);
 
         Assert.True(lobby.DraftStarted);
+
         var game = service.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
 
         Assert.NotNull(game.TeamA);
@@ -66,6 +77,7 @@ public class DraftServiceTests
         var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
         Assert.Equal(16, allPlayers.Count);
         Assert.Equal(16, allPlayers.Select(p => p.DiscordId).Distinct().Count());
+
         assign.Verify(a => a.AssignFactionsForGame(
             It.IsAny<Team>(),
             It.IsAny<Team>(),

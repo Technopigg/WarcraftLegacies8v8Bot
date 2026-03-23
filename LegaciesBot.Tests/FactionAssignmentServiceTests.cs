@@ -17,10 +17,17 @@ public class FactionAssignmentServiceTests
         var prefs = FactionRegistry.All.Select(f => f.Name).ToList();
         var list = new List<Player>();
 
+        var registry = new PlayerRegistryService(null);
+
         for (int i = 0; i < count; i++)
         {
-            var p = new Player((ulong)(i + 1), $"Player{i + 1}", 1500);
+            ulong id = (ulong)(i + 1);
+
+            var p = registry.GetOrCreate(id);
+            p.Name = $"Player{i + 1}";
+            p.Elo = 1500;
             p.FactionPreferences = prefs.ToList();
+
             list.Add(p);
         }
 

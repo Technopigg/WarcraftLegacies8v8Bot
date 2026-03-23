@@ -7,17 +7,15 @@ using Xunit;
 
 public class PlayerRegistryServiceTests
 {
-    private void ResetFile()
+    private PlayerRegistryService CreateRegistry()
     {
-        if (File.Exists("players.json"))
-            File.Delete("players.json");
+        return new PlayerRegistryService(Path.GetTempFileName());
     }
 
     [Fact]
     public void GetPlayer_ReturnsNull_WhenNotRegistered()
     {
-        ResetFile();
-        var registry = new PlayerRegistryService();
+        var registry = CreateRegistry();
 
         var result = registry.GetPlayer(999);
 
@@ -25,58 +23,66 @@ public class PlayerRegistryServiceTests
     }
 
     [Fact]
-    public void RegisterPlayer_CreatesNewPlayer()
+    public void GetOrCreate_CreatesNewPlayer()
     {
-        ResetFile();
-        var registry = new PlayerRegistryService();
+        var registry = CreateRegistry();
 
-        var p = registry.RegisterPlayer(1, "Techno");
+        var p = registry.GetOrCreate(1);
+        p.Name = "Techno";
+
+        var registry2 = new PlayerRegistryService(registry.FilePath);
+        var loaded = registry2.GetPlayer(1);
 
         Assert.NotNull(p);
         Assert.Equal((ulong)1, p.DiscordId);
         Assert.Equal("Techno", p.DisplayName());
         Assert.True(p.IsActive);
         Assert.True(p.JoinedAt <= DateTime.UtcNow);
+        Assert.Equal("Techno", loaded.Name);
     }
 
     [Fact]
-    public void RegisterPlayer_ReturnsExistingPlayer_WhenAlreadyRegistered()
+    public void GetOrCreate_ReturnsExistingPlayer_WhenAlreadyRegistered()
     {
-        ResetFile();
-        var registry = new PlayerRegistryService();
+        var registry = CreateRegistry();
 
-        var p1 = registry.RegisterPlayer(2, "Nick");
-        var p2 = registry.RegisterPlayer(2, "Nick");
+        var p1 = registry.GetOrCreate(2);
+        p1.Name = "Nick";
 
-        Assert.Same(p1, p2);
-        Assert.Single(registry.GetAllPlayers());
+        var registry2 = new PlayerRegistryService(registry.FilePath);
+        var p2 = registry2.GetOrCreate(2);
+
+        Assert.Equal("Nick", p2.Name);
+        Assert.Single(registry2.GetAllPlayers());
     }
 
     [Fact]
     public void IsRegistered_WorksCorrectly()
     {
-        ResetFile();
-        var registry = new PlayerRegistryService();
+        var registry = CreateRegistry();
 
-        registry.RegisterPlayer(3, "Vamp");
+        var p = registry.GetOrCreate(3);
+        p.Name = "Vamp";
 
-        Assert.True(registry.IsRegistered(3));
-        Assert.False(registry.IsRegistered(4));
+        var registry2 = new PlayerRegistryService(registry.FilePath);
+
+        Assert.True(registry2.IsRegistered(3));
+        Assert.False(registry2.IsRegistered(4));
     }
 
     [Fact]
     public void GetAllPlayers_ReturnsAllRegisteredPlayers()
     {
-        ResetFile();
-        var registry = new PlayerRegistryService();
+        var registry = CreateRegistry();
 
-        registry.RegisterPlayer(1, "Techno");
-        registry.RegisterPlayer(2, "Nick");
-        registry.RegisterPlayer(3, "Vamp");
-        registry.RegisterPlayer(4, "Madsen");
-        registry.RegisterPlayer(5, "Yak");
+        registry.GetOrCreate(1).Name = "Techno";
+        registry.GetOrCreate(2).Name = "Nick";
+        registry.GetOrCreate(3).Name = "Vamp";
+        registry.GetOrCreate(4).Name = "Madsen";
+        registry.GetOrCreate(5).Name = "Yak";
 
-        var all = registry.GetAllPlayers();
+        var registry2 = new PlayerRegistryService(registry.FilePath);
+        var all = registry2.GetAllPlayers();
 
         Assert.Equal(5, all.Count);
         Assert.Contains(all, p => p.DisplayName() == "Techno");
@@ -89,14 +95,15 @@ public class PlayerRegistryServiceTests
     [Fact]
     public void Registry_PersistsSinglePlayer()
     {
-        ResetFile();
+        string path = Path.GetTempFileName();
 
         {
-            var registry = new PlayerRegistryService();
-            registry.RegisterPlayer(1, "Techno");
+            var registry = new PlayerRegistryService(path);
+            var p = registry.GetOrCreate(1);
+            p.Name = "Techno";
         }
 
-        var registry2 = new PlayerRegistryService();
+        var registry2 = new PlayerRegistryService(path);
         var loaded = registry2.GetPlayer(1);
 
         Assert.NotNull(loaded);
@@ -106,16 +113,16 @@ public class PlayerRegistryServiceTests
     [Fact]
     public void Registry_PersistsMultiplePlayers()
     {
-        ResetFile();
+        string path = Path.GetTempFileName();
 
         {
-            var registry = new PlayerRegistryService();
-            registry.RegisterPlayer(1, "Techno");
-            registry.RegisterPlayer(2, "Nick");
-            registry.RegisterPlayer(3, "Vamp");
+            var registry = new PlayerRegistryService(path);
+            registry.GetOrCreate(1).Name = "Techno";
+            registry.GetOrCreate(2).Name = "Nick";
+            registry.GetOrCreate(3).Name = "Vamp";
         }
 
-        var registry2 = new PlayerRegistryService();
+        var registry2 = new PlayerRegistryService(path);
         var all = registry2.GetAllPlayers();
 
         Assert.Equal(3, all.Count);

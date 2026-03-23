@@ -35,44 +35,92 @@ public class DefaultPreferencesStub : IDefaultPreferences
 
 public class FactionAssignmentStub : IFactionAssignmentService
 {
+    public HashSet<TeamGroup> AllowedGroupsA { get; private set; } = new();
+    public HashSet<TeamGroup> AllowedGroupsB { get; private set; } = new();
+
+    private readonly Random _rng = new Random(12345);
+
     public void AssignFactionsForGame(
         Team teamA,
         Team teamB,
         HashSet<TeamGroup> allowedGroupsA,
         HashSet<TeamGroup> allowedGroupsB)
     {
+        AllowedGroupsA = new HashSet<TeamGroup>(allowedGroupsA);
+        AllowedGroupsB = new HashSet<TeamGroup>(allowedGroupsB);
+
         teamA.AssignedFactions.Clear();
         teamB.AssignedFactions.Clear();
 
-        AssignForSingleTeam(teamA, allowedGroupsA);
-        AssignForSingleTeam(teamB, allowedGroupsB);
-    }
+        var allowedByTeam = new Dictionary<Team, HashSet<TeamGroup>>
+        {
+            [teamA] = AllowedGroupsA,
+            [teamB] = AllowedGroupsB
+        };
 
-    private void AssignForSingleTeam(Team team, HashSet<TeamGroup> allowedGroups)
-    {
-        var pool = FactionRegistry.All
-            .Where(f => allowedGroups.Contains(f.Group))
+        var allPlayers = new List<(Team team, Player player)>();
+        allPlayers.AddRange(teamA.Players.Select(p => (teamA, p)));
+        allPlayers.AddRange(teamB.Players.Select(p => (teamB, p)));
+
+        allPlayers = allPlayers
+            .OrderBy(_ => _rng.Next())
             .ToList();
 
-        for (int i = 0; i < team.Players.Count; i++)
-        {
-            var player = team.Players[i];
+        var usedFactionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var usedSlotIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            var preferred = player.FactionPreferences
-                .Select(name => pool.FirstOrDefault(f =>
-                    f.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-                .Where(f => f != null)
+        var groupsPerTeam = new Dictionary<Team, HashSet<TeamGroup>>
+        {
+            [teamA] = new(),
+            [teamB] = new()
+        };
+
+        foreach (var (team, player) in allPlayers)
+        {
+            var allowedGroups = allowedByTeam[team];
+
+            var availableFactions = FactionRegistry.All
+                .Where(f => allowedGroups.Contains(f.Group))
+                .Where(f => !usedFactionNames.Contains(f.Name))
+                .Where(f => string.IsNullOrEmpty(f.SlotId) || !usedSlotIds.Contains(f.SlotId))
                 .ToList();
 
-            var source = preferred.Any() ? preferred : pool;
+            Faction? assigned = null;
 
-            if (!source.Any())
-                throw new Exception($"No available factions left for team {team.Name} before assigning player {player.Name}");
+            foreach (var prefName in player.FactionPreferences)
+            {
+                var faction = availableFactions
+                    .FirstOrDefault(f => f.Name.Equals(prefName, StringComparison.OrdinalIgnoreCase));
 
-            var faction = source.First();
+                if (faction == null)
+                    continue;
 
-            team.AssignedFactions.Add(faction);
-            pool.Remove(faction);
+                if (!ConstraintService.IsCompatible(groupsPerTeam[team], faction.Group))
+                    continue;
+
+                assigned = faction;
+                break;
+            }
+
+            if (assigned == null)
+            {
+                foreach (var faction in availableFactions)
+                {
+                    if (!ConstraintService.IsCompatible(groupsPerTeam[team], faction.Group))
+                        continue;
+
+                    assigned = faction;
+                    break;
+                }
+            }
+
+            team.AssignedFactions.Add(assigned);
+            usedFactionNames.Add(assigned.Name);
+
+            if (!string.IsNullOrEmpty(assigned.SlotId))
+                usedSlotIds.Add(assigned.SlotId);
+
+            groupsPerTeam[team].Add(assigned.Group);
         }
     }
 }

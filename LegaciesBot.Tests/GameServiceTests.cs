@@ -57,11 +57,17 @@ public class GameServiceTests
     private static Lobby CreateLobbyWithPlayers(int count)
     {
         var lobby = new Lobby();
+        var registry = new PlayerRegistryService(null);
 
         for (int i = 0; i < count; i++)
         {
-            var p = new Player((ulong)(i + 1), $"Player{i + 1}", 1500);
+            ulong id = (ulong)(i + 1);
+
+            var p = registry.GetOrCreate(id);
+            p.Name = $"Player{i + 1}";
+            p.Elo = 1500;
             p.FactionPreferences = new List<string>();
+
             lobby.Players.Add(p);
         }
 

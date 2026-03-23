@@ -18,23 +18,26 @@ public class DraftSimulationOutput
 
     private static Player CreatePlayer(ulong id, string name, int elo, IEnumerable<string> prefs)
     {
-        var p = new Player(id, name, elo);
+        var registry = new PlayerRegistryService(null);
+
+        var p = registry.GetOrCreate(id);
+        p.Name = name;
+        p.Elo = elo;
         p.FactionPreferences = prefs.ToList();
+
         return p;
     }
 
     private static List<Player> CreatePlayers()
     {
-
         string F(string name) => FactionRegistry.All.First(f =>
             string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)).Name;
 
         var allFactionNames = FactionRegistry.All.Select(f => f.Name).ToList();
 
         var players = new List<Player>();
-
         ulong id = 1;
-        
+
         players.Add(CreatePlayer(id++, "Nick", 1500, new[]
         {
             F("Dalaran"),
@@ -69,8 +72,9 @@ public class DraftSimulationOutput
                 !string.Equals(n, "Gilneas", StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(n, "Sunfury", StringComparison.OrdinalIgnoreCase))
             .ToList();
+
         players.Add(CreatePlayer(id++, "Dia", 1550, diaPrefs));
-        
+
         players.Add(CreatePlayer(id++, "Helsac", 1400, new[]
         {
             F("Lordaeron"),
@@ -108,7 +112,6 @@ public class DraftSimulationOutput
             F("Kul'tiras")
         }));
 
-      
         players.Add(CreatePlayer(id++, "Theg", 1420, new[]
         {
             F("Lordaeron"),
@@ -125,7 +128,6 @@ public class DraftSimulationOutput
             F("Stormwind")
         }));
 
-
         players.Add(CreatePlayer(id++, "Enclop", 1460, new[]
         {
             F("Warsong"),
@@ -134,7 +136,6 @@ public class DraftSimulationOutput
             F("Scourge"),
             F("Kul'tiras")
         }));
-
 
         players.Add(CreatePlayer(id++, "Lukas", 1440, new[]
         {
@@ -146,7 +147,6 @@ public class DraftSimulationOutput
             F("Kul'tiras")
         }));
 
-     
         players.Add(CreatePlayer(id++, "Alan", 1510, new[]
         {
             F("Illidari"),
@@ -156,7 +156,6 @@ public class DraftSimulationOutput
             F("Lordaeron")
         }));
 
-    
         players.Add(CreatePlayer(id++, "Royce", 1470, new[]
         {
             F("Fel Horde"),
@@ -165,7 +164,7 @@ public class DraftSimulationOutput
             F("Kul'tiras"),
             F("Lordaeron")
         }));
-        
+
         players.Add(CreatePlayer(id++, "Petertros", 1430, new[]
         {
             F("Kul'tiras"),
@@ -174,7 +173,7 @@ public class DraftSimulationOutput
             F("The Exodar"),
             F("Quel'thalas")
         }));
-        
+
         players.Add(CreatePlayer(id++, "Dragozer", 1505, new[]
         {
             F("Dalaran"),
@@ -185,7 +184,7 @@ public class DraftSimulationOutput
             F("Stormwind"),
             F("Sunfury")
         }));
-        
+
         players.Add(CreatePlayer(id++, "Madsen", 1455, new[]
         {
             F("Lordaeron"),

@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using LegaciesBot.Core;
 using LegaciesBot.GameData;
 using LegaciesBot.Services;
+using Xunit;
 
 public class DraftSimulationTests
 {
@@ -10,17 +14,16 @@ public class DraftSimulationTests
         var prefs = FactionRegistry.All.Select(f => f.Name).ToList();
         var list = new List<Player>();
 
+        var registry = new PlayerRegistryService(null);
+
         for (int i = 0; i < count; i++)
         {
-            var p = new Player(
-                (ulong)(i + 1),
-                $"Player{i + 1}",
-                1400 + rng.Next(-200, 201)
-            );
+            ulong id = (ulong)(i + 1);
 
-            p.FactionPreferences = prefs
-                .OrderBy(_ => rng.Next())
-                .ToList();
+            var p = registry.GetOrCreate(id);
+            p.Name = $"Player{i + 1}";
+            p.Elo = 1400 + rng.Next(-200, 201);
+            p.FactionPreferences = prefs.OrderBy(_ => rng.Next()).ToList();
 
             list.Add(p);
         }

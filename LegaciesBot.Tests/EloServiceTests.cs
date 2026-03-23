@@ -8,7 +8,11 @@ public class EloServiceTests
 {
     private Player P(ulong id, int elo, PlayerStatsService stats)
     {
-        var p = new Player(id, $"P{id}", elo);
+        var registry = new PlayerRegistryService(null);
+
+        var p = registry.GetOrCreate(id);
+        p.Name = $"P{id}";
+        p.Elo = elo;
 
         var s = stats.GetOrCreate(id);
         s.Elo = elo;
