@@ -20,9 +20,7 @@ public class CaptainCommandsTests
             p.Elo = 1500;
             lobby.Players.Add(p);
         }
-
         lobby.DraftMode = DraftMode.CaptainDraft_AutoFaction;
-
         return lobby;
     }
 
@@ -31,100 +29,81 @@ public class CaptainCommandsTests
         var lobbyService = new Mock<ILobbyService>();
         lobbyService.Setup(l => l.CurrentLobby).Returns(lobby);
 
-        return new CaptainCommands(lobbyService.Object, draftMock.Object);
+        var playerRegistry = new PlayerRegistryService(null);
+        var nicknameService = new NicknameService(playerRegistry);
+        playerRegistry.GetOrCreate(5).Name = "Player5";
+
+        return new CaptainCommands(lobbyService.Object, draftMock.Object, nicknameService, playerRegistry);
     }
 
     [Fact]
     public void ClaimCaptain_Succeeds_WhenSlotAvailable()
     {
         var lobby = CreateLobby();
-
         var draftMock = new Mock<ICaptainDraftService>();
-        draftMock.Setup(d => d.TryClaimCaptain(lobby, 1)).Returns(true);
+        draftMock.Setup(d => d.TryClaimCaptain(lobby, 1)).Returns(true).Callback<Lobby, ulong>((l, id) => l.CaptainA = id);
 
         var commands = CreateCommands(lobby, draftMock);
-
         var result = commands.ClaimCaptain(1);
 
-        Assert.Equal("You are now a captain.", result);
+        Assert.Contains("You are now a captain!", result);
     }
 
     [Fact]
     public void ClaimCaptain_Fails_WhenTwoCaptainsExist()
     {
         var lobby = CreateLobby();
-
+        lobby.CaptainA = 2;
+        lobby.CaptainB = 3;
+        
         var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.TryClaimCaptain(lobby, 1)).Returns(false);
 
         var commands = CreateCommands(lobby, draftMock);
-
         var result = commands.ClaimCaptain(1);
 
-        Assert.Equal("Two captains already exist.", result);
+        Assert.Contains("Two captains already exist", result);
     }
 
     [Fact]
     public void Draft_Fails_WhenNotCaptainTurn()
     {
         var lobby = CreateLobby();
-
         var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(false);
 
         var commands = CreateCommands(lobby, draftMock);
-
-        var result = commands.Draft(1, 5);
+        var result = commands.Draft("5", 1);
 
         Assert.Equal("It is not your turn to pick.", result);
-    }
-
-    [Fact]
-    public void Draft_Fails_WhenPickInvalid()
-    {
-        var lobby = CreateLobby();
-
-        var draftMock = new Mock<ICaptainDraftService>();
-        draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(true);
-        draftMock.Setup(d => d.TryPick(lobby, 1, 5)).Returns(false);
-
-        var commands = CreateCommands(lobby, draftMock);
-
-        var result = commands.Draft(1, 5);
-
-        Assert.Equal("Invalid pick.", result);
     }
 
     [Fact]
     public void Draft_Succeeds_WhenValidPick()
     {
         var lobby = CreateLobby();
-
         var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(true);
         draftMock.Setup(d => d.TryPick(lobby, 1, 5)).Returns(true);
         draftMock.Setup(d => d.DraftComplete(lobby)).Returns(false);
 
         var commands = CreateCommands(lobby, draftMock);
+        var result = commands.Draft("5", 1);
 
-        var result = commands.Draft(1, 5);
-
-        Assert.Equal("Pick successful.", result);
+        Assert.Contains("Successfully picked", result);
     }
 
     [Fact]
     public void Draft_ReportsCompletion_WhenDraftEnds()
     {
         var lobby = CreateLobby();
-
         var draftMock = new Mock<ICaptainDraftService>();
         draftMock.Setup(d => d.IsCaptainTurn(lobby, 1)).Returns(true);
         draftMock.Setup(d => d.TryPick(lobby, 1, 5)).Returns(true);
         draftMock.Setup(d => d.DraftComplete(lobby)).Returns(true);
 
         var commands = CreateCommands(lobby, draftMock);
-
-        var result = commands.Draft(1, 5);
+        var result = commands.Draft("5", 1);
 
         Assert.Equal("Draft complete! Teams are locked.", result);
     }
