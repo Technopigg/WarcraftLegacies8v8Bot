@@ -16,7 +16,7 @@ namespace LegaciesBot.Discord
 
         public GameCommands(
             GameService gameService,
-            LobbyService lobbyService,
+            ILobbyService lobbyService, 
             PlayerDataService playerDataService,
             PlayerStatsService stats,
             PermissionService permissions,
@@ -25,14 +25,13 @@ namespace LegaciesBot.Discord
         )
         {
             _gameService = gameService;
-            _lobbyService = lobbyService;
+            _lobbyService = (LobbyService)lobbyService; 
             _playerDataService = playerDataService;
             _stats = stats;
             _permissions = permissions;
             _matchHistoryService = matchHistoryService;
             _playerRegistry = playerRegistry;
         }
-
         [Command("register")]
         [Command("reg")]
         public async Task Register()

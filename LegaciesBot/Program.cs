@@ -5,6 +5,7 @@ using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Discord;
 using LegaciesBot.Services.CaptainDraft;
+using Microsoft.Extensions.DependencyInjection; // Added for the new provider
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
@@ -19,6 +20,7 @@ var client = new GatewayClient(
     new GatewayClientConfiguration
     {
         Intents = GatewayIntents.GuildMessages
+
                   | GatewayIntents.DirectMessages
                   | GatewayIntents.MessageContent
     }
@@ -51,12 +53,22 @@ var gameService = new GameService(
     defaultPreferences
 );
 
+var services = new ServiceCollection()
+    .AddSingleton<ILobbyService>(lobbyService)
+    .AddSingleton<LobbyService>(lobbyService)  
+    .AddSingleton<ICaptainDraftService>(captainDraftService)
+    .AddSingleton(playerDataService)
+    .AddSingleton(playerStatsService)
+    .AddSingleton(permissionService)
+    .AddSingleton(matchHistoryService)
+    .AddSingleton(playerRegistryService)
+    .AddSingleton(nicknameService)
+    .AddSingleton(factionManualAssignmentService)
+    .AddSingleton(gameService)
+    .BuildServiceProvider();
 var commandService = new CommandService<CommandContext>();
-commandService.AddModule<LobbyCommands>();
-commandService.AddModule<GameCommands>();
-commandService.AddModule<StatsCommands>();
-commandService.AddModule<CaptainCommands>();          // NEW
-commandService.AddModule<FactionCommands>();          // NEW
+
+commandService.AddModules(typeof(Program).Assembly);
 
 client.MessageCreate += async message =>
 {
@@ -64,23 +76,8 @@ client.MessageCreate += async message =>
         return;
 
     var ctx = new CommandContext(message, client);
-
-    await commandService.ExecuteAsync(
-        1,
-        ctx,
-        new SimpleServiceProvider(
-            lobbyService,
-            gameService,
-            playerDataService,
-            playerStatsService,
-            permissionService,
-            matchHistoryService,
-            playerRegistryService,
-            nicknameService,
-            captainDraftService,
-            factionManualAssignmentService
-        )
-    );
+    
+    await commandService.ExecuteAsync(1, ctx, services);
 };
 
 client.Ready += args =>
@@ -100,60 +97,3 @@ _ = Task.Run(async () =>
 
 await client.StartAsync();
 await Task.Delay(-1);
-
-public class SimpleServiceProvider : IServiceProvider
-{
-    private readonly LobbyService _lobbyService;
-    private readonly GameService _gameService;
-    private readonly PlayerDataService _playerDataService;
-    private readonly PlayerStatsService _playerStatsService;
-    private readonly PermissionService _permissionService;
-    private readonly MatchHistoryService _matchHistoryService;
-    private readonly PlayerRegistryService _playerRegistryService;
-
-    private readonly NicknameService _nicknameService;
-    private readonly CaptainDraftService _captainDraftService;
-    private readonly FactionManualAssignmentService _factionManualAssignmentService;
-
-    public SimpleServiceProvider(
-        LobbyService lobbyService,
-        GameService gameService,
-        PlayerDataService playerDataService,
-        PlayerStatsService playerStatsService,
-        PermissionService permissionService,
-        MatchHistoryService matchHistoryService,
-        PlayerRegistryService playerRegistryService,
-        NicknameService nicknameService,
-        CaptainDraftService captainDraftService,
-        FactionManualAssignmentService factionManualAssignmentService)
-    {
-        _lobbyService = lobbyService;
-        _gameService = gameService;
-        _playerDataService = playerDataService;
-        _playerStatsService = playerStatsService;
-        _permissionService = permissionService;
-        _matchHistoryService = matchHistoryService;
-        _playerRegistryService = playerRegistryService;
-
-        _nicknameService = nicknameService;
-        _captainDraftService = captainDraftService;
-        _factionManualAssignmentService = factionManualAssignmentService;
-    }
-
-    public object? GetService(Type serviceType)
-    {
-        if (serviceType == typeof(LobbyService)) return _lobbyService;
-        if (serviceType == typeof(GameService)) return _gameService;
-        if (serviceType == typeof(PlayerDataService)) return _playerDataService;
-        if (serviceType == typeof(PlayerStatsService)) return _playerStatsService;
-        if (serviceType == typeof(PermissionService)) return _permissionService;
-        if (serviceType == typeof(MatchHistoryService)) return _matchHistoryService;
-        if (serviceType == typeof(PlayerRegistryService)) return _playerRegistryService;
-
-        if (serviceType == typeof(NicknameService)) return _nicknameService;
-        if (serviceType == typeof(CaptainDraftService)) return _captainDraftService;
-        if (serviceType == typeof(FactionManualAssignmentService)) return _factionManualAssignmentService;
-
-        return null;
-    }
-}

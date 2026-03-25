@@ -3,7 +3,7 @@ using NetCord.Services.Commands;
 
 namespace LegaciesBot.Commands
 {
-    public class FactionCommands
+    public class FactionCommands : CommandModule<CommandContext>
     {
         private readonly ILobbyService _lobby;
         private readonly FactionManualAssignmentService _manual;

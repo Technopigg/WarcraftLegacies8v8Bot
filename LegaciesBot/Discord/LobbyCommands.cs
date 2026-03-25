@@ -7,6 +7,7 @@ namespace LegaciesBot.Discord
 {
     public class LobbyCommands : CommandModule<CommandContext>
     {
+    
         private readonly LobbyService _lobbyService;
         private readonly GameService _gameService;
         private readonly PlayerDataService _playerData;
@@ -14,18 +15,19 @@ namespace LegaciesBot.Discord
         private readonly PlayerRegistryService _playerRegistry;
 
         public LobbyCommands(
-            LobbyService lobbyService,
+            ILobbyService lobbyService, 
             GameService gameService,
             PlayerDataService playerData,
             PlayerStatsService playerStats,
             PlayerRegistryService playerRegistry)
         {
-            _lobbyService = lobbyService;
+            _lobbyService = (LobbyService)lobbyService;
             _gameService = gameService;
             _playerData = playerData;
             _playerStats = playerStats;
             _playerRegistry = playerRegistry;
         }
+    
 
         [Command("join")]
         [Command("j")]

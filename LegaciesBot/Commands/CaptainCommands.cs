@@ -4,7 +4,8 @@ using NetCord.Services.Commands;
 
 namespace LegaciesBot.Commands
 {
-    public class CaptainCommands
+    public class CaptainCommands : CommandModule<CommandContext>
+
     {
         private readonly ILobbyService _lobby;
         private readonly ICaptainDraftService _captainDraft;
@@ -43,5 +44,8 @@ namespace LegaciesBot.Commands
 
             return "Pick successful.";
         }
+        
+        [Command("hello")]
+        public string Hello() => "I am working!";
     }
 }
