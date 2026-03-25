@@ -58,6 +58,10 @@ namespace LegaciesBot.Services
 
             lobby.Players.Remove(player);
             lobby.AfkPingedAt.Remove(discordId);
+
+            if (lobby.CaptainA == discordId) lobby.CaptainA = null;
+            if (lobby.CaptainB == discordId) lobby.CaptainB = null;
+
             return true;
         }
 
@@ -108,6 +112,9 @@ namespace LegaciesBot.Services
                         {
                             lobby.Players.Remove(player);
                             lobby.AfkPingedAt.Remove(player.DiscordId);
+
+                            if (lobby.CaptainA == player.DiscordId) lobby.CaptainA = null;
+                            if (lobby.CaptainB == player.DiscordId) lobby.CaptainB = null;
                         }
                     }
                 }
