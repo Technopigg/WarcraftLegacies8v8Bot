@@ -32,6 +32,22 @@ public class LobbyServiceTests
     }
 
     [Fact]
+    public void RemovePlayer_ClearsCaptainSlots()
+    {
+        var service = CreateService();
+        var lobby = service.CurrentLobby;
+        
+        service.JoinLobby(1);
+        lobby.CaptainA = 1;
+        lobby.CaptainB = 2; // Someone else
+
+        service.RemovePlayer(1);
+
+        Assert.Null(lobby.CaptainA);
+        Assert.Equal((ulong)2, lobby.CaptainB); 
+    }
+
+    [Fact]
     public void RemovePlayer_Fails_WhenNotInLobby()
     {
         var service = CreateService();
@@ -103,14 +119,18 @@ public class LobbyServiceTests
     }
 
     [Fact]
-    public void CheckAfk_RemovesExpiredPlayers()
+    public void CheckAfk_RemovesExpiredPlayers_AndClearsCaptains()
     {
         var service = CreateService();
+        var lobby = service.CurrentLobby;
 
-        var p = service.JoinLobby(1);
+        service.JoinLobby(1);
+        lobby.CaptainA = 1;
         
-        service.CurrentLobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromHours(1);
+        lobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromHours(1);
         service.CheckAfk();
-        Assert.Empty(service.CurrentLobby.Players);
+
+        Assert.Empty(lobby.Players);
+        Assert.Null(lobby.CaptainA);
     }
 }
