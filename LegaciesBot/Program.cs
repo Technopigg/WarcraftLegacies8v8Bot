@@ -5,7 +5,7 @@ using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Discord;
 using LegaciesBot.Services.CaptainDraft;
-using Microsoft.Extensions.DependencyInjection; // Added for the new provider
+using Microsoft.Extensions.DependencyInjection; 
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
