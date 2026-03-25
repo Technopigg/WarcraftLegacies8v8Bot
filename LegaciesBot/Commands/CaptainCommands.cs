@@ -82,12 +82,15 @@ namespace LegaciesBot.Commands
 
             if (!targetId.HasValue)
                 return $"`{input}` is not a valid player or mention.";
+            
+            if (!lobby.Players.Any(p => p.DiscordId == targetId.Value))
+                return "That player is not in the lobby.";
 
             if (!_captainDraft.IsCaptainTurn(lobby, captainId))
                 return "It is not your turn to pick.";
 
             if (!_captainDraft.TryPick(lobby, captainId, targetId.Value))
-                return "Invalid pick (player might already be picked or not in lobby).";
+                return "Invalid pick (player might already be picked).";
 
             if (_captainDraft.DraftComplete(lobby))
                 return "Draft complete! Teams are locked.";
