@@ -42,15 +42,18 @@ namespace LegaciesBot.Commands
             var userId = testUserId == 0 ? Context.User.Id : testUserId;
             var lobby = _lobby.CurrentLobby;
             
+            if (!lobby.Players.Any(p => p.DiscordId == userId))
+                return "You must join the lobby with `!j` before you can claim captain.";
+
             if (lobby.CaptainA == userId || lobby.CaptainB == userId)
                 return "You are already a captain.";
-            
+    
             if (!_captainDraft.TryClaimCaptain(lobby, userId))
             {
                 var names = GetCaptainNames(lobby);
                 return $"Two captains already exist: {string.Join(", ", names)}.";
             }
-            
+    
             var currentNames = GetCaptainNames(lobby);
             return $"You are now a captain! Current captains: {string.Join(", ", currentNames)}.";
         }
