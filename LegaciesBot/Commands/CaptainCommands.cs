@@ -1,6 +1,7 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
 using LegaciesBot.Services.CaptainDraft;
+using LegaciesBot.Config;
 using NetCord.Services.Commands;
 
 namespace LegaciesBot.Commands
@@ -11,6 +12,9 @@ namespace LegaciesBot.Commands
         private readonly ICaptainDraftService _captainDraft;
         private readonly NicknameService _nicknames;
         private readonly PlayerRegistryService _playerRegistry;
+        private readonly IGatewayClient _client;
+
+        private const ulong GuildId = 1218338908216229979;
 
         public CaptainCommands()
         {
@@ -18,6 +22,7 @@ namespace LegaciesBot.Commands
             _captainDraft = GlobalServices.CaptainDraftService;
             _nicknames = GlobalServices.NicknameService;
             _playerRegistry = GlobalServices.PlayerRegistryService;
+            _client = GlobalServices.GameService.Client;
         }
 
         [Command("captains")]
@@ -150,8 +155,23 @@ namespace LegaciesBot.Commands
 
             if (_captainDraft.DraftComplete(lobby))
             {
-                await Context.Message.ReplyAsync("Draft complete! Teams are locked.");
+                await FinalizeDraft(lobby);
             }
+        }
+
+        private async Task FinalizeDraft(Lobby lobby)
+        {
+            var teamAPlayers = lobby.TeamAPicks.Select(id => _playerRegistry.GetPlayer(id)).Where(p => p != null).ToList();
+            var teamBPlayers = lobby.TeamBPicks.Select(id => _playerRegistry.GetPlayer(id)).Where(p => p != null).ToList();
+
+            foreach (var p in teamAPlayers)
+                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, RoleConfig.Team1Role);
+
+            foreach (var p in teamBPlayers)
+                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, RoleConfig.Team2Role);
+
+            await Context.Message.ReplyAsync("Draft complete! Team roles assigned.\nProceed to faction assignment.");
+            lobby.FactionAssignmentStarted = true;
         }
 
         private string[] GetCaptainNames(Lobby lobby)
