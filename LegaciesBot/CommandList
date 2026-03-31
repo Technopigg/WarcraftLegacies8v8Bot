@@ -21,6 +21,15 @@ LOBBY COMMANDS
 !setfactions
 !submit
 
+MODERATION COMMANDS
+
+!warn <user> <reason> (7 days)
+!warn <user> <duration d/h/m> <reason>
+!warnings/!warns
+!removewarn/!unwarn
+!ban <user> <reason>
+!unban <user>
+
 PREFERENCE COMMANDS
 
 !prefs
