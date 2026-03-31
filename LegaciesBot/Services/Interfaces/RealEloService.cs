@@ -1,15 +1,31 @@
 using LegaciesBot.Core;
+using LegaciesBot.Seasons;
 
-namespace LegaciesBot.Services;
-
-public class RealEloService : IEloService
+namespace LegaciesBot.Services
 {
-    public Dictionary<ulong, int> ApplyTeamResult(
-        List<Player> teamA,
-        List<Player> teamB,
-        bool teamAWon,
-        PlayerStatsService stats)
+    public class RealEloService : IEloService
     {
-        return EloService.ApplyTeamResult(teamA, teamB, teamAWon, stats);
+        private readonly PlayerStatsService _lifetime;
+        private readonly SeasonService _seasons;
+
+        public RealEloService(PlayerStatsService lifetime, SeasonService seasons)
+        {
+            _lifetime = lifetime;
+            _seasons = seasons;
+        }
+
+        public Dictionary<ulong, int> ApplyTeamResult(
+            List<Player> teamA,
+            List<Player> teamB,
+            bool teamAWon)
+        {
+            return EloService.ApplyTeamResult(
+                teamA,
+                teamB,
+                teamAWon,
+                _lifetime,
+                _seasons
+            );
+        }
     }
 }

@@ -88,8 +88,7 @@ public class GameService
         var changes = _eloService.ApplyTeamResult(
             game.TeamA.Players,
             game.TeamB.Players,
-            teamAWon,
-            stats
+            teamAWon
         );
 
         UpdateFactionStats(game.TeamA, teamAWon, stats, true);

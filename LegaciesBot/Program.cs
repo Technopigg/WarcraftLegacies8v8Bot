@@ -6,6 +6,7 @@ using LegaciesBot.Discord;
 using LegaciesBot.Services.CaptainDraft;
 using Microsoft.Extensions.DependencyInjection;
 using LegaciesBot.Moderation;
+using LegaciesBot.Seasons;
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
@@ -31,11 +32,12 @@ var matchHistoryService = new MatchHistoryService();
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
 var playerRegistryService = new PlayerRegistryService();
+var seasonService = new SeasonService();
 var lobbyService = new LobbyService(playerRegistryService);
 
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
-var elo = new RealEloService();
+var elo = new RealEloService(playerStatsService, seasonService);
 var factionAssignment = new RealFactionAssignmentService();
 var factionRegistry = new RealFactionRegistry();
 var defaultPreferences = new RealDefaultPreferences();
@@ -59,6 +61,7 @@ var services = new ServiceCollection()
     .AddSingleton<ICaptainDraftService>(captainDraftService)
     .AddSingleton(playerDataService)
     .AddSingleton(playerStatsService)
+    .AddSingleton(seasonService)
     .AddSingleton(permissionService)
     .AddSingleton(moderationService)
     .AddSingleton<ModerationCommands>()
