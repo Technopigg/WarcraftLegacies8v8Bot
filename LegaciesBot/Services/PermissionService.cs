@@ -60,7 +60,8 @@ namespace LegaciesBot.Services
             return Data.Mods.Contains(userId) || IsAdmin(userId);
         }
 
-        public bool IsModeratorOrAdmin(ulong userId)
+        public virtual bool IsModeratorOrAdmin(ulong userId)
+
         {
             return IsAdmin(userId) || IsMod(userId);
         }
