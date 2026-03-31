@@ -22,9 +22,7 @@ namespace LegaciesBot.Services.Drafting
             foreach (var id in lobby.TeamBPicks)
                 teamB.AddPlayer(lobby.Players.First(p => p.DiscordId == id));
 
-            var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
-
-            _factionAssignment.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
+            _factionAssignment.AssignFactionsForGame(teamA, teamB, null, rng);
 
             return (teamA, teamB);
         }

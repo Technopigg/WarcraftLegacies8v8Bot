@@ -41,9 +41,9 @@ namespace LegaciesBot.Commands
         }
 
         [Command("captain")]
-        public async Task ClaimCaptain(ulong testUserId = 0)
+        public async Task ClaimCaptain()
         {
-            var userId = testUserId == 0 ? Context.User.Id : testUserId;
+            var userId = Context.User.Id;
             var lobby = _lobby.CurrentLobby;
 
             if (!lobby.Players.Any(p => p.DiscordId == userId))
@@ -70,9 +70,9 @@ namespace LegaciesBot.Commands
         }
 
         [Command("uncaptain", "drop")]
-        public async Task UnclaimCaptain(ulong testUserId = 0)
+        public async Task UnclaimCaptain()
         {
-            var userId = testUserId == 0 ? Context.User.Id : testUserId;
+            var userId = Context.User.Id;
             var lobby = _lobby.CurrentLobby;
 
             if (lobby.CaptainA == userId)
@@ -93,9 +93,9 @@ namespace LegaciesBot.Commands
         }
 
         [Command("pass")]
-        public async Task Pass(ulong testCaptainId = 0)
+        public async Task Pass()
         {
-            var captainId = testCaptainId == 0 ? Context.User.Id : testCaptainId;
+            var captainId = Context.User.Id;
             var lobby = _lobby.CurrentLobby;
 
             if (lobby.CaptainA != captainId)
@@ -117,9 +117,9 @@ namespace LegaciesBot.Commands
         }
 
         [Command("d", "draft")]
-        public async Task Draft(string input, ulong testCaptainId = 0)
+        public async Task Draft(string input)
         {
-            var captainId = testCaptainId == 0 ? Context.User.Id : testCaptainId;
+            var captainId = Context.User.Id;
             var lobby = _lobby.CurrentLobby;
 
             ulong? targetId = (Context.Message.MentionedUsers.Count > 0)
@@ -154,9 +154,7 @@ namespace LegaciesBot.Commands
             await Context.Message.ReplyAsync("Picked " + pickedName);
 
             if (_captainDraft.DraftComplete(lobby))
-            {
                 await FinalizeDraft(lobby);
-            }
         }
 
         private async Task FinalizeDraft(Lobby lobby)
@@ -170,8 +168,9 @@ namespace LegaciesBot.Commands
             foreach (var p in teamBPlayers)
                 await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, RoleConfig.Team2Role);
 
-            await Context.Message.ReplyAsync("Draft complete! Team roles assigned.\nProceed to faction assignment.");
             lobby.FactionAssignmentStarted = true;
+
+            await Context.Message.ReplyAsync("Draft complete! Team roles assigned.\nProceed to faction assignment.");
         }
 
         private string[] GetCaptainNames(Lobby lobby)

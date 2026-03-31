@@ -4,10 +4,6 @@ namespace LegaciesBot.Services
 {
     public interface IFactionAssignmentService
     {
-        void AssignFactionsForGame(
-            Team teamA,
-            Team teamB,
-            HashSet<TeamGroup> allowedGroupsA,
-            HashSet<TeamGroup> allowedGroupsB);
+        void AssignFactionsForGame(Team teamA, Team teamB, HashSet<TeamGroup>? bannedGroups, Random? rng);
     }
 }

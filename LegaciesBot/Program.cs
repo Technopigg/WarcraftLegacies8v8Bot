@@ -37,13 +37,13 @@ var lobbyService = new LobbyService(playerRegistryService);
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
 var elo = new RealEloService(playerStatsService, seasonService);
-var factionAssignment = new RealFactionAssignmentService();
+
 var factionRegistry = new RealFactionRegistry();
+var factionAssignment = new RealFactionAssignmentService(factionRegistry);
 var defaultPreferences = new RealDefaultPreferences();
 
 var nicknameService = new NicknameService(playerRegistryService);
 var captainDraftService = new CaptainDraftService();
-var factionManualAssignmentService = new FactionManualAssignmentService(factionRegistry, nicknameService);
 
 var gameService = new GameService(
     gateway,
@@ -54,6 +54,12 @@ var gameService = new GameService(
     defaultPreferences
 );
 
+var factionManualAssignmentService = new FactionManualAssignmentService(
+    factionRegistry,
+    nicknameService,
+    gameService
+);
+GlobalServices.PermissionService = new PermissionService();
 GlobalServices.LobbyService = lobbyService;
 GlobalServices.GameService = gameService;
 GlobalServices.PlayerDataService = playerDataService;
@@ -64,6 +70,7 @@ GlobalServices.NicknameService = nicknameService;
 GlobalServices.FactionManualAssignmentService = factionManualAssignmentService;
 GlobalServices.CaptainDraftService = captainDraftService;
 GlobalServices.SeasonService = seasonService;
+
 
 var services = new ServiceCollection()
     .AddSingleton<ILobbyService>(lobbyService)
@@ -90,6 +97,7 @@ commandService.AddModule(typeof(StatsCommands));
 commandService.AddModule(typeof(SeasonCommands));
 commandService.AddModule(typeof(GameCommands));
 commandService.AddModule(typeof(FactionCommands));
+commandService.AddModule(typeof(DebugCommands));
 
 client.MessageCreate += async message =>
 {

@@ -16,15 +16,8 @@ namespace LegaciesBot.Services.Drafting
             var players = lobby.Players.ToList();
 
             var (teamA, teamB) = DraftService.CreateBalancedTeams(players, rng);
-            var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-            _factionAssignment.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
-
-            for (int i = 0; i < teamA.Players.Count; i++)
-                teamA.Players[i].AssignedFaction = teamA.AssignedFactions[i].Name;
-
-            for (int i = 0; i < teamB.Players.Count; i++)
-                teamB.Players[i].AssignedFaction = teamB.AssignedFactions[i].Name;
+            _factionAssignment.AssignFactionsForGame(teamA, teamB, null, rng);
 
             return (teamA, teamB);
         }

@@ -14,47 +14,54 @@ namespace LegaciesBot.Commands
             _manual = GlobalServices.FactionManualAssignmentService;
         }
 
-        [Command("setfaction")]
-        public string SetFaction(ulong captainId, string player, string faction)
+        [Command("assignf")]
+        public async Task AssignFaction(string player, string faction)
         {
             var lobby = _lobby.CurrentLobby;
+            var captainId = Context.User.Id;
 
             if (!_manual.TryAssignSingle(lobby, captainId, player, faction))
-                return "Invalid faction assignment.";
+            {
+                await Context.Message.ReplyAsync("Invalid faction assignment.");
+                return;
+            }
 
-            if (lobby.ManualFactionAssignments.Count == 16)
-                return "All factions assigned. Use !submit.";
-
-            return "Faction assigned.";
+            await Context.Message.ReplyAsync("Faction assigned.");
         }
 
-        [Command("setfactions")]
-        public string SetFactions(ulong captainId, [CommandParameter(Remainder = true)] string bulk)
+        [Command("assignfactions")]
+        public async Task AssignFactions([CommandParameter(Remainder = true)] string bulk)
         {
             var lobby = _lobby.CurrentLobby;
+            var captainId = Context.User.Id;
 
             var errors = _manual.AssignBulk(lobby, captainId, bulk);
 
             if (errors.Count == 0)
             {
-                if (lobby.ManualFactionAssignments.Count == 16)
-                    return "All factions assigned. Use !submit.";
-
-                return "Bulk assignment complete.";
+                await Context.Message.ReplyAsync("Bulk assignment complete.");
+                return;
             }
 
-            return "Some assignments failed:\n" + string.Join("\n", errors);
+            await Context.Message.ReplyAsync("Some assignments failed:\n" + string.Join("\n", errors));
         }
 
-        [Command("submit")]
-        public string Finalize(ulong captainId)
+        [Command("lockfactions")]
+        public async Task LockFactions()
         {
             var lobby = _lobby.CurrentLobby;
+            var captainId = Context.User.Id;
 
-            if (!_manual.TryFinalize(lobby))
-                return "Not all factions have been assigned.";
+            if (!_manual.TryLockFactions(lobby, captainId, out var message))
+            {
+                await Context.Message.ReplyAsync(message);
+                return;
+            }
 
-            return "Factions finalized. Ready to start the game.";
+            await Context.Message.ReplyAsync(message);
+
+            if (lobby.TeamAFactionsLocked && lobby.TeamBFactionsLocked)
+                await Context.Message.ReplyAsync("Both teams have locked factions. The game is starting.");
         }
     }
 }

@@ -64,9 +64,11 @@ namespace LegaciesBot.Services
 
             var channel = await _client.GetTextChannelAsync(channelId);
             if (channel != null)
-            {
                 await channel.SendMessageAsync("=== DRAFT COMPLETE ===\nTeams have been drafted.");
-            }
+
+            _factionAssignment.AssignFactionsForGame(teamA, teamB, null, null);
+
+            StartGame(lobby, teamA, teamB);
         }
 
         public async Task StartCaptainDraft(Lobby lobby, ulong channelId)
@@ -78,14 +80,12 @@ namespace LegaciesBot.Services
                 return;
 
             lobby.GameNumber = _nextGameId;
-            
+
             var draftRole = await _client.CreateRoleAsync(GuildId, $"Draft #{lobby.GameNumber} Players");
             lobby.DraftRoleId = draftRole.Id;
 
             foreach (var player in lobby.Players)
-            {
                 await _client.AddRoleToMemberAsync(GuildId, player.DiscordId, draftRole.Id);
-            }
 
             lobby.DraftStarted = true;
 
@@ -102,6 +102,20 @@ namespace LegaciesBot.Services
 
                 await channel.SendMessageAsync(msg);
             }
+        }
+
+        public void TryAutoStartAfterManualFactions(Lobby lobby)
+        {
+            if (!lobby.TeamAFactionsLocked || !lobby.TeamBFactionsLocked)
+                return;
+
+            foreach (var p in lobby.Players)
+            {
+                if (lobby.ManualFactionAssignments.TryGetValue(p.DiscordId, out var faction))
+                    p.AssignedFaction = faction;
+            }
+
+            StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
         }
 
         public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
@@ -140,7 +154,7 @@ namespace LegaciesBot.Services
             UpdateFactionStats(game.TeamB, teamAWon, stats, false);
 
             _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
-            
+
             if (game.Lobby.DraftRoleId.HasValue)
             {
                 var draftRoleId = game.Lobby.DraftRoleId.Value;

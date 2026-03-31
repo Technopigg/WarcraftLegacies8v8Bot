@@ -27,15 +27,13 @@ namespace LegaciesBot.Discord
             _nickname = GlobalServices.NicknameService;
         }
 
- 
-
-
         [Command("join")]
         [Command("j")]
         public async Task JoinLobby()
         {
             var ctx = this.Context;
             var discordId = ctx.Message.Author.Id;
+
             if (_moderation.IsBanned(discordId))
             {
                 await ctx.Message.ReplyAsync("You are banned and cannot join the lobby.");
@@ -104,6 +102,7 @@ namespace LegaciesBot.Discord
         public async Task ShowLobby()
         {
             var lobby = _lobbyService.CurrentLobby;
+
             if (lobby.Players.Count == 0)
             {
                 await Context.Message.ReplyAsync("The lobby is currently empty.");
@@ -112,6 +111,7 @@ namespace LegaciesBot.Discord
 
             var lines = lobby.Players.Select(p => $"- {p.DisplayName()} ({p.Elo})");
             string msg = $"**Current lobby members ({lobby.Players.Count}/16):**\n" + string.Join("\n", lines);
+
             await Context.Message.ReplyAsync(msg);
         }
 
@@ -121,7 +121,9 @@ namespace LegaciesBot.Discord
         {
             var ctx = this.Context;
             var userId = ctx.Message.Author.Id;
-            var player = _lobbyService.CurrentLobby.Players.FirstOrDefault(p => p.DiscordId == userId);
+
+            var player = _lobbyService.CurrentLobby.Players
+                .FirstOrDefault(p => p.DiscordId == userId);
 
             if (player == null)
             {
@@ -131,61 +133,8 @@ namespace LegaciesBot.Discord
 
             string display = $"{player.DisplayName()} ({player.Elo})";
             _lobbyService.RemovePlayer(userId);
+
             await ctx.Message.ReplyAsync($"{display} has left the lobby.");
-        }
-
-        [Command("debugfill")]
-        public async Task DebugFill()
-        {
-            var ctx = this.Context;
-            var lobby = _lobbyService.CurrentLobby;
-
-            if (lobby.Players.Count >= 16)
-            {
-                await ctx.Message.ReplyAsync("Lobby is already full.");
-                return;
-            }
-
-            var allFactions = FactionRegistry.All.Select(f => f.Name).ToList();
-            var rand = new Random();
-            int needed = 16 - lobby.Players.Count;
-
-            for (int i = 0; i < needed; i++)
-            {
-                ulong fakeId = (ulong)rand.NextInt64();
-                var player = _lobbyService.JoinLobby(fakeId);
-                player.Name = $"TestPlayer{i + 1}";
-                player.Elo = rand.Next(1000, 2000);
-
-                int prefCount = rand.Next(1, 5);
-                player.FactionPreferences = allFactions
-                    .OrderBy(_ => rand.Next())
-                    .Take(prefCount)
-                    .ToList();
-            }
-
-            await ctx.Message.ReplyAsync($"Filled lobby with {needed} test players.");
-
-            if (lobby.IsFull && !lobby.DraftStarted)
-            {
-                if (lobby.CaptainA != null && lobby.CaptainB != null)
-                {
-                    lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
-
-                    await ctx.Message.ReplyAsync(
-                        "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
-                        "Captains, begin drafting using `!draft @player`."
-                    );
-
-                    return;
-                }
-
-                lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
-
-                await ctx.Message.ReplyAsync("Draft mode: **AutoDraft (Auto Faction)**");
-
-                await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
-            }
         }
 
         [Command("prefs")]
@@ -200,6 +149,7 @@ namespace LegaciesBot.Discord
                 var mentioned = ctx.Message.MentionedUsers[0];
                 var reg = _playerRegistry.GetPlayer(mentioned.Id);
                 string display = reg?.DisplayName() ?? mentioned.Username;
+
                 await ShowPreferencesForUser(mentioned.Id, display);
                 return;
             }
@@ -208,15 +158,18 @@ namespace LegaciesBot.Discord
             {
                 var reg = _playerRegistry.GetPlayer(callerId);
                 string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
+
                 await ShowPreferencesForUser(callerId, display);
                 return;
             }
 
             var sub = args[0].ToLowerInvariant();
+
             if (sub == "show")
             {
                 var reg = _playerRegistry.GetPlayer(callerId);
                 string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
+
                 await ShowPreferencesForUser(callerId, display);
                 return;
             }
@@ -245,23 +198,29 @@ namespace LegaciesBot.Discord
         private async Task ShowPreferencesForUser(ulong userId, string displayName)
         {
             var prefs = _playerData.GetPreferences(userId);
+
             if (prefs.Count == 0)
             {
-                await Context.Message.ReplyAsync(userId == Context.Message.Author.Id
-                    ? "You have no faction preferences set."
-                    : $"{displayName} has no faction preferences set.");
+                await Context.Message.ReplyAsync(
+                    userId == Context.Message.Author.Id
+                        ? "You have no faction preferences set."
+                        : $"{displayName} has no faction preferences set."
+                );
             }
             else
             {
-                await Context.Message.ReplyAsync(userId == Context.Message.Author.Id
-                    ? $"Your current faction preferences are: {string.Join(", ", prefs)}"
-                    : $"{displayName}'s current faction preferences are: {string.Join(", ", prefs)}");
+                await Context.Message.ReplyAsync(
+                    userId == Context.Message.Author.Id
+                        ? $"Your current faction preferences are: {string.Join(", ", prefs)}"
+                        : $"{displayName}'s current faction preferences are: {string.Join(", ", prefs)}"
+                );
             }
         }
 
         private async Task ClearPreferences(ulong userId)
         {
             var current = _playerData.GetPreferences(userId);
+
             if (current.Count == 0)
             {
                 await Context.Message.ReplyAsync("You have no preferences to clear.");
@@ -276,24 +235,30 @@ namespace LegaciesBot.Discord
         {
             if (args.Length == 0)
             {
-                await Context.Message.ReplyAsync("Usage: `!prefs add <Faction> [Position]`");
+                await Context.Message.ReplyAsync("Usage: `!prefs add <Faction>`");
                 return;
             }
 
             string factionName = args[0];
-            var validNames = FactionRegistry.All.Select(f => f.Name.ToLowerInvariant()).ToHashSet();
+            var validNames = FactionRegistry.All
+                .Select(f => f.Name.ToLowerInvariant())
+                .ToHashSet();
+
             if (!validNames.Contains(factionName.ToLowerInvariant()))
             {
                 await Context.Message.ReplyAsync(
-                    $"`{factionName}` is not a valid faction.\nValid factions are:\n{string.Join(", ", FactionRegistry.All.Select(x => x.Name))}");
+                    $"`{factionName}` is not a valid faction.\nValid factions are:\n{string.Join(", ", FactionRegistry.All.Select(x => x.Name))}"
+                );
                 return;
             }
 
             var prefs = _playerData.GetPreferences(userId);
+
             if (!prefs.Contains(factionName, StringComparer.OrdinalIgnoreCase))
             {
                 prefs.Add(factionName);
                 _playerData.SetPreferences(userId, prefs);
+
                 await Context.Message.ReplyAsync($"Added `{factionName}` to your preferences.");
             }
         }
@@ -307,6 +272,7 @@ namespace LegaciesBot.Discord
             }
 
             var prefs = _playerData.GetPreferences(userId);
+
             if (prefs.RemoveAll(p => p.Equals(args[0], StringComparison.OrdinalIgnoreCase)) > 0)
             {
                 _playerData.SetPreferences(userId, prefs);
@@ -316,8 +282,11 @@ namespace LegaciesBot.Discord
 
         private async Task SetPreferencesList(ulong userId, string[] args)
         {
-            var validNames = FactionRegistry.All.ToDictionary(f => f.Name.ToLowerInvariant(), f => f.Name);
+            var validNames = FactionRegistry.All
+                .ToDictionary(f => f.Name.ToLowerInvariant(), f => f.Name);
+
             var newPrefs = new List<string>();
+
             foreach (var arg in args)
             {
                 if (validNames.TryGetValue(arg.ToLowerInvariant(), out var correctName))
@@ -353,10 +322,12 @@ namespace LegaciesBot.Discord
             }
 
             int index = 0;
+
             while (index < text.Length)
             {
                 int length = Math.Min(2000, text.Length - index);
                 string chunk = text.Substring(index, length);
+
                 await ctx.Message.ReplyAsync(chunk);
                 index += length;
             }
