@@ -20,7 +20,7 @@ LOBBY COMMANDS
 !setfaction
 !setfactions
 !submit
-
+!forcescore 
 MODERATION COMMANDS
 
 !warn <user> <reason> (7 days)
@@ -59,8 +59,10 @@ STATS COMMANDS
 
 MODERATION COMMANDS
 
-!listmods
-!makemod <userId>
+!admins
+!mods
+!addadmin
+!addmod <userId>
 !removemod <userId>
 !kill
 !season start

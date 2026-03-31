@@ -4,8 +4,8 @@ namespace LegaciesBot.Services
 {
     public class PermissionService
     {
-        private string FilePath = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "permissions.json"));
+        private string FilePath = Path.Combine(AppContext.BaseDirectory, "permissions.json");
+
 
         public PermissionData Data { get; private set; }
 
@@ -104,6 +104,7 @@ namespace LegaciesBot.Services
 
         public void Save()
         {
+            Console.WriteLine("Saving permissions to: " + FilePath);
             string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions
             {
                 WriteIndented = true

@@ -3,6 +3,8 @@ namespace LegaciesBot.Moderation
     public class ModerationData
     {
         public Dictionary<ulong, UserModerationEntry> Users { get; set; } = new();
+        public List<ulong> Admins { get; set; } = new();
+        public List<ulong> Mods { get; set; } = new();
     }
 
     public class UserModerationEntry

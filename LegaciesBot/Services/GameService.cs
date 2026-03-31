@@ -42,6 +42,9 @@ public class GameService
         if (lobby.Players.Count != 16)
             throw new ArgumentException("Draft requires exactly 16 players.");
 
+        if (lobby.IsCaptainDraft)
+            return;
+
         foreach (var player in lobby.Players)
         {
             if (!player.FactionPreferences.Any())

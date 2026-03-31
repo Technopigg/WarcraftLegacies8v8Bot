@@ -1,11 +1,12 @@
-﻿using NetCord;
+﻿using LegaciesBot;
+using LegaciesBot.Commands;
+using NetCord;
 using NetCord.Gateway;
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Discord;
 using LegaciesBot.Services.CaptainDraft;
 using Microsoft.Extensions.DependencyInjection;
-using LegaciesBot.Moderation;
 using LegaciesBot.Seasons;
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
@@ -26,14 +27,14 @@ var client = new GatewayClient(
     }
 );
 
-var permissionService = new PermissionService();
-var moderationService = new ModerationService(TimeSpan.FromDays(7), 3);
 var matchHistoryService = new MatchHistoryService();
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
 var playerRegistryService = new PlayerRegistryService();
 var seasonService = new SeasonService();
 var lobbyService = new LobbyService(playerRegistryService);
+
+GlobalServices.LobbyService = lobbyService;
 
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
@@ -62,9 +63,6 @@ var services = new ServiceCollection()
     .AddSingleton(playerDataService)
     .AddSingleton(playerStatsService)
     .AddSingleton(seasonService)
-    .AddSingleton(permissionService)
-    .AddSingleton(moderationService)
-    .AddSingleton<ModerationCommands>()
     .AddSingleton(matchHistoryService)
     .AddSingleton(playerRegistryService)
     .AddSingleton(nicknameService)
@@ -74,8 +72,9 @@ var services = new ServiceCollection()
 
 var commandService = new CommandService<CommandContext>();
 
+commandService.AddModule(typeof(AdminCommands));
+commandService.AddModule(typeof(ModeCommands));
 commandService.AddModule(typeof(ModerationCommands));
-commandService.AddModules(typeof(Program).Assembly);
 
 client.MessageCreate += async message =>
 {

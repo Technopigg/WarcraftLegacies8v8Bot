@@ -80,8 +80,28 @@ namespace LegaciesBot.Discord
                 );
             }
 
-            if (_lobbyService.CurrentLobby.IsFull && !_lobbyService.CurrentLobby.DraftStarted)
-                await _gameService.StartDraft(_lobbyService.CurrentLobby, ctx.Message.ChannelId);
+            var lobby = _lobbyService.CurrentLobby;
+
+            if (lobby.IsFull && !lobby.DraftStarted)
+            {
+                if (lobby.CaptainA != null && lobby.CaptainB != null)
+                {
+                    lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
+
+                    await ctx.Message.ReplyAsync(
+                        "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
+                        "Captains, begin drafting using `!draft @player`."
+                    );
+
+                    return;
+                }
+
+                lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
+
+                await ctx.Message.ReplyAsync("Draft mode: **AutoDraft (Auto Faction)**");
+
+                await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
+            }
         }
 
         [Command("lobby")]
@@ -151,7 +171,25 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync($"Filled lobby with {needed} test players.");
 
             if (lobby.IsFull && !lobby.DraftStarted)
+            {
+                if (lobby.CaptainA != null && lobby.CaptainB != null)
+                {
+                    lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
+
+                    await ctx.Message.ReplyAsync(
+                        "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
+                        "Captains, begin drafting using `!draft @player`."
+                    );
+
+                    return;
+                }
+
+                lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
+
+                await ctx.Message.ReplyAsync("Draft mode: **AutoDraft (Auto Faction)**");
+
                 await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
+            }
         }
 
         [Command("prefs")]
@@ -329,4 +367,3 @@ namespace LegaciesBot.Discord
         }
     }
 }
-
