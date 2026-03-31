@@ -1,6 +1,5 @@
 using NetCord.Services.Commands;
 
-
 namespace LegaciesBot.Commands
 {
     public class AdminCommands : CommandModule<CommandContext>
@@ -13,9 +12,20 @@ namespace LegaciesBot.Commands
         {
             return GlobalServices.PermissionService.IsAdmin(id);
         }
+        
+        private ulong? ResolveUserId(string input)
+        {
+            var ctx = this.Context;
+            if (ctx.Message.MentionedUsers.Count > 0)
+                return ctx.Message.MentionedUsers[0].Id;
+            if (ulong.TryParse(input, out var parsed))
+                return parsed;
 
+            return null;
+        }
+        
         [Command("addadmin")]
-        public async Task AddAdmin()
+        public async Task AddAdmin(string userInput)
         {
             var ctx = this.Context;
             var caller = ctx.User.Id;
@@ -26,21 +36,25 @@ namespace LegaciesBot.Commands
                 return;
             }
 
-            if (ctx.Message.MentionedUsers.Count == 0)
+            var userId = ResolveUserId(userInput);
+            if (userId == null)
             {
-                await ctx.Message.ReplyAsync("Mention a user to promote.");
+                await ctx.Message.ReplyAsync("Invalid user. Mention them or provide their ID.");
                 return;
             }
 
-            var target = ctx.Message.MentionedUsers[0].Id;
+            GlobalServices.PermissionService.AddAdmin(userId.Value);
+            await ctx.Message.ReplyAsync($"User <@{userId}> is now an admin.");
+        }
 
-            GlobalServices.PermissionService.AddAdmin(target);
-
-            await ctx.Message.ReplyAsync($"User <@{target}> is now an admin.");
+        [Command("addadmin")]
+        public async Task AddAdminNoArg()
+        {
+            await Context.Message.ReplyAsync("Usage: !addadmin <@mention or userId>");
         }
 
         [Command("addmod")]
-        public async Task AddMod()
+        public async Task AddMod(string userInput)
         {
             var ctx = this.Context;
             var caller = ctx.User.Id;
@@ -51,21 +65,24 @@ namespace LegaciesBot.Commands
                 return;
             }
 
-            if (ctx.Message.MentionedUsers.Count == 0)
+            var userId = ResolveUserId(userInput);
+            if (userId == null)
             {
-                await ctx.Message.ReplyAsync("Mention a user to promote.");
+                await ctx.Message.ReplyAsync("Invalid user. Mention them or provide their ID.");
                 return;
             }
 
-            var target = ctx.Message.MentionedUsers[0].Id;
-
-            GlobalServices.PermissionService.AddMod(target);
-
-            await ctx.Message.ReplyAsync($"User <@{target}> is now a moderator.");
+            GlobalServices.PermissionService.AddMod(userId.Value);
+            await ctx.Message.ReplyAsync($"User <@{userId}> is now a moderator.");
         }
 
+        [Command("addmod")]
+        public async Task AddModNoArg()
+        {
+            await Context.Message.ReplyAsync("Usage: !addmod <@mention or userId>");
+        }
         [Command("removeadmin")]
-        public async Task RemoveAdmin()
+        public async Task RemoveAdmin(string userInput)
         {
             var ctx = this.Context;
             var caller = ctx.User.Id;
@@ -76,21 +93,25 @@ namespace LegaciesBot.Commands
                 return;
             }
 
-            if (ctx.Message.MentionedUsers.Count == 0)
+            var userId = ResolveUserId(userInput);
+            if (userId == null)
             {
-                await ctx.Message.ReplyAsync("Mention a user to demote.");
+                await ctx.Message.ReplyAsync("Invalid user. Mention them or provide their ID.");
                 return;
             }
 
-            var target = ctx.Message.MentionedUsers[0].Id;
-
-            GlobalServices.PermissionService.RemoveAdmin(target);
-
-            await ctx.Message.ReplyAsync($"User <@{target}> is no longer an admin.");
+            GlobalServices.PermissionService.RemoveAdmin(userId.Value);
+            await ctx.Message.ReplyAsync($"User <@{userId}> is no longer an admin.");
         }
 
+        [Command("removeadmin")]
+        public async Task RemoveAdminNoArg()
+        {
+            await Context.Message.ReplyAsync("Usage: !removeadmin <@mention or userId>");
+        }
+        
         [Command("removemod")]
-        public async Task RemoveMod()
+        public async Task RemoveMod(string userInput)
         {
             var ctx = this.Context;
             var caller = ctx.User.Id;
@@ -101,19 +122,23 @@ namespace LegaciesBot.Commands
                 return;
             }
 
-            if (ctx.Message.MentionedUsers.Count == 0)
+            var userId = ResolveUserId(userInput);
+            if (userId == null)
             {
-                await ctx.Message.ReplyAsync("Mention a user to demote.");
+                await ctx.Message.ReplyAsync("Invalid user. Mention them or provide their ID.");
                 return;
             }
 
-            var target = ctx.Message.MentionedUsers[0].Id;
-
-            GlobalServices.PermissionService.RemoveMod(target);
-
-            await ctx.Message.ReplyAsync($"User <@{target}> is no longer a moderator.");
+            GlobalServices.PermissionService.RemoveMod(userId.Value);
+            await ctx.Message.ReplyAsync($"User <@{userId}> is no longer a moderator.");
         }
 
+        [Command("removemod")]
+        public async Task RemoveModNoArg()
+        {
+            await Context.Message.ReplyAsync("Usage: !removemod <@mention or userId>");
+        }
+        
         [Command("admins")]
         public async Task ListAdmins()
         {
@@ -128,10 +153,11 @@ namespace LegaciesBot.Commands
             var names = list.Select(id => $"<@{id}>");
             await Context.Message.ReplyAsync("Admins:\n" + string.Join("\n", names));
         }
-
         [Command("mods")]
         public async Task ListMods()
         {
+            await Context.Message.ReplyAsync("DEBUG: AdminCommands !mods is running");
+
             var list = GlobalServices.PermissionService.Data.Mods;
 
             if (list.Count == 0)
