@@ -42,8 +42,20 @@ PREFERENCE COMMANDS
 STATS COMMANDS
 
 !stats
+!stats <user>
+!stats season
+!stats lifetime
+!stats <user> lifetime
 !leaderboard [count]
+!leaderboard lifetime
 !compare <user1> <user2>
+!compare <user1> <user2> season
+!compare <user1< <user2> lifetime
+!season history
+!season show <n>
+!season summary
+!season show <n> summary
+!season leaderboard <n>
 
 MODERATION COMMANDS
 
@@ -51,3 +63,5 @@ MODERATION COMMANDS
 !makemod <userId>
 !removemod <userId>
 !kill
+!season start
+
