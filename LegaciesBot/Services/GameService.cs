@@ -1,136 +1,167 @@
 ﻿using LegaciesBot.Core;
+using LegaciesBot.Config;
 using LTeam = LegaciesBot.Core.Team;
+using NetCord.Gateway;
 
-namespace LegaciesBot.Services;
-
-public class GameService
+namespace LegaciesBot.Services
 {
-    private readonly List<Game> _games = new();
-
-    private readonly IGatewayClient _client;
-    private readonly IMatchHistoryService _matchHistoryService;
-    private readonly IEloService _eloService;
-    private readonly IFactionAssignmentService _factionAssignment;
-    private readonly IFactionRegistry _factionRegistry;
-    private readonly IDefaultPreferences _defaultPreferences;
-
-    private readonly DraftEngine _draftEngine;
-
-    private int _nextGameId = 1;
-
-    public GameService(
-        IGatewayClient client,
-        IMatchHistoryService matchHistoryService,
-        IEloService eloService,
-        IFactionAssignmentService factionAssignment,
-        IFactionRegistry factionRegistry,
-        IDefaultPreferences defaultPreferences,
-        Random? rng = null)
+    public class GameService
     {
-        _client = client;
-        _matchHistoryService = matchHistoryService;
-        _eloService = eloService;
-        _factionAssignment = factionAssignment;
-        _factionRegistry = factionRegistry;
-        _defaultPreferences = defaultPreferences;
+        private readonly List<Game> _games = new();
 
-        _draftEngine = new DraftEngine(factionAssignment, rng);
-    }
+        private readonly IGatewayClient _client;
+        private readonly IMatchHistoryService _matchHistoryService;
+        private readonly IEloService _eloService;
+        private readonly IFactionAssignmentService _factionAssignment;
+        private readonly IFactionRegistry _factionRegistry;
+        private readonly IDefaultPreferences _defaultPreferences;
 
-    public async Task StartDraft(Lobby lobby, ulong channelId)
-    {
-        if (lobby.Players.Count != 16)
-            throw new ArgumentException("Draft requires exactly 16 players.");
+        private readonly DraftEngine _draftEngine;
 
-        if (lobby.IsCaptainDraft)
-            return;
+        private int _nextGameId = 1;
 
-        foreach (var player in lobby.Players)
+        public GameService(
+            IGatewayClient client,
+            IMatchHistoryService matchHistoryService,
+            IEloService eloService,
+            IFactionAssignmentService factionAssignment,
+            IFactionRegistry factionRegistry,
+            IDefaultPreferences defaultPreferences,
+            Random? rng = null)
         {
-            if (!player.FactionPreferences.Any())
-                player.FactionPreferences = _defaultPreferences.Factions.ToList();
+            _client = client;
+            _matchHistoryService = matchHistoryService;
+            _eloService = eloService;
+            _factionAssignment = factionAssignment;
+            _factionRegistry = factionRegistry;
+            _defaultPreferences = defaultPreferences;
+
+            _draftEngine = new DraftEngine(factionAssignment, rng);
         }
 
-        var (teamA, teamB) = _draftEngine.RunDraft(lobby);
-
-        lobby.TeamA = teamA;
-        lobby.TeamB = teamB;
-        lobby.DraftStarted = true;
-
-        var channel = await _client.GetTextChannelAsync(channelId);
-        if (channel != null)
+        public async Task StartDraft(Lobby lobby, ulong channelId)
         {
-            string msg = "=== DRAFT COMPLETE ===\n";
-            msg += "Teams have been drafted.\n";
-            await channel.SendMessageAsync(msg);
-        }
-    }
+            if (lobby.Players.Count != 16)
+                throw new ArgumentException("Draft requires exactly 16 players.");
 
-    public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
-    {
-        var game = new Game
-        {
-            Id = _nextGameId++,
-            Lobby = lobby,
-            TeamA = teamA,
-            TeamB = teamB
-        };
+            if (lobby.IsCaptainDraft)
+                return;
 
-        _games.Add(game);
-        return game;
-    }
-
-    public Dictionary<ulong, int> SubmitScore(Game game, int scoreA, int scoreB, PlayerStatsService stats)
-    {
-        game.ScoreA = scoreA;
-        game.ScoreB = scoreB;
-        game.Finished = true;
-
-        bool teamAWon = scoreA > scoreB;
-
-        var changes = _eloService.ApplyTeamResult(
-            game.TeamA.Players,
-            game.TeamB.Players,
-            teamAWon
-        );
-
-        UpdateFactionStats(game.TeamA, teamAWon, stats, true);
-        UpdateFactionStats(game.TeamB, teamAWon, stats, false);
-
-        _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
-
-        game.Lobby.Players.Clear();
-        game.Lobby.DraftStarted = false;
-
-        return changes;
-    }
-
-    private void UpdateFactionStats(Team team, bool teamAWon, PlayerStatsService statsService, bool isTeamA)
-    {
-        foreach (var player in team.Players)
-        {
-            if (string.IsNullOrWhiteSpace(player.AssignedFaction))
-                continue;
-
-            var stats = statsService.GetOrCreate(player.DiscordId);
-
-            if (!stats.FactionHistory.TryGetValue(player.AssignedFaction, out var record))
+            foreach (var player in lobby.Players)
             {
-                record = new FactionRecord();
-                stats.FactionHistory[player.AssignedFaction] = record;
+                if (!player.FactionPreferences.Any())
+                    player.FactionPreferences = _defaultPreferences.Factions.ToList();
             }
 
-            bool won = isTeamA == teamAWon;
+            var (teamA, teamB) = _draftEngine.RunDraft(lobby);
 
-            if (won)
-                record.Wins++;
-            else
-                record.Losses++;
+            lobby.TeamA = teamA;
+            lobby.TeamB = teamB;
+            lobby.DraftStarted = true;
 
-            statsService.Update(stats);
+            var channel = await _client.GetTextChannelAsync(channelId);
+            if (channel != null)
+            {
+                await channel.SendMessageAsync("=== DRAFT COMPLETE ===\nTeams have been drafted.");
+            }
         }
-    }
 
-    public List<Game> GetOngoingGames() =>
-        _games.Where(g => !g.Finished).ToList();
+        public async Task StartCaptainDraft(Lobby lobby, ulong channelId)
+        {
+            if (lobby.Players.Count != 16)
+                throw new ArgumentException("Draft requires exactly 16 players.");
+
+            if (!lobby.IsCaptainDraft)
+                return;
+
+            lobby.GameNumber = _nextGameId;
+            lobby.DraftStarted = true;
+
+            var channel = await _client.GetTextChannelAsync(channelId);
+            if (channel != null)
+            {
+                string captainA = lobby.CaptainA.HasValue ? $"<@{lobby.CaptainA.Value}>" : "Captain A";
+                string captainB = lobby.CaptainB.HasValue ? $"<@{lobby.CaptainB.Value}>" : "Captain B";
+
+                string msg =
+                    $"Draft #{lobby.GameNumber} has begun!\n" +
+                    $"Captains: {captainA} and {captainB}\n" +
+                    $"{captainA}, it is your pick. Use !draft <player> or !pass.";
+
+                await channel.SendMessageAsync(msg);
+            }
+        }
+
+        public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
+        {
+            var game = new Game
+            {
+                Id = _nextGameId++,
+                Lobby = lobby,
+                TeamA = teamA,
+                TeamB = teamB
+            };
+
+            _games.Add(game);
+            return game;
+        }
+
+        public async Task<Dictionary<ulong, int>> SubmitScore(
+            Game game,
+            int scoreA,
+            int scoreB,
+            PlayerStatsService stats)
+        {
+            game.ScoreA = scoreA;
+            game.ScoreB = scoreB;
+            game.Finished = true;
+
+            bool teamAWon = scoreA > scoreB;
+
+            var changes = _eloService.ApplyTeamResult(
+                game.TeamA.Players,
+                game.TeamB.Players,
+                teamAWon
+            );
+
+            UpdateFactionStats(game.TeamA, teamAWon, stats, true);
+            UpdateFactionStats(game.TeamB, teamAWon, stats, false);
+
+            _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
+
+            game.Lobby.Players.Clear();
+            game.Lobby.DraftStarted = false;
+
+            return changes;
+        }
+
+        private void UpdateFactionStats(Team team, bool teamAWon, PlayerStatsService statsService, bool isTeamA)
+        {
+            foreach (var player in team.Players)
+            {
+                if (string.IsNullOrWhiteSpace(player.AssignedFaction))
+                    continue;
+
+                var stats = statsService.GetOrCreate(player.DiscordId);
+
+                if (!stats.FactionHistory.TryGetValue(player.AssignedFaction, out var record))
+                {
+                    record = new FactionRecord();
+                    stats.FactionHistory[player.AssignedFaction] = record;
+                }
+
+                bool won = isTeamA == teamAWon;
+
+                if (won)
+                    record.Wins++;
+                else
+                    record.Losses++;
+
+                statsService.Update(stats);
+            }
+        }
+
+        public List<Game> GetOngoingGames() =>
+            _games.Where(g => !g.Finished).ToList();
+    }
 }

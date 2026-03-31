@@ -21,86 +21,145 @@ namespace LegaciesBot.Commands
         }
 
         [Command("captains")]
-        public string ListCaptains()
+        public async Task ListCaptains()
         {
             var lobby = _lobby.CurrentLobby;
             var names = GetCaptainNames(lobby);
 
             if (names.Length == 0)
-                return "There are currently no captains claimed.";
+            {
+                await Context.Message.ReplyAsync("There are currently no captains claimed.");
+                return;
+            }
 
-            return $"Current captains: {string.Join(", ", names)}";
+            await Context.Message.ReplyAsync("Current captains: " + string.Join(", ", names));
         }
 
         [Command("captain")]
-        public string ClaimCaptain(ulong testUserId = 0)
+        public async Task ClaimCaptain(ulong testUserId = 0)
         {
             var userId = testUserId == 0 ? Context.User.Id : testUserId;
             var lobby = _lobby.CurrentLobby;
-            
+
             if (!lobby.Players.Any(p => p.DiscordId == userId))
-                return "You must join the lobby with `!j` before you can claim captain.";
+            {
+                await Context.Message.ReplyAsync("You must join the lobby with !j before you can claim captain.");
+                return;
+            }
 
             if (lobby.CaptainA == userId || lobby.CaptainB == userId)
-                return "You are already a captain.";
-    
+            {
+                await Context.Message.ReplyAsync("You are already a captain.");
+                return;
+            }
+
             if (!_captainDraft.TryClaimCaptain(lobby, userId))
             {
                 var names = GetCaptainNames(lobby);
-                return $"Two captains already exist: {string.Join(", ", names)}.";
+                await Context.Message.ReplyAsync("Two captains already exist: " + string.Join(", ", names));
+                return;
             }
-    
+
             var currentNames = GetCaptainNames(lobby);
-            return $"You are now a captain! Current captains: {string.Join(", ", currentNames)}.";
+            await Context.Message.ReplyAsync("You are now a captain! Current captains: " + string.Join(", ", currentNames));
         }
 
         [Command("uncaptain", "drop")]
-        public string UnclaimCaptain(ulong testUserId = 0)
+        public async Task UnclaimCaptain(ulong testUserId = 0)
         {
             var userId = testUserId == 0 ? Context.User.Id : testUserId;
             var lobby = _lobby.CurrentLobby;
 
-            if (lobby.CaptainA == userId) { lobby.CaptainA = null; return "You dropped Captain A."; }
-            if (lobby.CaptainB == userId) { lobby.CaptainB = null; return "You dropped Captain B."; }
+            if (lobby.CaptainA == userId)
+            {
+                lobby.CaptainA = null;
+                await Context.Message.ReplyAsync("You dropped Captain A.");
+                return;
+            }
 
-            return "You are not a captain.";
+            if (lobby.CaptainB == userId)
+            {
+                lobby.CaptainB = null;
+                await Context.Message.ReplyAsync("You dropped Captain B.");
+                return;
+            }
+
+            await Context.Message.ReplyAsync("You are not a captain.");
         }
 
-        [Command("d", "draft")]
-        public string Draft(string input, ulong testCaptainId = 0)
+        [Command("pass")]
+        public async Task Pass(ulong testCaptainId = 0)
         {
             var captainId = testCaptainId == 0 ? Context.User.Id : testCaptainId;
             var lobby = _lobby.CurrentLobby;
 
-            ulong? targetId = (Context != null && Context.Message.MentionedUsers.Count > 0) 
-                ? Context.Message.MentionedUsers.First().Id 
+            if (lobby.CaptainA != captainId)
+            {
+                await Context.Message.ReplyAsync("Only Captain A may pass the first pick.");
+                return;
+            }
+
+            if (lobby.CurrentPickIndex != 0)
+            {
+                await Context.Message.ReplyAsync("You may only pass on the first pick.");
+                return;
+            }
+
+            lobby.CaptainAPassed = true;
+            _captainDraft.BuildDraftOrder(lobby);
+
+            await Context.Message.ReplyAsync("Captain A has passed. Captain B picks first.");
+        }
+
+        [Command("d", "draft")]
+        public async Task Draft(string input, ulong testCaptainId = 0)
+        {
+            var captainId = testCaptainId == 0 ? Context.User.Id : testCaptainId;
+            var lobby = _lobby.CurrentLobby;
+
+            ulong? targetId = (Context.Message.MentionedUsers.Count > 0)
+                ? Context.Message.MentionedUsers.First().Id
                 : _nicknames.ResolvePlayerId(input);
 
             if (!targetId.HasValue)
-                return $"`{input}` is not a valid player or mention.";
-            
+            {
+                await Context.Message.ReplyAsync(input + " is not a valid player.");
+                return;
+            }
+
             if (!lobby.Players.Any(p => p.DiscordId == targetId.Value))
-                return "That player is not in the lobby.";
+            {
+                await Context.Message.ReplyAsync("That player is not in the lobby.");
+                return;
+            }
 
             if (!_captainDraft.IsCaptainTurn(lobby, captainId))
-                return "It is not your turn to pick.";
+            {
+                await Context.Message.ReplyAsync("It is not your turn to pick.");
+                return;
+            }
 
             if (!_captainDraft.TryPick(lobby, captainId, targetId.Value))
-                return "Invalid pick (player might already be picked).";
-
-            if (_captainDraft.DraftComplete(lobby))
-                return "Draft complete! Teams are locked.";
+            {
+                await Context.Message.ReplyAsync("Invalid pick.");
+                return;
+            }
 
             var pickedName = _playerRegistry.GetPlayer(targetId.Value)?.DisplayName() ?? targetId.Value.ToString();
-            return $"Successfully picked **{pickedName}**.";
+            await Context.Message.ReplyAsync("Picked " + pickedName);
+
+            if (_captainDraft.DraftComplete(lobby))
+            {
+                await Context.Message.ReplyAsync("Draft complete! Teams are locked.");
+            }
         }
 
-        private string[] GetCaptainNames(Core.Lobby lobby)
+        private string[] GetCaptainNames(Lobby lobby)
         {
             var list = new List<string>();
-            if (lobby.CaptainA.HasValue) 
+            if (lobby.CaptainA.HasValue)
                 list.Add(_playerRegistry.GetPlayer(lobby.CaptainA.Value)?.DisplayName() ?? "Unknown");
-            if (lobby.CaptainB.HasValue) 
+            if (lobby.CaptainB.HasValue)
                 list.Add(_playerRegistry.GetPlayer(lobby.CaptainB.Value)?.DisplayName() ?? "Unknown");
             return list.ToArray();
         }

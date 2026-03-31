@@ -224,7 +224,7 @@ namespace LegaciesBot.Discord
         private async Task FinalizeForcedScore(Game game, int scoreA, int scoreB)
         {
             var ctx = this.Context;
-            var changes = _gameService.SubmitScore(game, scoreA, scoreB, _stats);
+            var changes = await _gameService.SubmitScore(game, scoreA, scoreB, _stats);
 
             bool teamAWon = scoreA > scoreB;
             bool draw = scoreA == 0 && scoreB == 0;
