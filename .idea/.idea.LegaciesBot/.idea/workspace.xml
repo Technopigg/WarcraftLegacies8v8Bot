@@ -9,22 +9,9 @@
   <component name="ChangeListManager">
     <list default="true" id="561a90ed-ee5a-4f33-9f14-98840ed0c3f9" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.LegaciesBot/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftEngineTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftEngineTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationOutput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/EloServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/EloServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FactionAssignmentServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FactionAssignmentServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowWithPreferencesTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowWithPreferencesTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/GameServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/LobbyServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/LobbyServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/MatchHistoryServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/MatchHistoryServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/NicknameTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/NicknameTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/PlayerRegistryServiceTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot.Tests/TestStubs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.Tests/TestStubs.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Core/Player.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegaciesBot/Services/PlayerRegistryService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Services/PlayerRegistryService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/CommandList" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/CommandList" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LegaciesBot/Discord/DebugCommands.cs" beforeDir="false" afterPath="$PROJECT_DIR$/LegaciesBot/Discord/DebugCommands.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,10 +37,14 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/DraftSimulationTests.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/2bca3a4f08bc4cbeb2ad520290c27b9d37fa00/33/59351545/RestClient.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/b7a11f5ecd3bb4ce217d536f7e1abfd931205ce552177b3946e5462295715d14/GatewayClient.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/c5239a8dbc84d57066b48d9fb9ed2fdfecc1777a3f467c8e36a15f06d3d4cf2/CommandService.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/d5a2b9fc631d9478fcac7895a17ad208d59259dc350e1a0f059ca5d742636/RestClient.Guild.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/FullMatchFlowTests.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/LegaciesBot.Tests/PermissionServiceTests.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="false" />
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="SWEA" />
   </component>
@@ -70,7 +61,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;.NET Project.LegaciesBot.executor&quot;: &quot;Debug&quot;,
+    &quot;.NET Project.LegaciesBot.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
@@ -82,7 +73,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected=".NET Project.LegaciesBot">
+  <component name="RunManager">
     <configuration name="LegaciesBot" type="DotNetProject" factoryName=".NET Project" temporary="true">
       <option name="EXE_PATH" value="$PROJECT_DIR$/LegaciesBot/bin/Debug/net10.0/LegaciesBot.exe" />
       <option name="PROGRAM_PARAMETERS" value="" />
@@ -134,12 +125,26 @@
       <workItem from="1774287233536" duration="2739000" />
       <workItem from="1774290954368" duration="3470000" />
       <workItem from="1774297160061" duration="1037000" />
+      <workItem from="1774309348195" duration="1195000" />
+      <workItem from="1774455738563" duration="2243000" />
+      <workItem from="1774458022115" duration="1108000" />
+      <workItem from="1774459149069" duration="660000" />
+      <workItem from="1774819199463" duration="808000" />
+      <workItem from="1774956771265" duration="6765000" />
+      <workItem from="1774963585546" duration="124000" />
+      <workItem from="1774963723719" duration="608000" />
+      <workItem from="1774964347925" duration="4893000" />
+      <workItem from="1774969279159" duration="13710000" />
+      <workItem from="1774984386628" duration="4832000" />
+      <workItem from="1774989608069" duration="724000" />
+      <workItem from="1774990619533" duration="327000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="false" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">

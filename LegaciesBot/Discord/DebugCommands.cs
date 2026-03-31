@@ -142,7 +142,7 @@ namespace LegaciesBot.Discord
             );
         }
 
-        [Command("debugdraft")]
+        [Command("debugclear")]
         public async Task DebugClear()
         {
             var ctx = this.Context;

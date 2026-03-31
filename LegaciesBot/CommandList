@@ -16,11 +16,16 @@ LOBBY COMMANDS
 !lobby
 !debugfill
 !captain
+!captains
+!uncaptain/drop
+!pass
+!draft/d
 !draft/!d
 !setfaction
 !setfactions
 !submit
 !forcescore 
+
 MODERATION COMMANDS
 
 !warn <user> <reason> (7 days)
@@ -57,6 +62,19 @@ STATS COMMANDS
 !season show <n> summary
 !season leaderboard <n>
 
+FACTION COMMANDS
+
+!assignf
+!assignfactions
+!lockfactions
+
+DRAFT MODE COMMANDS 
+!mode show
+!mode auto
+!mode auto-manual
+!mode captain
+!mode captain-tuo
+
 MODERATION COMMANDS
 
 !admins
@@ -66,4 +84,10 @@ MODERATION COMMANDS
 !removemod <userId>
 !kill
 !season start
+
+DEBUG COMMANDS (admin/mod only)
+
+!debugclear
+!debugfill
+!debugstart
 
