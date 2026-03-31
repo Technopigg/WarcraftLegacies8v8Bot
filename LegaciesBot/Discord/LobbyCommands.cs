@@ -2,6 +2,7 @@
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.GameData;
+using LegaciesBot.Moderation;
 
 namespace LegaciesBot.Discord
 {
@@ -12,19 +13,26 @@ namespace LegaciesBot.Discord
         private readonly PlayerDataService _playerData;
         private readonly PlayerStatsService _playerStats;
         private readonly PlayerRegistryService _playerRegistry;
+        private readonly ModerationService _moderation;
+        private readonly NicknameService _nickname;
+
 
         public LobbyCommands(
-            ILobbyService lobbyService, 
+            ILobbyService lobbyService,
             GameService gameService,
             PlayerDataService playerData,
             PlayerStatsService playerStats,
-            PlayerRegistryService playerRegistry)
+            PlayerRegistryService playerRegistry,
+            ModerationService moderation,
+            NicknameService nickname)
         {
             _lobbyService = (LobbyService)lobbyService;
             _gameService = gameService;
             _playerData = playerData;
             _playerStats = playerStats;
             _playerRegistry = playerRegistry;
+            _moderation = moderation;
+            _nickname = nickname;
         }
 
         [Command("join")]
@@ -33,6 +41,11 @@ namespace LegaciesBot.Discord
         {
             var ctx = this.Context;
             var discordId = ctx.Message.Author.Id;
+            if (_moderation.IsBanned(discordId))
+            {
+                await ctx.Message.ReplyAsync("You are banned and cannot join the lobby.");
+                return;
+            }
             var existing = _lobbyService.CurrentLobby.Players
                 .FirstOrDefault(p => p.DiscordId == discordId);
 
@@ -71,7 +84,6 @@ namespace LegaciesBot.Discord
         }
 
         [Command("lobby")]
-        [Command("l")]
         public async Task ShowLobby()
         {
             var lobby = _lobbyService.CurrentLobby;
@@ -87,7 +99,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("leave")]
-        [Command("quit")]
+        [Command("l")]
         public async Task LeaveLobby()
         {
             var ctx = this.Context;
@@ -142,6 +154,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("prefs")]
+        [Command("p")]
         public async Task Preferences(params string[] args)
         {
             var ctx = this.Context;

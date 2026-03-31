@@ -1,11 +1,11 @@
-﻿using LegaciesBot.Commands;
-using NetCord;
+﻿using NetCord;
 using NetCord.Gateway;
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Discord;
 using LegaciesBot.Services.CaptainDraft;
-using Microsoft.Extensions.DependencyInjection; 
+using Microsoft.Extensions.DependencyInjection;
+using LegaciesBot.Moderation;
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
@@ -20,13 +20,13 @@ var client = new GatewayClient(
     new GatewayClientConfiguration
     {
         Intents = GatewayIntents.GuildMessages
-
                   | GatewayIntents.DirectMessages
                   | GatewayIntents.MessageContent
     }
 );
 
 var permissionService = new PermissionService();
+var moderationService = new ModerationService(TimeSpan.FromDays(7), 3);
 var matchHistoryService = new MatchHistoryService();
 var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
@@ -55,19 +55,23 @@ var gameService = new GameService(
 
 var services = new ServiceCollection()
     .AddSingleton<ILobbyService>(lobbyService)
-    .AddSingleton<LobbyService>(lobbyService)  
+    .AddSingleton<LobbyService>(lobbyService)
     .AddSingleton<ICaptainDraftService>(captainDraftService)
     .AddSingleton(playerDataService)
     .AddSingleton(playerStatsService)
     .AddSingleton(permissionService)
+    .AddSingleton(moderationService)
+    .AddSingleton<ModerationCommands>()
     .AddSingleton(matchHistoryService)
     .AddSingleton(playerRegistryService)
     .AddSingleton(nicknameService)
     .AddSingleton(factionManualAssignmentService)
     .AddSingleton(gameService)
     .BuildServiceProvider();
+
 var commandService = new CommandService<CommandContext>();
 
+commandService.AddModule(typeof(ModerationCommands));
 commandService.AddModules(typeof(Program).Assembly);
 
 client.MessageCreate += async message =>
@@ -76,7 +80,6 @@ client.MessageCreate += async message =>
         return;
 
     var ctx = new CommandContext(message, client);
-    
     await commandService.ExecuteAsync(1, ctx, services);
 };
 

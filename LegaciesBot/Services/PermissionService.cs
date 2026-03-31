@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace LegaciesBot.Services
 {
@@ -61,6 +58,11 @@ namespace LegaciesBot.Services
         public bool IsMod(ulong userId)
         {
             return Data.Mods.Contains(userId) || IsAdmin(userId);
+        }
+
+        public bool IsModeratorOrAdmin(ulong userId)
+        {
+            return IsAdmin(userId) || IsMod(userId);
         }
 
         public void AddMod(ulong userId)
