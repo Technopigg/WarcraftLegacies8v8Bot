@@ -14,24 +14,17 @@ namespace LegaciesBot.Discord
         private readonly MatchHistoryService _matchHistoryService;
         private readonly PlayerRegistryService _playerRegistry;
 
-        public GameCommands(
-            GameService gameService,
-            ILobbyService lobbyService, 
-            PlayerDataService playerDataService,
-            PlayerStatsService stats,
-            PermissionService permissions,
-            MatchHistoryService matchHistoryService,
-            PlayerRegistryService playerRegistry
-        )
+        public GameCommands()
         {
-            _gameService = gameService;
-            _lobbyService = (LobbyService)lobbyService; 
-            _playerDataService = playerDataService;
-            _stats = stats;
-            _permissions = permissions;
-            _matchHistoryService = matchHistoryService;
-            _playerRegistry = playerRegistry;
+            _gameService = GlobalServices.GameService;
+            _lobbyService = GlobalServices.LobbyService;
+            _playerDataService = GlobalServices.PlayerDataService;
+            _stats = GlobalServices.PlayerStatsService;
+            _permissions = GlobalServices.PermissionService;
+            _matchHistoryService = GlobalServices.MatchHistoryService;
+            _playerRegistry = GlobalServices.PlayerRegistryService;
         }
+
         [Command("register")]
         [Command("reg")]
         public async Task Register()

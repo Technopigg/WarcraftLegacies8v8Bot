@@ -10,10 +10,10 @@ namespace LegaciesBot.Discord
         private readonly SeasonService _seasons;
         private readonly PlayerRegistryService _registry;
 
-        public SeasonCommands(SeasonService seasons, PlayerRegistryService registry)
+        public SeasonCommands()
         {
-            _seasons = seasons;
-            _registry = registry;
+            _seasons = GlobalServices.SeasonService;
+            _registry = GlobalServices.PlayerRegistryService;
         }
 
         [Command("season")]

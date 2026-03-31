@@ -16,23 +16,19 @@ namespace LegaciesBot.Discord
         private readonly ModerationService _moderation;
         private readonly NicknameService _nickname;
 
-        public LobbyCommands(
-            ILobbyService lobbyService,
-            GameService gameService,
-            PlayerDataService playerData,
-            PlayerStatsService playerStats,
-            PlayerRegistryService playerRegistry,
-            ModerationService moderation,
-            NicknameService nickname)
+        public LobbyCommands()
         {
-            _lobbyService = (LobbyService)lobbyService;
-            _gameService = gameService;
-            _playerData = playerData;
-            _playerStats = playerStats;
-            _playerRegistry = playerRegistry;
-            _moderation = moderation;
-            _nickname = nickname;
+            _lobbyService = GlobalServices.LobbyService;
+            _gameService = GlobalServices.GameService;
+            _playerData = GlobalServices.PlayerDataService;
+            _playerStats = GlobalServices.PlayerStatsService;
+            _playerRegistry = GlobalServices.PlayerRegistryService;
+            _moderation = GlobalServices.ModerationService;
+            _nickname = GlobalServices.NicknameService;
         }
+
+ 
+
 
         [Command("join")]
         [Command("j")]

@@ -156,8 +156,6 @@ namespace LegaciesBot.Commands
         [Command("mods")]
         public async Task ListMods()
         {
-            await Context.Message.ReplyAsync("DEBUG: AdminCommands !mods is running");
-
             var list = GlobalServices.PermissionService.Data.Mods;
 
             if (list.Count == 0)

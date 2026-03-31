@@ -12,16 +12,12 @@ namespace LegaciesBot.Discord
         private readonly NicknameService _nicknames;
         private readonly SeasonService _seasons;
 
-        public StatsCommands(
-            PlayerStatsService playerStats,
-            PlayerRegistryService playerRegistry,
-            NicknameService nicknames,
-            SeasonService seasons)
+        public StatsCommands()
         {
-            _playerStats = playerStats;
-            _playerRegistry = playerRegistry;
-            _nicknames = nicknames;
-            _seasons = seasons;
+            _playerStats = GlobalServices.PlayerStatsService;
+            _playerRegistry = GlobalServices.PlayerRegistryService;
+            _nicknames = GlobalServices.NicknameService;
+            _seasons = GlobalServices.SeasonService;
         }
 
         [Command("stats")]

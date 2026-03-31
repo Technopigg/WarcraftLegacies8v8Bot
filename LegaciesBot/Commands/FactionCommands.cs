@@ -8,10 +8,10 @@ namespace LegaciesBot.Commands
         private readonly ILobbyService _lobby;
         private readonly FactionManualAssignmentService _manual;
 
-        public FactionCommands(ILobbyService lobby, FactionManualAssignmentService manual)
+        public FactionCommands()
         {
-            _lobby = lobby;
-            _manual = manual;
+            _lobby = GlobalServices.LobbyService;
+            _manual = GlobalServices.FactionManualAssignmentService;
         }
 
         [Command("setfaction")]

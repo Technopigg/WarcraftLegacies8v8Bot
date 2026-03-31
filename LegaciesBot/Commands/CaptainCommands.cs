@@ -12,16 +12,12 @@ namespace LegaciesBot.Commands
         private readonly NicknameService _nicknames;
         private readonly PlayerRegistryService _playerRegistry;
 
-        public CaptainCommands(
-            ILobbyService lobby, 
-            ICaptainDraftService captainDraft, 
-            NicknameService nicknames,
-            PlayerRegistryService playerRegistry)
+        public CaptainCommands()
         {
-            _lobby = lobby;
-            _captainDraft = captainDraft;
-            _nicknames = nicknames;
-            _playerRegistry = playerRegistry;
+            _lobby = GlobalServices.LobbyService;
+            _captainDraft = GlobalServices.CaptainDraftService;
+            _nicknames = GlobalServices.NicknameService;
+            _playerRegistry = GlobalServices.PlayerRegistryService;
         }
 
         [Command("captains")]
