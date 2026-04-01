@@ -20,8 +20,7 @@ public class CaptainDraftAutoFactionTests
             p.Elo = 1500;
             lobby.Players.Add(p);
         }
-
-        // Pre‑selected picks for captain draft
+        
         lobby.TeamAPicks.AddRange(Enumerable.Range(1, 8).Select(i => (ulong)i));
         lobby.TeamBPicks.AddRange(Enumerable.Range(9, 8).Select(i => (ulong)i));
 
