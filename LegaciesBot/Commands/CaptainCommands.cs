@@ -15,6 +15,8 @@ namespace LegaciesBot.Commands
         private readonly IGatewayClient _client;
 
         private const ulong GuildId = 1218338908216229979;
+        private const ulong DraftChannelId = 1488958363361349908;
+        private const string CaptainRoleName = "Captain";
 
         public CaptainCommands()
         {
@@ -67,6 +69,17 @@ namespace LegaciesBot.Commands
                 return;
             }
 
+            var guild = await _client.GetGuildAsync(GuildId);
+            var role = guild.Roles.FirstOrDefault(r => r.Name == CaptainRoleName);
+
+            if (role == null)
+            {
+                role = await _client.CreateRoleAsync(GuildId, CaptainRoleName);
+            }
+
+            lobby.CaptainRoleId = role.Id;
+            await _client.AddRoleToMemberAsync(GuildId, userId, role.Id);
+
             var currentNames = GetCaptainNames(lobby);
             await Context.Message.ReplyAsync(
                 $"Lobby #{lobby.GameNumber} — You are now a captain! Current captains: {string.Join(", ", currentNames)}");
@@ -103,20 +116,20 @@ namespace LegaciesBot.Commands
 
             if (lobby.CaptainA != captainId)
             {
-                await Context.Message.ReplyAsync("Only Captain A may pass the first pick.");
+                await SendDraftMessage("Only Captain A may pass the first pick.");
                 return;
             }
 
             if (lobby.CurrentPickIndex != 0)
             {
-                await Context.Message.ReplyAsync("You may only pass on the first pick.");
+                await SendDraftMessage("You may only pass on the first pick.");
                 return;
             }
 
             lobby.CaptainAPassed = true;
             _captainDraft.BuildDraftOrder(lobby);
 
-            await Context.Message.ReplyAsync(
+            await SendDraftMessage(
                 $"Lobby #{lobby.GameNumber} — Captain A has passed. Captain B picks first.");
         }
 
@@ -132,31 +145,30 @@ namespace LegaciesBot.Commands
 
             if (!targetId.HasValue)
             {
-                await Context.Message.ReplyAsync(input + " is not a valid player.");
+                await SendDraftMessage(input + " is not a valid player.");
                 return;
             }
 
             if (!lobby.Players.Any(p => p.DiscordId == targetId.Value))
             {
-                await Context.Message.ReplyAsync("That player is not in the lobby.");
+                await SendDraftMessage("That player is not in the lobby.");
                 return;
             }
 
             if (!_captainDraft.IsCaptainTurn(lobby, captainId))
             {
-                await Context.Message.ReplyAsync("It is not your turn to pick.");
+                await SendDraftMessage("It is not your turn to pick.");
                 return;
             }
 
             if (!_captainDraft.TryPick(lobby, captainId, targetId.Value))
             {
-                await Context.Message.ReplyAsync("Invalid pick.");
+                await SendDraftMessage("Invalid pick.");
                 return;
             }
 
             var pickedName = _playerRegistry.GetPlayer(targetId.Value)?.DisplayName() ?? targetId.Value.ToString();
-            await Context.Message.ReplyAsync(
-                $"Lobby #{lobby.GameNumber} — Picked {pickedName}");
+            await SendDraftMessage($"Lobby #{lobby.GameNumber} — Picked {pickedName}");
 
             if (_captainDraft.DraftComplete(lobby))
                 await FinalizeDraft(lobby);
@@ -173,10 +185,26 @@ namespace LegaciesBot.Commands
             foreach (var p in teamBPlayers)
                 await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, RoleConfig.Team2Role);
 
+            if (lobby.CaptainRoleId.HasValue)
+            {
+                if (lobby.CaptainA.HasValue)
+                    await _client.RemoveRoleFromMemberAsync(GuildId, lobby.CaptainA.Value, lobby.CaptainRoleId.Value);
+
+                if (lobby.CaptainB.HasValue)
+                    await _client.RemoveRoleFromMemberAsync(GuildId, lobby.CaptainB.Value, lobby.CaptainRoleId.Value);
+            }
+
             lobby.FactionAssignmentStarted = true;
 
-            await Context.Message.ReplyAsync(
+            await SendDraftMessage(
                 $"Lobby #{lobby.GameNumber} — Draft complete! Team roles assigned.\nProceed to faction assignment.");
+        }
+
+        private async Task SendDraftMessage(string message)
+        {
+            var channel = await _client.GetTextChannelAsync(DraftChannelId);
+            if (channel != null)
+                await channel.SendMessageAsync(message);
         }
 
         private string[] GetCaptainNames(Lobby lobby)

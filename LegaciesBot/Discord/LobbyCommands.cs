@@ -26,77 +26,79 @@ namespace LegaciesBot.Discord
             _moderation = GlobalServices.ModerationService;
             _nickname = GlobalServices.NicknameService;
         }
+        
+[Command("join")]
+[Command("j")]
+public async Task JoinLobby()
+{
+    var ctx = this.Context;
+    var discordId = ctx.Message.Author.Id;
 
-        [Command("join")]
-        [Command("j")]
-        public async Task JoinLobby()
+    if (_moderation.IsBanned(discordId))
+    {
+        await ctx.Message.ReplyAsync("You are banned and cannot join the lobby.");
+        return;
+    }
+
+    var existing = _lobbyService.CurrentLobby.Players
+        .FirstOrDefault(p => p.DiscordId == discordId);
+
+    if (existing != null)
+    {
+        await ctx.Message.ReplyAsync(
+            $"{existing.DisplayName()} ({existing.Elo}), you are already in the lobby.");
+        return;
+    }
+
+    var player = _lobbyService.JoinLobby(discordId);
+    var stats = _playerStats.GetOrCreate(player.DiscordId);
+    player.Elo = stats.Elo;
+
+    var savedPrefs = _playerData.GetPreferences(player.DiscordId);
+    if (savedPrefs.Count > 0)
+        player.FactionPreferences = savedPrefs.ToList();
+
+    string display = $"{player.DisplayName()} ({player.Elo})";
+
+    if (savedPrefs.Count > 0)
+    {
+        await ctx.Message.ReplyAsync(
+            $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
+            $"Type `!prefs <list>` to update them."
+        );
+    }
+    else
+    {
+        await ctx.Message.ReplyAsync(
+            $"Welcome {display}! Submit your faction preferences with `!prefs <list>`."
+        );
+    }
+
+    var lobby = _lobbyService.CurrentLobby;
+
+    if (lobby.IsFull && !lobby.DraftStarted)
+    {
+        if (lobby.CaptainA != null && lobby.CaptainB != null)
         {
-            var ctx = this.Context;
-            var discordId = ctx.Message.Author.Id;
+            lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
+            lobby.IsCaptainDraft = true;
 
-            if (_moderation.IsBanned(discordId))
-            {
-                await ctx.Message.ReplyAsync("You are banned and cannot join the lobby.");
-                return;
-            }
+            await ctx.Message.ReplyAsync(
+                "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
+                "Drafting will take place in the dedicated draft channel."
+            );
 
-            var existing = _lobbyService.CurrentLobby.Players
-                .FirstOrDefault(p => p.DiscordId == discordId);
-
-            if (existing != null)
-            {
-                await ctx.Message.ReplyAsync(
-                    $"{existing.DisplayName()} ({existing.Elo}), you are already in the lobby.");
-                return;
-            }
-
-            var player = _lobbyService.JoinLobby(discordId);
-            var stats = _playerStats.GetOrCreate(player.DiscordId);
-            player.Elo = stats.Elo;
-
-            var savedPrefs = _playerData.GetPreferences(player.DiscordId);
-            if (savedPrefs.Count > 0)
-                player.FactionPreferences = savedPrefs.ToList();
-
-            string display = $"{player.DisplayName()} ({player.Elo})";
-
-            if (savedPrefs.Count > 0)
-            {
-                await ctx.Message.ReplyAsync(
-                    $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
-                    $"Type `!prefs <list>` to update them."
-                );
-            }
-            else
-            {
-                await ctx.Message.ReplyAsync(
-                    $"Welcome {display}! Submit your faction preferences with `!prefs <list>`."
-                );
-            }
-
-            var lobby = _lobbyService.CurrentLobby;
-
-            if (lobby.IsFull && !lobby.DraftStarted)
-            {
-                if (lobby.CaptainA != null && lobby.CaptainB != null)
-                {
-                    lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
-
-                    await ctx.Message.ReplyAsync(
-                        "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
-                        "Captains, begin drafting using `!draft @player`."
-                    );
-
-                    return;
-                }
-
-                lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
-
-                await ctx.Message.ReplyAsync("Draft mode: **AutoDraft (Auto Faction)**");
-
-                await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
-            }
+            return;
         }
+
+        lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
+
+        await ctx.Message.ReplyAsync("Draft mode: **AutoDraft (Auto Faction)**");
+
+        await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
+    }
+}
+
 
         [Command("lobby")]
         public async Task ShowLobby()
