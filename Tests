@@ -1,0 +1,10 @@
+LegaciesBot.Tests (5 tests) Failed: 5 tests failed
+  LegaciesBot.Tests (3 tests) Failed: 3 tests failed
+    FactionManualAssignmentTests (3 tests) Failed: One or more child tests failed: 3 tests failed
+      AssignBulk_AssignsMultipleFactions Failed: Assert.Empty() Failure: Collection was not empty
+      TryAssignSingle_AssignsFaction_WhenValid Failed: Assert.True() Failure
+      TryLockFactions_ReturnsFalse_WhenNotAllAssigned Failed: Assert.Contains() Failure: Sub-string not found
+  FullMatchFlowWithPreferencesTests (1 test) Failed: One or more child tests failed: 1 test failed
+    FullMatchFlow_WithPreferences_WorksEndToEnd Failed: System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+  GameServiceTests (1 test) Failed: One or more child tests failed: 1 test failed
+    SubmitScore_UpdatesFactionStats Failed: System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')

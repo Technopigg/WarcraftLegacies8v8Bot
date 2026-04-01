@@ -27,7 +27,6 @@ public class GameServiceTests
         public Task<RestGuild> GetGuildAsync(ulong guildId, bool withCounts = false)
             => Task.FromResult<RestGuild>(null!);
 
-        // IMPORTANT: Role is in NetCord, not NetCord.Rest, and must match IGatewayClient exactly
         public Task<Role> CreateRoleAsync(ulong guildId, string name)
             => Task.FromResult<Role>(null!);
 
@@ -220,23 +219,12 @@ public class GameServiceTests
 
         var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
 
-        teamA.AssignedFactions.Clear();
-        teamB.AssignedFactions.Clear();
-
-        var (groupsA, _) = TeamGroupService.GenerateValidSplit();
-
         factionAssignment.AssignFactionsForGame(
             teamA,
             teamB,
-            groupsA,
+            null,
             rng
         );
-
-        for (int i = 0; i < teamA.Players.Count; i++)
-            teamA.Players[i].AssignedFaction = teamA.AssignedFactions[i].Name;
-
-        for (int i = 0; i < teamB.Players.Count; i++)
-            teamB.Players[i].AssignedFaction = teamB.AssignedFactions[i].Name;
 
         var game = service.StartGame(lobby, teamA, teamB);
 

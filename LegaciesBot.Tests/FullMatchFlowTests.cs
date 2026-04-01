@@ -45,7 +45,7 @@ public class FullMatchFlowTests
         var elo = new EloStub();
         var factionRegistry = new FactionRegistryStub();
         var defaultPrefs = new DefaultPreferencesStub();
-        var factionAssignment = new FactionAssignmentStub();
+        var factionAssignment = new RealFactionAssignmentService(new FactionRegistryStub());
         var rng = new Random(12345);
 
         var gameService = new GameService(

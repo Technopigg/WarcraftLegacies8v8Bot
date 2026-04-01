@@ -21,6 +21,7 @@ public class FactionManualAssignmentTests
         }
 
         lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
+        lobby.IsCaptainDraft = true; 
 
         lobby.CaptainA = 1;
         lobby.CaptainB = 2;
@@ -38,10 +39,15 @@ public class FactionManualAssignmentTests
 
         var nickname = new NicknameService(registry);
 
-        var gameService = new Mock<GameService>(
-            MockBehavior.Strict,
-            null!, null!, null!, null!, null!, null!
-        ).Object;
+        var gameService = new GameService(
+            new DummyGatewayClient(),
+            new MatchHistoryAdapter(new MatchHistoryService()),
+            new EloStub(),
+            new FactionAssignmentStub(),
+            new FactionRegistryStub(),
+            new DefaultPreferencesStub(),
+            new Random(12345)
+        );
 
         return new FactionManualAssignmentService(
             factionRegistry.Object,
@@ -56,8 +62,7 @@ public class FactionManualAssignmentTests
         var registry = new PlayerRegistryService(null);
         var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
-
-        var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player3", "sw");
+        var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "3", "sw");
 
         Assert.True(result);
         Assert.Equal("Stormwind", lobby.ManualFactionAssignments[3]);
@@ -69,8 +74,8 @@ public class FactionManualAssignmentTests
         var registry = new PlayerRegistryService(null);
         var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
-
-        var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player10", "sw");
+        
+        var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "10", "sw");
 
         Assert.False(result);
     }
@@ -82,8 +87,8 @@ public class FactionManualAssignmentTests
         var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
-        service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player1", "sw");
-        var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player2", "sw");
+        service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "1", "sw");
+        var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "2", "sw");
 
         Assert.False(result);
     }
@@ -94,12 +99,12 @@ public class FactionManualAssignmentTests
         var registry = new PlayerRegistryService(null);
         var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
-
+        
         string bulk = """
-        Player1 sw
-        Player2 dal
-        Player3 sc
-        Player4 fh
+        1 sw
+        2 dal
+        3 sc
+        4 fh
         """;
 
         var errors = service.AssignBulk(lobby, lobby.CaptainA!.Value, bulk);

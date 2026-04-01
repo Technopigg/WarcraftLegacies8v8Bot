@@ -48,8 +48,11 @@ public class FactionAssignmentServiceTests
 
         service.AssignFactionsForGame(teamA, teamB, groupsA, rng);
 
-        Assert.Equal(8, teamA.AssignedFactions.Count);
-        Assert.Equal(8, teamB.AssignedFactions.Count);
+        var assignedA = teamA.Players.Where(p => !string.IsNullOrWhiteSpace(p.AssignedFaction)).ToList();
+        var assignedB = teamB.Players.Where(p => !string.IsNullOrWhiteSpace(p.AssignedFaction)).ToList();
+
+        Assert.Equal(8, assignedA.Count);
+        Assert.Equal(8, assignedB.Count);
     }
 
     [Fact]
@@ -65,10 +68,14 @@ public class FactionAssignmentServiceTests
 
         service.AssignFactionsForGame(teamA, teamB, groupsA, rng);
 
-        var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
+        var allNames = teamA.Players
+            .Concat(teamB.Players)
+            .Select(p => p.AssignedFaction)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .ToList();
 
-        Assert.Equal(16, all.Count);
-        Assert.Equal(16, all.Select(f => f.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(16, allNames.Count);
+        Assert.Equal(16, allNames.Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]

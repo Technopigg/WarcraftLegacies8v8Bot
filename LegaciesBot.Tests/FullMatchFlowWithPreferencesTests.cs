@@ -72,7 +72,7 @@ public class FullMatchFlowWithPreferencesTests
         var elo = new EloStub();
         var factionRegistry = new FactionRegistryStub();
         var defaultPrefs = new DefaultPreferencesStub();
-        var factionAssignment = new FactionAssignmentStub();
+        var factionAssignment = new RealFactionAssignmentService(new FactionRegistryStub());
         var rng = new Random(12345);
 
         var gameService = new GameService(
@@ -106,28 +106,26 @@ public class FullMatchFlowWithPreferencesTests
 
         int preferredCount = 0;
 
-        for (int i = 0; i < teamA.Players.Count; i++)
+        foreach (var player in teamA.Players)
         {
-            var player = teamA.Players[i];
-            var faction = teamA.AssignedFactions[i];
+            var factionName = player.AssignedFaction;
             var prefs = Prefs[player.DiscordId];
 
-            if (prefs.Any(p => p.Equals(faction.Name, StringComparison.OrdinalIgnoreCase)))
+            if (prefs.Any(p => p.Equals(factionName, StringComparison.OrdinalIgnoreCase)))
                 preferredCount++;
 
-            Assert.False(string.IsNullOrWhiteSpace(player.AssignedFaction));
+            Assert.False(string.IsNullOrWhiteSpace(factionName));
         }
 
-        for (int i = 0; i < teamB.Players.Count; i++)
+        foreach (var player in teamB.Players)
         {
-            var player = teamB.Players[i];
-            var faction = teamB.AssignedFactions[i];
+            var factionName = player.AssignedFaction;
             var prefs = Prefs[player.DiscordId];
 
-            if (prefs.Any(p => p.Equals(faction.Name, StringComparison.OrdinalIgnoreCase)))
+            if (prefs.Any(p => p.Equals(factionName, StringComparison.OrdinalIgnoreCase)))
                 preferredCount++;
 
-            Assert.False(string.IsNullOrWhiteSpace(player.AssignedFaction));
+            Assert.False(string.IsNullOrWhiteSpace(factionName));
         }
 
         Assert.True(preferredCount > 0);

@@ -27,7 +27,6 @@ public class DraftEngineRoutingTests
     public void DraftEngine_RoutesCorrectly_ForAllDraftModes()
     {
         var rng = new Random(12345);
-
         var factionAssign = new RealFactionAssignmentService(new FactionRegistryStub());
         var engine = new DraftEngine(factionAssign, rng);
 
@@ -43,6 +42,21 @@ public class DraftEngineRoutingTests
         {
             var lobby = CreateLobby(16);
             lobby.DraftMode = mode;
+
+            if (mode == DraftMode.CaptainDraft_AutoFaction ||
+                mode == DraftMode.CaptainDraft_ManualFaction)
+            {
+                lobby.TeamAPicks = lobby.Players
+                    .Take(8)
+                    .Select(p => p.DiscordId)
+                    .ToList();
+
+                lobby.TeamBPicks = lobby.Players
+                    .Skip(8)
+                    .Take(8)
+                    .Select(p => p.DiscordId)
+                    .ToList();
+            }
 
             var (teamA, teamB) = engine.RunDraft(lobby);
 
