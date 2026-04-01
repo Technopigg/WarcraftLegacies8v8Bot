@@ -99,7 +99,7 @@ public class FullMatchFlowWithPreferencesTests
 
         var lobby = lobbyService.CurrentLobby;
 
-        gameService.StartDraft(lobby, 123).Wait();
+        gameService.StartDraft(lobby, 123).GetAwaiter().GetResult();
 
         var teamA = lobby.TeamA!;
         var teamB = lobby.TeamB!;
@@ -135,7 +135,7 @@ public class FullMatchFlowWithPreferencesTests
         var game = gameService.StartGame(lobby, teamA, teamB);
 
         var stats = new PlayerStatsService();
-        var changes = gameService.SubmitScore(game, 4, 2, stats);
+        var changes = gameService.SubmitScore(game, 4, 2, stats).GetAwaiter().GetResult();
 
         Assert.True(game.Finished);
         Assert.NotEmpty(changes);

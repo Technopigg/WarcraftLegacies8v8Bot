@@ -1,5 +1,6 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using LegaciesBot.Services.Drafting;
 using Moq;
 
 namespace LegaciesBot.Tests;
@@ -29,7 +30,7 @@ public class CaptainDraftManualFactionTests
     }
 
     [Fact]
-    public void CaptainDraftManualFaction_ThrowsNotImplemented()
+    public void CaptainDraftManualFaction_CreatesTeams_WithoutAssigningFactions()
     {
         var lobby = CreateCaptainDraftLobby();
 
@@ -38,6 +39,17 @@ public class CaptainDraftManualFactionTests
 
         var engine = new DraftEngine(factionAssign.Object, rng);
 
-        Assert.Throws<NotImplementedException>(() => engine.RunDraft(lobby));
+        var (teamA, teamB) = engine.RunDraft(lobby);
+
+        Assert.Equal(8, teamA.Players.Count);
+        Assert.Equal(8, teamB.Players.Count);
+
+        // No faction assignment should occur
+        factionAssign.Verify(a => a.AssignFactionsForGame(
+            It.IsAny<Team>(),
+            It.IsAny<Team>(),
+            It.IsAny<HashSet<TeamGroup>>(),
+            It.IsAny<Random>()
+        ), Times.Never);
     }
 }

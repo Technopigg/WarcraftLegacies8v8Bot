@@ -12,6 +12,20 @@ namespace LegaciesBot.Discord
         private readonly IMessageResponder _responder;
         private readonly IUserContext _user;
 
+        public ModerationCommands(
+            ModerationService mod,
+            PermissionService perm,
+            NicknameService nick,
+            IMessageResponder responder,
+            IUserContext user)
+        {
+            _mod = mod;
+            _perm = perm;
+            _nick = nick;
+            _responder = responder;
+            _user = user;
+        }
+
         public ModerationCommands()
         {
             _mod = GlobalServices.ModerationService;

@@ -71,7 +71,7 @@ public class FullMatchFlowTests
 
         Assert.Equal(16, lobby.Players.Count);
 
-        gameService.StartDraft(lobby, 123).Wait();
+        gameService.StartDraft(lobby, 123).GetAwaiter().GetResult();
 
         foreach (var p in lobby.TeamA!.Players)
             p.AssignedFaction = "TestFactionA";
@@ -92,7 +92,7 @@ public class FullMatchFlowTests
 
         var game = gameService.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
         var stats = new PlayerStatsService();
-        var changes = gameService.SubmitScore(game, 5, 3, stats);
+        var changes = gameService.SubmitScore(game, 5, 3, stats).GetAwaiter().GetResult();
 
         Assert.True(game.Finished);
         Assert.NotEmpty(changes);

@@ -1,5 +1,6 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using LegaciesBot.Services.Drafting;
 using Moq;
 
 namespace LegaciesBot.Tests;
@@ -10,6 +11,7 @@ public class CaptainDraftAutoFactionTests
     {
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
+
         for (int i = 0; i < 16; i++)
         {
             ulong id = (ulong)(i + 1);
@@ -19,9 +21,8 @@ public class CaptainDraftAutoFactionTests
             lobby.Players.Add(p);
         }
 
+        // Pre‑selected picks for captain draft
         lobby.TeamAPicks.AddRange(Enumerable.Range(1, 8).Select(i => (ulong)i));
-
-
         lobby.TeamBPicks.AddRange(Enumerable.Range(9, 8).Select(i => (ulong)i));
 
         lobby.DraftMode = DraftMode.CaptainDraft_AutoFaction;
@@ -35,11 +36,12 @@ public class CaptainDraftAutoFactionTests
         var lobby = CreateCaptainDraftLobby();
 
         var factionAssign = new Mock<IFactionAssignmentService>();
+
         factionAssign.Setup(a => a.AssignFactionsForGame(
             It.IsAny<Team>(),
             It.IsAny<Team>(),
             It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
+            It.IsAny<Random>()
         ));
 
         var rng = new Random(12345);
@@ -54,7 +56,7 @@ public class CaptainDraftAutoFactionTests
             It.IsAny<Team>(),
             It.IsAny<Team>(),
             It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
+            It.IsAny<Random>()
         ), Times.Once);
     }
 }

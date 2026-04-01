@@ -1,5 +1,6 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using LegaciesBot.Services.Drafting;
 using Moq;
 
 namespace LegaciesBot.Tests;
@@ -47,7 +48,7 @@ public class AutoDraftManualFactionTests
             It.IsAny<Team>(),
             It.IsAny<Team>(),
             It.IsAny<HashSet<TeamGroup>>(),
-            It.IsAny<HashSet<TeamGroup>>()
+            It.IsAny<Random>()
         ), Times.Never);
     }
 }

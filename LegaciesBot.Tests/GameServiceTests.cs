@@ -1,6 +1,8 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
 using LegaciesBot.GameData;
+using NetCord;
+using NetCord.Rest;
 
 public class GameServiceTests
 {
@@ -19,8 +21,24 @@ public class GameServiceTests
     {
         public ITextChannel? Channel { get; set; }
 
-        public Task<ITextChannel?> GetTextChannelAsync(ulong id)
+        public Task<ITextChannel?> GetTextChannelAsync(ulong channelId)
             => Task.FromResult(Channel);
+
+        public Task<RestGuild> GetGuildAsync(ulong guildId, bool withCounts = false)
+            => Task.FromResult<RestGuild>(null!);
+
+        // IMPORTANT: Role is in NetCord, not NetCord.Rest, and must match IGatewayClient exactly
+        public Task<Role> CreateRoleAsync(ulong guildId, string name)
+            => Task.FromResult<Role>(null!);
+
+        public Task AddRoleToMemberAsync(ulong guildId, ulong userId, ulong roleId)
+            => Task.CompletedTask;
+
+        public Task RemoveRoleFromMemberAsync(ulong guildId, ulong userId, ulong roleId)
+            => Task.CompletedTask;
+
+        public Task DeleteRoleAsync(ulong guildId, ulong roleId)
+            => Task.CompletedTask;
     }
 
     private class FakeMatchHistoryService : IMatchHistoryService
@@ -84,7 +102,7 @@ public class GameServiceTests
 
         var matchHistory = new FakeMatchHistoryService();
         var elo = new FakeEloService();
-        var factionAssignment = new FactionAssignmentService(rng);
+        var factionAssignment = new RealFactionAssignmentService(new FakeFactionRegistry());
         var factionRegistry = new FakeFactionRegistry();
         var defaults = new FakeDefaultPreferences();
 
@@ -118,7 +136,7 @@ public class GameServiceTests
         var client = new FakeGatewayClient();
         var matchHistory = new FakeMatchHistoryService();
         var elo = new FakeEloService();
-        var factionAssignment = new FactionAssignmentService(rng);
+        var factionAssignment = new RealFactionAssignmentService(new FakeFactionRegistry());
         var factionRegistry = new FakeFactionRegistry();
         var defaults = new FakeDefaultPreferences();
 
@@ -147,7 +165,7 @@ public class GameServiceTests
         var client = new FakeGatewayClient();
         var matchHistory = new FakeMatchHistoryService();
         var elo = new FakeEloService();
-        var factionAssignment = new FactionAssignmentService(rng);
+        var factionAssignment = new RealFactionAssignmentService(new FakeFactionRegistry());
         var factionRegistry = new FakeFactionRegistry();
         var defaults = new FakeDefaultPreferences();
 
@@ -180,7 +198,7 @@ public class GameServiceTests
         var client = new FakeGatewayClient();
         var matchHistory = new FakeMatchHistoryService();
         var elo = new FakeEloService();
-        var factionAssignment = new FactionAssignmentStub();
+        var factionAssignment = new RealFactionAssignmentService(new FakeFactionRegistry());
         var factionRegistry = new FakeFactionRegistry();
         var defaults = new FakeDefaultPreferences();
 
@@ -201,14 +219,17 @@ public class GameServiceTests
         var lobby = CreateLobbyWithPlayers(16);
 
         var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
-        
+
         teamA.AssignedFactions.Clear();
         teamB.AssignedFactions.Clear();
 
+        var (groupsA, _) = TeamGroupService.GenerateValidSplit();
+
         factionAssignment.AssignFactionsForGame(
-            teamA, teamB,
-            TeamGroupService.GenerateValidSplit().Item1,
-            TeamGroupService.GenerateValidSplit().Item2
+            teamA,
+            teamB,
+            groupsA,
+            rng
         );
 
         for (int i = 0; i < teamA.Players.Count; i++)

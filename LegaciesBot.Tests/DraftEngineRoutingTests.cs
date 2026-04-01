@@ -1,5 +1,6 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using LegaciesBot.Services.Drafting;
 
 namespace LegaciesBot.Tests;
 
@@ -23,12 +24,11 @@ public class DraftEngineRoutingTests
     }
 
     [Fact]
-    public void DraftEngine_DoesNotThrow_ForAllDraftModes()
+    public void DraftEngine_RoutesCorrectly_ForAllDraftModes()
     {
         var rng = new Random(12345);
-        
-        var factionAssign = new FactionAssignmentService(rng);
 
+        var factionAssign = new RealFactionAssignmentService(new FactionRegistryStub());
         var engine = new DraftEngine(factionAssign, rng);
 
         var modes = new[]
@@ -44,16 +44,15 @@ public class DraftEngineRoutingTests
             var lobby = CreateLobby(16);
             lobby.DraftMode = mode;
 
-            if (mode == DraftMode.CaptainDraft_ManualFaction)
-            {
-                Assert.Throws<NotImplementedException>(() => engine.RunDraft(lobby));
-            }
-            else
-            {
-                var (teamA, teamB) = engine.RunDraft(lobby);
-                Assert.NotNull(teamA);
-                Assert.NotNull(teamB);
-            }
+            var (teamA, teamB) = engine.RunDraft(lobby);
+
+            Assert.NotNull(teamA);
+            Assert.NotNull(teamB);
+
+            Assert.Equal(8, teamA.Players.Count);
+            Assert.Equal(8, teamB.Players.Count);
+
+            Assert.Empty(teamA.Players.Intersect(teamB.Players));
         }
     }
 }

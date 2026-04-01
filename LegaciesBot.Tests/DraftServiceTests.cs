@@ -1,5 +1,6 @@
 using LegaciesBot.Core;
 using LegaciesBot.Services;
+using LegaciesBot.Services.Drafting;
 using LegaciesBot.GameData;
 using Moq;
 
@@ -38,7 +39,9 @@ public class DraftServiceTests
 
         var history = new Mock<IMatchHistoryService>();
         var elo = new Mock<IEloService>();
-        var assign = new FactionAssignmentService(new Random(12345));
+
+        var assign = new RealFactionAssignmentService(new FactionRegistryStub());
+
         var registry = new Mock<IFactionRegistry>();
         registry.Setup(r => r.All).Returns(FactionRegistry.All);
 
@@ -57,6 +60,11 @@ public class DraftServiceTests
         await service.StartDraft(lobby, 123);
 
         Assert.True(lobby.DraftStarted);
+        Assert.NotNull(lobby.TeamA);
+        Assert.NotNull(lobby.TeamB);
+
+        Assert.Equal(8, lobby.TeamA!.Players.Count);
+        Assert.Equal(8, lobby.TeamB!.Players.Count);
 
         var game = service.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
 

@@ -1,6 +1,7 @@
 using LegaciesBot.Core;
 using LegaciesBot.GameData;
 using LegaciesBot.Services;
+using LegaciesBot.Services.Drafting;
 
 public class FactionAssignmentServiceTests
 {
@@ -38,14 +39,14 @@ public class FactionAssignmentServiceTests
     public void AssignsFactionToAllPlayers()
     {
         var rng = new Random(12345);
-        var service = new FactionAssignmentService(rng);
+        var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
         var teamA = CreateTeam("A", CreatePlayers(8));
         var teamB = CreateTeam("B", CreatePlayers(8));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, rng);
 
         Assert.Equal(8, teamA.AssignedFactions.Count);
         Assert.Equal(8, teamB.AssignedFactions.Count);
@@ -55,14 +56,14 @@ public class FactionAssignmentServiceTests
     public void AssignsUniqueFactionsGlobally()
     {
         var rng = new Random(12345);
-        var service = new FactionAssignmentService(rng);
+        var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
         var teamA = CreateTeam("A", CreatePlayers(8));
         var teamB = CreateTeam("B", CreatePlayers(8));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, rng);
 
         var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
 
@@ -74,14 +75,14 @@ public class FactionAssignmentServiceTests
     public void RespectsSlotExclusivity()
     {
         var rng = new Random(12345);
-        var service = new FactionAssignmentService(rng);
+        var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
         var teamA = CreateTeam("A", CreatePlayers(8));
         var teamB = CreateTeam("B", CreatePlayers(8));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, rng);
 
         var all = teamA.AssignedFactions.Concat(teamB.AssignedFactions).ToList();
 
@@ -94,14 +95,14 @@ public class FactionAssignmentServiceTests
     public void RespectsGroupCompatibility()
     {
         var rng = new Random(12345);
-        var service = new FactionAssignmentService(rng);
+        var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
         var teamA = CreateTeam("A", CreatePlayers(8));
         var teamB = CreateTeam("B", CreatePlayers(8));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
-        service.AssignFactionsForGame(teamA, teamB, groupsA, groupsB);
+        service.AssignFactionsForGame(teamA, teamB, groupsA, rng);
 
         var groupsAUsed = teamA.AssignedFactions.Select(f => f.Group).ToHashSet();
         var groupsBUsed = teamB.AssignedFactions.Select(f => f.Group).ToHashSet();

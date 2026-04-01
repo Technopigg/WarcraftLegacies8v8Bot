@@ -7,10 +7,10 @@ namespace LegaciesBot.Tests;
 
 public class FactionManualAssignmentTests
 {
-    private Lobby CreateLobbyWithCaptains()
+    private Lobby CreateLobbyWithCaptains(PlayerRegistryService registry)
     {
         var lobby = new Lobby();
-        var registry = new PlayerRegistryService(null);
+
         for (int i = 0; i < 16; i++)
         {
             ulong id = (ulong)(i + 1);
@@ -19,10 +19,12 @@ public class FactionManualAssignmentTests
             p.Elo = 1500;
             lobby.Players.Add(p);
         }
+
         lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
-        
+
         lobby.CaptainA = 1;
         lobby.CaptainB = 2;
+
         lobby.TeamAPicks.AddRange(Enumerable.Range(1, 8).Select(i => (ulong)i));
         lobby.TeamBPicks.AddRange(Enumerable.Range(9, 8).Select(i => (ulong)i));
 
@@ -36,14 +38,23 @@ public class FactionManualAssignmentTests
 
         var nickname = new NicknameService(registry);
 
-        return new FactionManualAssignmentService(factionRegistry.Object, nickname);
+        var gameService = new Mock<GameService>(
+            MockBehavior.Strict,
+            null!, null!, null!, null!, null!, null!
+        ).Object;
+
+        return new FactionManualAssignmentService(
+            factionRegistry.Object,
+            nickname,
+            gameService
+        );
     }
 
     [Fact]
     public void TryAssignSingle_AssignsFaction_WhenValid()
     {
-        var lobby = CreateLobbyWithCaptains();
         var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
         var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player3", "sw");
@@ -55,8 +66,8 @@ public class FactionManualAssignmentTests
     [Fact]
     public void TryAssignSingle_Fails_WhenCaptainAssignsToWrongTeam()
     {
-        var lobby = CreateLobbyWithCaptains();
         var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
         var result = service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player10", "sw");
@@ -67,8 +78,8 @@ public class FactionManualAssignmentTests
     [Fact]
     public void TryAssignSingle_Fails_WhenFactionAlreadyUsed()
     {
-        var lobby = CreateLobbyWithCaptains();
         var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
         service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "Player1", "sw");
@@ -80,8 +91,8 @@ public class FactionManualAssignmentTests
     [Fact]
     public void AssignBulk_AssignsMultipleFactions()
     {
-        var lobby = CreateLobbyWithCaptains();
         var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
         string bulk = """
@@ -101,14 +112,15 @@ public class FactionManualAssignmentTests
     }
 
     [Fact]
-    public void TryFinalize_ReturnsFalse_WhenNotAllAssigned()
+    public void TryLockFactions_ReturnsFalse_WhenNotAllAssigned()
     {
-        var lobby = CreateLobbyWithCaptains();
         var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
-        var result = service.TryFinalize(lobby);
+        var result = service.TryLockFactions(lobby, lobby.CaptainA!.Value, out var message);
 
         Assert.False(result);
+        Assert.Contains("assign all 8 factions", message);
     }
 }
