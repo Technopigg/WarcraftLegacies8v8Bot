@@ -9,7 +9,12 @@
         public int ScoreA { get; set; }
         public int ScoreB { get; set; }
         public bool Finished { get; set; }
+        public DateTime FinishedAt { get; set; }
+        public DateTime StartedAt { get; set; }
+
+
         public bool IsActive { get; set; }
         public Dictionary<ulong, int> ScoreVotes { get; set; } = new();
+        
     }
 }

@@ -93,6 +93,7 @@ namespace LegaciesBot.Services
 
             game.TeamA = teamA;
             game.TeamB = teamB;
+            game.StartedAt = DateTime.UtcNow;
             game.IsActive = true;
         }
 
@@ -150,6 +151,7 @@ namespace LegaciesBot.Services
                     p.AssignedFaction = faction;
             }
 
+            game.StartedAt = DateTime.UtcNow;
             game.IsActive = true;
         }
 
@@ -163,6 +165,7 @@ namespace LegaciesBot.Services
             game.ScoreB = scoreB;
             game.Finished = true;
             game.IsActive = false;
+            game.FinishedAt = DateTime.UtcNow;
 
             bool teamAWon = scoreA > scoreB;
 
@@ -230,10 +233,10 @@ namespace LegaciesBot.Services
 
         public List<Game> GetOngoingGames() =>
             _games.Where(g => !g.Finished).ToList();
+
         public Game? GetGameById(int id)
         {
             return _games.FirstOrDefault(g => g.Id == id);
         }
-
     }
 }

@@ -45,7 +45,6 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync(
                 $"Registration complete. Welcome, **{player.DisplayName()}**! Your starting Elo is **{player.Elo}**.");
         }
-
         [Command("recent")]
         public async Task RecentMatches()
         {
@@ -68,7 +67,13 @@ namespace LegaciesBot.Discord
 
                 string result = draw ? "Draw" : teamAWon ? "Team A Win" : "Team B Win";
 
-                msg += $"**Game {match.GameId}** — {result}\n";
+                var date = match.Timestamp.ToLocalTime().ToString("dd/MM/yy");
+                var ago = FormatAgo(match.Timestamp);
+
+                var duration = match.Timestamp - match.StartedAt;
+                string durationStr = duration.ToString(@"hh\:mm\:ss");
+
+                msg += $"**Game {match.GameId}** — {result} — {date} ({ago}) — Duration: {durationStr}\n";
                 msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
 
                 msg += "Team A Elo: ";
@@ -89,6 +94,20 @@ namespace LegaciesBot.Discord
             }
 
             await ctx.Message.ReplyAsync(msg);
+        }
+
+        private string FormatAgo(DateTime time)
+        {
+            var span = DateTime.UtcNow - time;
+
+            if (span.TotalMinutes < 1)
+                return "just now";
+            if (span.TotalMinutes < 60)
+                return $"{(int)span.TotalMinutes} minutes ago";
+            if (span.TotalHours < 24)
+                return $"{(int)span.TotalHours} hours ago";
+
+            return $"{(int)span.TotalDays} days ago";
         }
 
         [Command("kill")]

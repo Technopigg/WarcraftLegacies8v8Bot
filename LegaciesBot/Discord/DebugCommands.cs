@@ -184,6 +184,9 @@ namespace LegaciesBot.Discord
             var assign = GlobalServices.FactionAssignmentService;
             assign.AssignFactionsForGame(lobby.TeamA, lobby.TeamB, null, null);
 
+            var game = GlobalServices.GameService.CreatePendingGameIfMissing(lobby);
+            game.StartedAt = DateTime.UtcNow;
+
             await ctx.Message.ReplyAsync(
                 "Debug factions assigned.\n\n" +
                 $"Team A: {string.Join(", ", lobby.TeamA.Players.Select(p => $"{p.DisplayName()} ({p.AssignedFaction})"))}\n" +
