@@ -76,18 +76,18 @@ namespace LegaciesBot.Discord
                 msg += $"**Game {match.GameId}** — {result} — {date} ({ago}) — Duration: {durationStr}\n";
                 msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
 
-                msg += "Team A Elo: ";
+                msg += "Team A: ";
                 msg += string.Join(", ", match.TeamA.Select(p =>
                 {
                     string sign = p.EloChange >= 0 ? "+" : "";
-                    return $"{p.DisplayName} ({sign}{p.EloChange})";
+                    return $"{p.DisplayName} [{p.Faction}] ({sign}{p.EloChange})";
                 }));
 
-                msg += "\nTeam B Elo: ";
+                msg += "\nTeam B: ";
                 msg += string.Join(", ", match.TeamB.Select(p =>
                 {
                     string sign = p.EloChange >= 0 ? "+" : "";
-                    return $"{p.DisplayName} ({sign}{p.EloChange})";
+                    return $"{p.DisplayName} [{p.Faction}] ({sign}{p.EloChange})";
                 }));
 
                 msg += "\n\n";
@@ -388,6 +388,8 @@ namespace LegaciesBot.Discord
         }
 
         [Command("g")]
+        [Command("g")]
+        [Command("games")]
         public async Task ListGames()
         {
             var ctx = this.Context;
@@ -403,10 +405,20 @@ namespace LegaciesBot.Discord
             foreach (var game in games)
             {
                 string status = game.IsActive ? "In Progress" : "Drafting/Factions";
-                msg +=
-                    $"**Game {game.Id}** ({status}) — " +
-                    $"Team A ({string.Join(", ", game.TeamA?.Players.Select(p => p.DisplayName()) ?? Array.Empty<string>())}) " +
-                    $"vs Team B ({string.Join(", ", game.TeamB?.Players.Select(p => p.DisplayName()) ?? Array.Empty<string>())})\n";
+
+                string teamA = string.Join(", ",
+                    game.TeamA?.Players.Select(p =>
+                        $"{p.DisplayName()} [{p.AssignedFaction}]"
+                    ) ?? Array.Empty<string>()
+                );
+
+                string teamB = string.Join(", ",
+                    game.TeamB?.Players.Select(p =>
+                        $"{p.DisplayName()} [{p.AssignedFaction}]"
+                    ) ?? Array.Empty<string>()
+                );
+
+                msg += $"**Game {game.Id}** ({status}) — Team A ({teamA}) vs Team B ({teamB})\n";
             }
 
             await ctx.Message.ReplyAsync(msg);
