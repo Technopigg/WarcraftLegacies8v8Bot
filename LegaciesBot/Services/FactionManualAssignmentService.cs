@@ -10,15 +10,33 @@ namespace LegaciesBot.Services
 
         public static readonly Dictionary<string, string> FactionShortcodes = new()
         {
-            ["sw"] = "Stormwind",
-            ["dal"] = "Dalaran",
-            ["sc"] = "Scourge",
-            ["fh"] = "Fel Horde",
-            ["sen"] = "Sentinels",
-            ["if"] = "Ironforge",
-            ["leg"] = "Legion",
-            ["qt"] = "Quel'thalas"
+            ["lord"] = "Lordaeron",
+            ["quel"] = "Quel'thalas",
+            ["dala"] = "Dalaran",
+            ["giln"] = "Gilneas",
+
+            ["sc"]   = "Scourge",
+            ["leg"]  = "Legion",
+
+            ["sw"]   = "Stormwind",
+            ["if"]   = "Ironforge",
+            ["kt"]   = "Kul'tiras",
+
+            ["fel"]  = "Fel Horde",
+            ["illi"] = "Illidari",
+            ["sun"]  = "Sunfury",
+
+            ["ws"]   = "Warsong",
+            ["fw"]   = "Frostwolf",
+            ["sents"] = "Sentinels",
+            ["exo"]  = "The Exodar",
+            ["dru"]  = "Druids",
+
+            ["aq"]   = "An'qiraj",
+            ["be"]   = "Black Empire",
+            ["sky"]  = "Skywall"
         };
+
 
         public FactionManualAssignmentService(
             IFactionRegistry registry,

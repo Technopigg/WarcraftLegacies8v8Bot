@@ -99,13 +99,13 @@ public class FactionManualAssignmentTests
         var registry = new PlayerRegistryService(null);
         var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
-        
+    
         string bulk = """
-        1 sw
-        2 dal
-        3 sc
-        4 fh
-        """;
+                      1 sw
+                      2 dala
+                      3 sc
+                      4 fel
+                      """;
 
         var errors = service.AssignBulk(lobby, lobby.CaptainA!.Value, bulk);
 

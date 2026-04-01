@@ -37,7 +37,6 @@ namespace LegaciesBot.Discord
                     : registry.RegisterPlayer(id, $"Debug{i}");
 
                 stats.GetOrCreate(id);
-
                 lobby.Players.Add(player);
             }
 
@@ -56,48 +55,87 @@ namespace LegaciesBot.Discord
 
             var lobby = GlobalServices.LobbyService.CurrentLobby;
 
+            if (lobby.Players.Count < 2)
+            {
+                await ctx.Message.ReplyAsync("Not enough players. Use !debugfill first.");
+                return;
+            }
+
             lobby.CaptainA = lobby.Players[0].DiscordId;
             lobby.CaptainB = lobby.Players[1].DiscordId;
 
             await ctx.Message.ReplyAsync(
-                $"Debug captains assigned:\nCaptain A: {lobby.Players[0].DisplayName()}\nCaptain B: {lobby.Players[1].DisplayName()}"
+                $"Debug captains assigned:\n" +
+                $"Captain A: {lobby.Players[0].DisplayName()}\n" +
+                $"Captain B: {lobby.Players[1].DisplayName()}"
             );
         }
 
-        [Command("debugdraft")]
-        public async Task DebugDraft()
-        {
-            var ctx = this.Context;
-            if (!IsAllowed(ctx.User.Id))
-            {
-                await ctx.Message.ReplyAsync("You do not have permission to use debug commands.");
-                return;
-            }
+      [Command("debugdraft")]
+public async Task DebugDraft()
+{
+    var ctx = this.Context;
+    if (!IsAllowed(ctx.User.Id))
+    {
+        await ctx.Message.ReplyAsync("You do not have permission to use debug commands.");
+        return;
+    }
 
-            var lobby = GlobalServices.LobbyService.CurrentLobby;
-            var engine = new DraftEngine(GlobalServices.FactionAssignmentService);
+    var lobby = GlobalServices.LobbyService.CurrentLobby;
 
-            lobby.DraftStarted = true;
+    if (lobby.Players.Count < 16)
+    {
+        await ctx.Message.ReplyAsync($"Lobby has {lobby.Players.Count} players. Use !debugfill first.");
+        return;
+    }
 
-            if (lobby.DraftMode != DraftMode.AutoDraft_AutoFaction &&
-                lobby.DraftMode != DraftMode.AutoDraft_ManualFaction &&
-                lobby.DraftMode != DraftMode.CaptainDraft_AutoFaction &&
-                lobby.DraftMode != DraftMode.CaptainDraft_ManualFaction)
-            {
-                lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
-            }
+    if (lobby.DraftMode != DraftMode.AutoDraft_AutoFaction &&
+        lobby.DraftMode != DraftMode.AutoDraft_ManualFaction &&
+        lobby.DraftMode != DraftMode.CaptainDraft_AutoFaction &&
+        lobby.DraftMode != DraftMode.CaptainDraft_ManualFaction)
+    {
+        lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
+    }
 
-            var (teamA, teamB) = engine.RunDraft(lobby);
+    if (lobby.TeamAPicks.Count == 0)
+        lobby.TeamAPicks = lobby.Players.Take(8).Select(p => p.DiscordId).ToList();
 
-            lobby.TeamA = teamA;
-            lobby.TeamB = teamB;
+    if (lobby.TeamBPicks.Count == 0)
+        lobby.TeamBPicks = lobby.Players.Skip(8).Take(8).Select(p => p.DiscordId).ToList();
 
-            await ctx.Message.ReplyAsync(
-                $"Debug draft complete.\n\n" +
-                $"Team A: {string.Join(", ", teamA.Players.Select(p => p.DisplayName()))}\n" +
-                $"Team B: {string.Join(", ", teamB.Players.Select(p => p.DisplayName()))}"
-            );
-        }
+    if (lobby.CaptainA == null)
+        lobby.CaptainA = lobby.TeamAPicks.First();
+
+    if (lobby.CaptainB == null)
+        lobby.CaptainB = lobby.TeamBPicks.First();
+
+    lobby.DraftStarted = true;
+
+    var engine = new DraftEngine(GlobalServices.FactionAssignmentService, new Random(12345));
+
+    try
+    {
+        var beforeCount = lobby.Players.Count;
+
+        var (teamA, teamB) = engine.RunDraft(lobby);
+
+        var afterCount = lobby.Players.Count;
+
+        lobby.TeamA = teamA;
+        lobby.TeamB = teamB;
+
+        await ctx.Message.ReplyAsync(
+            $"Debug draft complete.\n" +
+            $"Lobby players before: {beforeCount}, after: {afterCount}\n\n" +
+            $"Team A: {string.Join(", ", teamA.Players.Select(p => p.DisplayName()))}\n" +
+            $"Team B: {string.Join(", ", teamB.Players.Select(p => p.DisplayName()))}"
+        );
+    }
+    catch (Exception ex)
+    {
+        await ctx.Message.ReplyAsync($"Debug draft FAILED: {ex.GetType().Name}: {ex.Message}");
+    }
+}
 
         [Command("debugfactions")]
         public async Task DebugFactions()
@@ -110,8 +148,14 @@ namespace LegaciesBot.Discord
             }
 
             var lobby = GlobalServices.LobbyService.CurrentLobby;
-            var assign = GlobalServices.FactionAssignmentService;
 
+            if (lobby.TeamA == null || lobby.TeamB == null)
+            {
+                await ctx.Message.ReplyAsync("Teams not drafted. Use !debugdraft first.");
+                return;
+            }
+
+            var assign = GlobalServices.FactionAssignmentService;
             assign.AssignFactionsForGame(lobby.TeamA, lobby.TeamB, null, null);
 
             await ctx.Message.ReplyAsync(
@@ -132,6 +176,12 @@ namespace LegaciesBot.Discord
             }
 
             var lobby = GlobalServices.LobbyService.CurrentLobby;
+
+            if (lobby.TeamA == null || lobby.TeamB == null)
+            {
+                await ctx.Message.ReplyAsync("Teams not drafted. Use !debugdraft first.");
+                return;
+            }
 
             var game = GlobalServices.GameService.StartGame(lobby, lobby.TeamA, lobby.TeamB);
 
@@ -159,6 +209,8 @@ namespace LegaciesBot.Discord
             lobby.TeamB = null;
             lobby.CaptainA = null;
             lobby.CaptainB = null;
+            lobby.TeamAPicks.Clear();
+            lobby.TeamBPicks.Clear();
             lobby.DraftStarted = false;
 
             await ctx.Message.ReplyAsync("Lobby cleared.");
