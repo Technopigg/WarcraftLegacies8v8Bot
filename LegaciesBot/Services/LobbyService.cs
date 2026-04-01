@@ -15,8 +15,16 @@ namespace LegaciesBot.Services
             _playerRegistry = playerRegistry;
         }
 
-        public Lobby CurrentLobby =>
-            _lobbies.LastOrDefault(l => !l.IsLocked) ?? CreateLobby();
+        public Lobby CurrentLobby
+        {
+            get
+            {
+                if (_lobbies.Count == 0)
+                    return CreateLobby();
+
+                return _lobbies.Last();
+            }
+        }
 
         private Lobby CreateLobby()
         {
@@ -29,12 +37,14 @@ namespace LegaciesBot.Services
         {
             var lobby = CurrentLobby;
 
+            if (lobby.IsLocked || lobby.Players.Count >= 16)
+                lobby = CreateLobby();
+
             var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
             if (player == null)
             {
                 player = _playerRegistry.GetOrCreate(discordId);
                 player.JoinedAt = DateTime.UtcNow;
-
                 lobby.Players.Add(player);
             }
             else
@@ -91,34 +101,33 @@ namespace LegaciesBot.Services
 
         public void UpdatePreferences(ulong discordId, List<string> prefs)
         {
-            foreach (var lobby in _lobbies.Where(l => !l.IsLocked))
-            {
-                var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
-                if (player != null)
-                {
-                    player.FactionPreferences = prefs;
-                    break;
-                }
-            }
+            var lobby = CurrentLobby;
+
+            var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
+            if (player != null)
+                player.FactionPreferences = prefs;
         }
 
         public void CheckAfk()
         {
-            foreach (var lobby in _lobbies.Where(l => !l.IsLocked))
-            {
-                var now = DateTime.UtcNow;
-                foreach (var player in lobby.Players.ToList())
-                {
-                    if (lobby.AfkPingedAt.TryGetValue(player.DiscordId, out var pingTime))
-                    {
-                        if (now > pingTime + AfkKickDelay)
-                        {
-                            lobby.Players.Remove(player);
-                            lobby.AfkPingedAt.Remove(player.DiscordId);
+            var lobby = CurrentLobby;
 
-                            if (lobby.CaptainA == player.DiscordId) lobby.CaptainA = null;
-                            if (lobby.CaptainB == player.DiscordId) lobby.CaptainB = null;
-                        }
+            if (lobby.IsLocked)
+                return;
+
+            var now = DateTime.UtcNow;
+
+            foreach (var player in lobby.Players.ToList())
+            {
+                if (lobby.AfkPingedAt.TryGetValue(player.DiscordId, out var pingTime))
+                {
+                    if (now > pingTime + AfkKickDelay)
+                    {
+                        lobby.Players.Remove(player);
+                        lobby.AfkPingedAt.Remove(player.DiscordId);
+
+                        if (lobby.CaptainA == player.DiscordId) lobby.CaptainA = null;
+                        if (lobby.CaptainB == player.DiscordId) lobby.CaptainB = null;
                     }
                 }
             }

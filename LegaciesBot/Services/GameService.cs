@@ -123,6 +123,7 @@ namespace LegaciesBot.Services
         public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
         {
             lobby.IsLocked = true;
+            lobby.GameNumber = _nextGameId;
 
             var game = new Game
             {
@@ -135,6 +136,7 @@ namespace LegaciesBot.Services
             _games.Add(game);
             return game;
         }
+
 
         public async Task<Dictionary<ulong, int>> SubmitScore(
             Game game,

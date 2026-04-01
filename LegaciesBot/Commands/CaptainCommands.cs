@@ -37,7 +37,8 @@ namespace LegaciesBot.Commands
                 return;
             }
 
-            await Context.Message.ReplyAsync("Current captains: " + string.Join(", ", names));
+            await Context.Message.ReplyAsync(
+                $"Lobby #{lobby.GameNumber} — Current captains: {string.Join(", ", names)}");
         }
 
         [Command("captain")]
@@ -61,12 +62,14 @@ namespace LegaciesBot.Commands
             if (!_captainDraft.TryClaimCaptain(lobby, userId))
             {
                 var names = GetCaptainNames(lobby);
-                await Context.Message.ReplyAsync("Two captains already exist: " + string.Join(", ", names));
+                await Context.Message.ReplyAsync(
+                    $"Lobby #{lobby.GameNumber} — Two captains already exist: {string.Join(", ", names)}");
                 return;
             }
 
             var currentNames = GetCaptainNames(lobby);
-            await Context.Message.ReplyAsync("You are now a captain! Current captains: " + string.Join(", ", currentNames));
+            await Context.Message.ReplyAsync(
+                $"Lobby #{lobby.GameNumber} — You are now a captain! Current captains: {string.Join(", ", currentNames)}");
         }
 
         [Command("uncaptain", "drop")]
@@ -113,7 +116,8 @@ namespace LegaciesBot.Commands
             lobby.CaptainAPassed = true;
             _captainDraft.BuildDraftOrder(lobby);
 
-            await Context.Message.ReplyAsync("Captain A has passed. Captain B picks first.");
+            await Context.Message.ReplyAsync(
+                $"Lobby #{lobby.GameNumber} — Captain A has passed. Captain B picks first.");
         }
 
         [Command("d", "draft")]
@@ -151,7 +155,8 @@ namespace LegaciesBot.Commands
             }
 
             var pickedName = _playerRegistry.GetPlayer(targetId.Value)?.DisplayName() ?? targetId.Value.ToString();
-            await Context.Message.ReplyAsync("Picked " + pickedName);
+            await Context.Message.ReplyAsync(
+                $"Lobby #{lobby.GameNumber} — Picked {pickedName}");
 
             if (_captainDraft.DraftComplete(lobby))
                 await FinalizeDraft(lobby);
@@ -170,7 +175,8 @@ namespace LegaciesBot.Commands
 
             lobby.FactionAssignmentStarted = true;
 
-            await Context.Message.ReplyAsync("Draft complete! Team roles assigned.\nProceed to faction assignment.");
+            await Context.Message.ReplyAsync(
+                $"Lobby #{lobby.GameNumber} — Draft complete! Team roles assigned.\nProceed to faction assignment.");
         }
 
         private string[] GetCaptainNames(Lobby lobby)

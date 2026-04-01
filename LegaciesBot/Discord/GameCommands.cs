@@ -61,45 +61,29 @@ namespace LegaciesBot.Discord
             var lastMatches = history.OrderByDescending(m => m.Timestamp).Take(5).ToList();
             string msg = "=== RECENT MATCHES ===\n\n";
 
-            for (int i = 0; i < lastMatches.Count; i++)
+            foreach (var match in lastMatches)
             {
-                var match = lastMatches[i];
-
                 bool teamAWon = match.ScoreA > match.ScoreB;
                 bool draw = match.ScoreA == 0 && match.ScoreB == 0;
 
-                string result;
-                if (draw)
-                    result = "Draw";
-                else if (teamAWon)
-                    result = "Team A Win";
-                else
-                    result = "Team B Win";
+                string result = draw ? "Draw" : teamAWon ? "Team A Win" : "Team B Win";
 
-                msg += "**Game " + match.GameId + "** — " + result + "\n";
-                msg += "Score: **" + match.ScoreA + " - " + match.ScoreB + "**\n";
+                msg += $"**Game {match.GameId}** — {result}\n";
+                msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
 
                 msg += "Team A Elo: ";
-                for (int j = 0; j < match.TeamA.Count; j++)
+                msg += string.Join(", ", match.TeamA.Select(p =>
                 {
-                    var p = match.TeamA[j];
                     string sign = p.EloChange >= 0 ? "+" : "";
-                    msg += p.DisplayName + " (" + sign + p.EloChange + ")";
-                    if (j < match.TeamA.Count - 1)
-                        msg += ", ";
-                }
+                    return $"{p.DisplayName} ({sign}{p.EloChange})";
+                }));
 
-                msg += "\n";
-
-                msg += "Team B Elo: ";
-                for (int j = 0; j < match.TeamB.Count; j++)
+                msg += "\nTeam B Elo: ";
+                msg += string.Join(", ", match.TeamB.Select(p =>
                 {
-                    var p = match.TeamB[j];
                     string sign = p.EloChange >= 0 ? "+" : "";
-                    msg += p.DisplayName + " (" + sign + p.EloChange + ")";
-                    if (j < match.TeamB.Count - 1)
-                        msg += ", ";
-                }
+                    return $"{p.DisplayName} ({sign}{p.EloChange})";
+                }));
 
                 msg += "\n\n";
             }
@@ -152,6 +136,7 @@ namespace LegaciesBot.Discord
             game.Lobby.Players.Clear();
             game.Lobby.DraftStarted = false;
             game.Finished = true;
+
             await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
         }
 
@@ -186,10 +171,10 @@ namespace LegaciesBot.Discord
             {
                 scoreA = args[0];
                 scoreB = args[1];
+
                 if (ongoingGames.Count > 1)
                 {
-                    await ctx.Message.ReplyAsync(
-                        "Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
+                    await ctx.Message.ReplyAsync("Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
                     return;
                 }
 
@@ -200,6 +185,7 @@ namespace LegaciesBot.Discord
                 int gameId = args[0];
                 scoreA = args[1];
                 scoreB = args[2];
+
                 game = ongoingGames.FirstOrDefault(g => g.Id == gameId);
                 if (game == null)
                 {
@@ -235,7 +221,8 @@ namespace LegaciesBot.Discord
                 teamAWon ? "🏆 **Team A wins!**" :
                 "🏆 **Team B wins!**";
 
-            string msg = $"{resultText}\n\n";
+            string msg = $"**Game {game.Id}**\n\n";
+            msg += $"{resultText}\n\n";
             msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
             msg += "**Elo changes:**\n\n";
 
@@ -305,7 +292,7 @@ namespace LegaciesBot.Discord
             int required = 6;
 
             await ctx.Message.ReplyAsync(
-                $"Vote recorded. Team A: {votesA}/{required}, Team B: {votesB}/{required}");
+                $"Vote recorded for **Game {game.Id}**. Team A: {votesA}/{required}, Team B: {votesB}/{required}");
 
             if (votesA >= required || votesB >= required)
             {
@@ -345,7 +332,7 @@ namespace LegaciesBot.Discord
             var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
             var notVoted = allPlayers.Where(p => !game.ScoreVotes.ContainsKey(p.DiscordId)).ToList();
 
-            string msg = "**Score Voting Summary**\n\n";
+            string msg = $"**Score Voting Summary — Game {game.Id}**\n\n";
 
             msg += "**Team A Votes (1):**\n";
             foreach (var id in votesA)
@@ -378,7 +365,8 @@ namespace LegaciesBot.Discord
             foreach (var game in games)
             {
                 msg +=
-                    $"Game {game.Id}: Team A ({string.Join(", ", game.TeamA.Players.Select(p => p.DisplayName()))}) " +
+                    $"**Game {game.Id}** — " +
+                    $"Team A ({string.Join(", ", game.TeamA.Players.Select(p => p.DisplayName()))}) " +
                     $"vs Team B ({string.Join(", ", game.TeamB.Players.Select(p => p.DisplayName()))})\n";
             }
 

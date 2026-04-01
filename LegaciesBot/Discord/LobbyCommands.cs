@@ -109,8 +109,12 @@ namespace LegaciesBot.Discord
                 return;
             }
 
+            string header = lobby.GameNumber > 0
+                ? $"**Lobby #{lobby.GameNumber} — Current lobby members ({lobby.Players.Count}/16):**\n"
+                : $"**Lobby — Current lobby members ({lobby.Players.Count}/16):**\n";
+
             var lines = lobby.Players.Select(p => $"- {p.DisplayName()} ({p.Elo})");
-            string msg = $"**Current lobby members ({lobby.Players.Count}/16):**\n" + string.Join("\n", lines);
+            string msg = header + string.Join("\n", lines);
 
             await Context.Message.ReplyAsync(msg);
         }
