@@ -9,10 +9,12 @@ namespace LegaciesBot.Services
         private readonly TimeSpan AfkKickDelay = TimeSpan.FromMinutes(10);
 
         private readonly PlayerRegistryService _playerRegistry;
+        private readonly GameService _gameService;
 
-        public LobbyService(PlayerRegistryService playerRegistry)
+        public LobbyService(PlayerRegistryService playerRegistry, GameService gameService)
         {
             _playerRegistry = playerRegistry;
+            _gameService = gameService;
         }
 
         public Lobby CurrentLobby
@@ -25,7 +27,12 @@ namespace LegaciesBot.Services
                 return _lobbies.Last();
             }
         }
+        public IReadOnlyList<Lobby> GetAllLobbies() => _lobbies;
 
+        public Lobby? GetLobbyByGameNumber(int gameNumber)
+        {
+            return _lobbies.FirstOrDefault(l => l.GameNumber == gameNumber);
+        }
         private Lobby CreateLobby()
         {
             var lobby = new Lobby();
@@ -38,7 +45,12 @@ namespace LegaciesBot.Services
             var lobby = CurrentLobby;
 
             if (lobby.IsLocked || lobby.Players.Count >= 16)
+            {
+                if (lobby.Players.Count >= 16)
+                    _gameService.CreatePendingGameIfMissing(lobby);
+
                 lobby = CreateLobby();
+            }
 
             var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
             if (player == null)
@@ -52,11 +64,13 @@ namespace LegaciesBot.Services
                 player.IsActive = true;
             }
 
-            lobby.AfkPingedAt[player.DiscordId] =
-                DateTime.UtcNow.Add(AfkReminderDelay);
+            lobby.AfkPingedAt[player.DiscordId] = DateTime.UtcNow.Add(AfkReminderDelay);
 
-            if (lobby.Players.Count >= 16)
+            if (lobby.Players.Count == 16)
+            {
                 lobby.IsLocked = true;
+                _gameService.CreatePendingGameIfMissing(lobby);
+            }
 
             return player;
         }

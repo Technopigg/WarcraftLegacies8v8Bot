@@ -42,6 +42,26 @@ namespace LegaciesBot.Services
             _draftEngine = new DraftEngine(factionAssignment, rng);
         }
 
+        public Game CreatePendingGameIfMissing(Lobby lobby)
+        {
+            var existing = _games.FirstOrDefault(g => g.Lobby == lobby && !g.Finished);
+            if (existing != null)
+                return existing;
+
+            var game = new Game
+            {
+                Id = _nextGameId++,
+                Lobby = lobby,
+                IsActive = false
+            };
+
+            lobby.GameNumber = game.Id;
+            lobby.IsLocked = true;
+
+            _games.Add(game);
+            return game;
+        }
+
         public async Task StartDraft(Lobby lobby, ulong channelId)
         {
             if (lobby.Players.Count != 16)
@@ -49,6 +69,8 @@ namespace LegaciesBot.Services
 
             if (lobby.IsCaptainDraft)
                 return;
+
+            var game = CreatePendingGameIfMissing(lobby);
 
             foreach (var player in lobby.Players)
             {
@@ -69,7 +91,9 @@ namespace LegaciesBot.Services
 
             _factionAssignment.AssignFactionsForGame(teamA, teamB, null, null);
 
-            StartGame(lobby, teamA, teamB);
+            game.TeamA = teamA;
+            game.TeamB = teamB;
+            game.IsActive = true;
         }
 
         public async Task StartCaptainDraft(Lobby lobby, ulong channelId)
@@ -80,7 +104,9 @@ namespace LegaciesBot.Services
             if (!lobby.IsCaptainDraft)
                 return;
 
-            lobby.GameNumber = _nextGameId;
+            var game = CreatePendingGameIfMissing(lobby);
+
+            lobby.GameNumber = game.Id;
 
             var draftRole = await _client.CreateRoleAsync(GuildId, $"Draft #{lobby.GameNumber} Players");
             lobby.DraftRoleId = draftRole.Id;
@@ -111,32 +137,21 @@ namespace LegaciesBot.Services
             if (!lobby.TeamAFactionsLocked || !lobby.TeamBFactionsLocked)
                 return;
 
+            var game = CreatePendingGameIfMissing(lobby);
+
+            if (lobby.TeamA != null)
+                game.TeamA = lobby.TeamA;
+            if (lobby.TeamB != null)
+                game.TeamB = lobby.TeamB;
+
             foreach (var p in lobby.Players)
             {
                 if (lobby.ManualFactionAssignments.TryGetValue(p.DiscordId, out var faction))
                     p.AssignedFaction = faction;
             }
 
-            StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
+            game.IsActive = true;
         }
-
-        public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
-        {
-            lobby.IsLocked = true;
-            lobby.GameNumber = _nextGameId;
-
-            var game = new Game
-            {
-                Id = _nextGameId++,
-                Lobby = lobby,
-                TeamA = teamA,
-                TeamB = teamB
-            };
-
-            _games.Add(game);
-            return game;
-        }
-
 
         public async Task<Dictionary<ulong, int>> SubmitScore(
             Game game,
@@ -147,6 +162,7 @@ namespace LegaciesBot.Services
             game.ScoreA = scoreA;
             game.ScoreB = scoreB;
             game.Finished = true;
+            game.IsActive = false;
 
             bool teamAWon = scoreA > scoreB;
 
@@ -181,6 +197,7 @@ namespace LegaciesBot.Services
             game.Lobby.Players.Clear();
             game.Lobby.DraftStarted = false;
             game.Lobby.IsLocked = false;
+            game.Lobby.GameNumber = 0;
 
             return changes;
         }
@@ -213,5 +230,10 @@ namespace LegaciesBot.Services
 
         public List<Game> GetOngoingGames() =>
             _games.Where(g => !g.Finished).ToList();
+        public Game? GetGameById(int id)
+        {
+            return _games.FirstOrDefault(g => g.Id == id);
+        }
+
     }
 }

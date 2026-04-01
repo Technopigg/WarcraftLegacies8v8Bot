@@ -136,6 +136,7 @@ namespace LegaciesBot.Discord
             game.Lobby.Players.Clear();
             game.Lobby.DraftStarted = false;
             game.Finished = true;
+            game.IsActive = false;
 
             await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
         }
@@ -197,6 +198,12 @@ namespace LegaciesBot.Discord
             {
                 await ctx.Message.ReplyAsync(
                     "Invalid arguments. Use `!forcescore <scoreA> <scoreB>` or `!forcescore <gameId> <scoreA> <scoreB>`");
+                return;
+            }
+
+            if (!game.IsActive)
+            {
+                await ctx.Message.ReplyAsync("The game has not started yet. Factions must be locked first.");
                 return;
             }
 
@@ -278,6 +285,12 @@ namespace LegaciesBot.Discord
                 return;
             }
 
+            if (!game.IsActive)
+            {
+                await ctx.Message.ReplyAsync("The game has not started yet. Factions must be locked first.");
+                return;
+            }
+
             if (game.ScoreVotes.ContainsKey(userId))
             {
                 await ctx.Message.ReplyAsync("You have already voted.");
@@ -326,6 +339,12 @@ namespace LegaciesBot.Discord
                 return;
             }
 
+            if (!game.IsActive)
+            {
+                await ctx.Message.ReplyAsync("The game has not started yet. Factions must be locked first.");
+                return;
+            }
+
             var votesA = game.ScoreVotes.Where(v => v.Value == 1).Select(v => v.Key).ToList();
             var votesB = game.ScoreVotes.Where(v => v.Value == 0).Select(v => v.Key).ToList();
 
@@ -364,10 +383,11 @@ namespace LegaciesBot.Discord
             string msg = "=== ONGOING GAMES ===\n";
             foreach (var game in games)
             {
+                string status = game.IsActive ? "In Progress" : "Drafting/Factions";
                 msg +=
-                    $"**Game {game.Id}** — " +
-                    $"Team A ({string.Join(", ", game.TeamA.Players.Select(p => p.DisplayName()))}) " +
-                    $"vs Team B ({string.Join(", ", game.TeamB.Players.Select(p => p.DisplayName()))})\n";
+                    $"**Game {game.Id}** ({status}) — " +
+                    $"Team A ({string.Join(", ", game.TeamA?.Players.Select(p => p.DisplayName()) ?? Array.Empty<string>())}) " +
+                    $"vs Team B ({string.Join(", ", game.TeamB?.Players.Select(p => p.DisplayName()) ?? Array.Empty<string>())})\n";
             }
 
             await ctx.Message.ReplyAsync(msg);

@@ -32,7 +32,6 @@ var playerDataService = new PlayerDataService();
 var playerStatsService = new PlayerStatsService();
 var playerRegistryService = new PlayerRegistryService();
 var seasonService = new SeasonService();
-var lobbyService = new LobbyService(playerRegistryService);
 
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
@@ -53,6 +52,8 @@ var gameService = new GameService(
     factionRegistry,
     defaultPreferences
 );
+
+var lobbyService = new LobbyService(playerRegistryService, gameService);
 
 var factionManualAssignmentService = new FactionManualAssignmentService(
     factionRegistry,

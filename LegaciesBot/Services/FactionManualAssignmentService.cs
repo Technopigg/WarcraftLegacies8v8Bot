@@ -232,8 +232,7 @@ namespace LegaciesBot.Services
                 if (lobby.ManualFactionAssignments.TryGetValue(p.DiscordId, out var faction))
                     p.AssignedFaction = faction;
             }
-
-            _gameService.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
+            _gameService.TryAutoStartAfterManualFactions(lobby);
         }
     }
 }
