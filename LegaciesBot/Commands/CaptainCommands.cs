@@ -70,14 +70,13 @@ namespace LegaciesBot.Commands
             }
 
             var guild = await _client.GetGuildAsync(GuildId);
-            var role = guild.Roles.FirstOrDefault(r => r.Name == CaptainRoleName);
+            var role = guild.Roles.Values.FirstOrDefault(r => r.Name == CaptainRoleName);
 
-            if (role == null)
-            {
+            if (role is null)
                 role = await _client.CreateRoleAsync(GuildId, CaptainRoleName);
-            }
 
             lobby.CaptainRoleId = role.Id;
+
             await _client.AddRoleToMemberAsync(GuildId, userId, role.Id);
 
             var currentNames = GetCaptainNames(lobby);
