@@ -4,6 +4,7 @@ public class Team
 {
     public string Name { get; }
     public List<Player> Players { get; } = new();
+    public ulong? CaptainId { get; set; }
     public List<Faction> AssignedFactions { get; } = new();
 
     public Team(string name)

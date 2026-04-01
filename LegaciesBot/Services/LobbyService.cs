@@ -16,7 +16,7 @@ namespace LegaciesBot.Services
         }
 
         public Lobby CurrentLobby =>
-            _lobbies.FirstOrDefault(l => !l.DraftStarted) ?? CreateLobby();
+            _lobbies.LastOrDefault(l => !l.IsLocked) ?? CreateLobby();
 
         private Lobby CreateLobby()
         {
@@ -45,6 +45,9 @@ namespace LegaciesBot.Services
             lobby.AfkPingedAt[player.DiscordId] =
                 DateTime.UtcNow.Add(AfkReminderDelay);
 
+            if (lobby.Players.Count >= 16)
+                lobby.IsLocked = true;
+
             return player;
         }
 
@@ -53,7 +56,7 @@ namespace LegaciesBot.Services
             var lobby = CurrentLobby;
 
             var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
-            if (player == null || lobby.DraftStarted)
+            if (player == null || lobby.IsLocked)
                 return false;
 
             lobby.Players.Remove(player);
@@ -88,7 +91,7 @@ namespace LegaciesBot.Services
 
         public void UpdatePreferences(ulong discordId, List<string> prefs)
         {
-            foreach (var lobby in _lobbies.Where(l => !l.DraftStarted))
+            foreach (var lobby in _lobbies.Where(l => !l.IsLocked))
             {
                 var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
                 if (player != null)
@@ -101,7 +104,7 @@ namespace LegaciesBot.Services
 
         public void CheckAfk()
         {
-            foreach (var lobby in _lobbies.Where(l => !l.DraftStarted))
+            foreach (var lobby in _lobbies.Where(l => !l.IsLocked))
             {
                 var now = DateTime.UtcNow;
                 foreach (var player in lobby.Players.ToList())

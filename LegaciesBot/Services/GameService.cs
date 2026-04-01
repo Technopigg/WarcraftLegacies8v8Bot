@@ -61,6 +61,7 @@ namespace LegaciesBot.Services
             lobby.TeamA = teamA;
             lobby.TeamB = teamB;
             lobby.DraftStarted = true;
+            lobby.IsLocked = true;
 
             var channel = await _client.GetTextChannelAsync(channelId);
             if (channel != null)
@@ -88,6 +89,7 @@ namespace LegaciesBot.Services
                 await _client.AddRoleToMemberAsync(GuildId, player.DiscordId, draftRole.Id);
 
             lobby.DraftStarted = true;
+            lobby.IsLocked = true;
 
             var channel = await _client.GetTextChannelAsync(channelId);
             if (channel != null)
@@ -120,6 +122,8 @@ namespace LegaciesBot.Services
 
         public Game StartGame(Lobby lobby, LTeam teamA, LTeam teamB)
         {
+            lobby.IsLocked = true;
+
             var game = new Game
             {
                 Id = _nextGameId++,
@@ -174,6 +178,7 @@ namespace LegaciesBot.Services
 
             game.Lobby.Players.Clear();
             game.Lobby.DraftStarted = false;
+            game.Lobby.IsLocked = false;
 
             return changes;
         }

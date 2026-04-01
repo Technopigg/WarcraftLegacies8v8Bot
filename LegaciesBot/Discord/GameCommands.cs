@@ -79,7 +79,6 @@ namespace LegaciesBot.Discord
                 msg += "**Game " + match.GameId + "** — " + result + "\n";
                 msg += "Score: **" + match.ScoreA + " - " + match.ScoreB + "**\n";
 
-
                 msg += "Team A Elo: ";
                 for (int j = 0; j < match.TeamA.Count; j++)
                 {
@@ -92,7 +91,6 @@ namespace LegaciesBot.Discord
 
                 msg += "\n";
 
-
                 msg += "Team B Elo: ";
                 for (int j = 0; j < match.TeamB.Count; j++)
                 {
@@ -104,7 +102,6 @@ namespace LegaciesBot.Discord
                 }
 
                 msg += "\n\n";
-
             }
 
             await ctx.Message.ReplyAsync(msg);
@@ -164,16 +161,21 @@ namespace LegaciesBot.Discord
             var ctx = this.Context;
             ulong userId = ctx.Message.Author.Id;
 
-            if (!_permissions.IsMod(userId))
-            {
-                await ctx.Message.ReplyAsync("You do not have permission to use this command.");
-                return;
-            }
-
             var ongoingGames = _gameService.GetOngoingGames();
             if (!ongoingGames.Any())
             {
                 await ctx.Message.ReplyAsync("There are no ongoing games.");
+                return;
+            }
+
+            bool isMod = _permissions.IsMod(userId) || _permissions.IsAdmin(userId);
+            bool isCaptain = ongoingGames.Any(g =>
+                g.TeamA.CaptainId == userId ||
+                g.TeamB.CaptainId == userId);
+
+            if (!isMod && !isCaptain)
+            {
+                await ctx.Message.ReplyAsync("Only mods or game captains can score the match.");
                 return;
             }
 
@@ -241,21 +243,125 @@ namespace LegaciesBot.Discord
             foreach (var p in game.TeamA.Players)
             {
                 int delta = changes[p.DiscordId];
+                var stats = _stats.GetOrCreate(p.DiscordId);
+                int oldElo = stats.Elo - delta;
                 string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} {sign}{delta}\n";
+                msg += $"{p.DisplayName()} ({oldElo}) {sign}{delta}\n";
             }
 
             msg += "\n**Team B:**\n";
             foreach (var p in game.TeamB.Players)
             {
                 int delta = changes[p.DiscordId];
+                var stats = _stats.GetOrCreate(p.DiscordId);
+                int oldElo = stats.Elo - delta;
                 string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} {sign}{delta}\n";
+                msg += $"{p.DisplayName()} ({oldElo}) {sign}{delta}\n";
             }
 
             await ctx.Message.ReplyAsync(msg);
         }
-        
+
+        [Command("score")]
+        public async Task ScoreVote(int vote)
+        {
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (vote != 0 && vote != 1)
+            {
+                await ctx.Message.ReplyAsync("Use `!score 1` for Team A or `!score 0` for Team B.");
+                return;
+            }
+
+            var games = _gameService.GetOngoingGames();
+            if (!games.Any())
+            {
+                await ctx.Message.ReplyAsync("There are no ongoing games.");
+                return;
+            }
+
+            var game = games.FirstOrDefault(g =>
+                g.TeamA.Players.Any(p => p.DiscordId == userId) ||
+                g.TeamB.Players.Any(p => p.DiscordId == userId));
+
+            if (game == null)
+            {
+                await ctx.Message.ReplyAsync("You are not a player in this game.");
+                return;
+            }
+
+            if (game.ScoreVotes.ContainsKey(userId))
+            {
+                await ctx.Message.ReplyAsync("You have already voted.");
+                return;
+            }
+
+            game.ScoreVotes[userId] = vote;
+
+            int votesA = game.ScoreVotes.Values.Count(v => v == 1);
+            int votesB = game.ScoreVotes.Values.Count(v => v == 0);
+
+            int required = 6;
+
+            await ctx.Message.ReplyAsync(
+                $"Vote recorded. Team A: {votesA}/{required}, Team B: {votesB}/{required}");
+
+            if (votesA >= required || votesB >= required)
+            {
+                int scoreA = votesA >= required ? 1 : 0;
+                int scoreB = votesB >= required ? 1 : 0;
+
+                await FinalizeForcedScore(game, scoreA, scoreB);
+            }
+        }
+
+        [Command("scores")]
+        public async Task ScoreSummary()
+        {
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            var games = _gameService.GetOngoingGames();
+            if (!games.Any())
+            {
+                await ctx.Message.ReplyAsync("There are no ongoing games.");
+                return;
+            }
+
+            var game = games.FirstOrDefault(g =>
+                g.TeamA.Players.Any(p => p.DiscordId == userId) ||
+                g.TeamB.Players.Any(p => p.DiscordId == userId));
+
+            if (game == null)
+            {
+                await ctx.Message.ReplyAsync("You are not a player in this game.");
+                return;
+            }
+
+            var votesA = game.ScoreVotes.Where(v => v.Value == 1).Select(v => v.Key).ToList();
+            var votesB = game.ScoreVotes.Where(v => v.Value == 0).Select(v => v.Key).ToList();
+
+            var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
+            var notVoted = allPlayers.Where(p => !game.ScoreVotes.ContainsKey(p.DiscordId)).ToList();
+
+            string msg = "**Score Voting Summary**\n\n";
+
+            msg += "**Team A Votes (1):**\n";
+            foreach (var id in votesA)
+                msg += _playerRegistry.GetOrCreate(id).DisplayName() + "\n";
+
+            msg += "\n**Team B Votes (0):**\n";
+            foreach (var id in votesB)
+                msg += _playerRegistry.GetOrCreate(id).DisplayName() + "\n";
+
+            msg += "\n**Not Voted:**\n";
+            foreach (var p in notVoted)
+                msg += p.DisplayName() + "\n";
+
+            await ctx.Message.ReplyAsync(msg);
+        }
+
         [Command("g")]
         public async Task ListGames()
         {

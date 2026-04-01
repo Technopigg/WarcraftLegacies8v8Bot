@@ -37,5 +37,7 @@
         public ulong? DraftRoleId { get; set; }
 
         public bool IsCaptainDraft { get; set; } = false;
+        public bool IsLocked { get; set; }
+
     }
 }

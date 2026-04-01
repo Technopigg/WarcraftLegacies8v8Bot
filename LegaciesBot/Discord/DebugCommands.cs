@@ -70,8 +70,16 @@ namespace LegaciesBot.Discord
                 $"Captain B: {lobby.Players[1].DisplayName()}"
             );
         }
-
-      [Command("debugdraft")]
+        
+        [Command("debugcheck")]
+        public async Task DebugCheck()
+        {
+            await Context.Message.ReplyAsync(
+                $"FactionAssignmentService is null? {GlobalServices.FactionAssignmentService == null}"
+            );
+        }
+        
+[Command("debugdraft")]
 public async Task DebugDraft()
 {
     var ctx = this.Context;
@@ -133,7 +141,9 @@ public async Task DebugDraft()
     }
     catch (Exception ex)
     {
-        await ctx.Message.ReplyAsync($"Debug draft FAILED: {ex.GetType().Name}: {ex.Message}");
+        await ctx.Message.ReplyAsync(
+            $"Debug draft FAILED: {ex.GetType().Name}: {ex.Message}\n\n{ex.StackTrace}"
+        );
     }
 }
 
@@ -189,6 +199,19 @@ public async Task DebugDraft()
                 $"Debug game started: Game {game.Id}\n\n" +
                 $"Team A: {string.Join(", ", game.TeamA.Players.Select(p => $"{p.DisplayName()} ({p.AssignedFaction})"))}\n" +
                 $"Team B: {string.Join(", ", game.TeamB.Players.Select(p => $"{p.DisplayName()} ({p.AssignedFaction})"))}"
+            );
+        }
+        
+        [Command("debugstate")]
+        public async Task DebugState()
+        {
+            var lobby = GlobalServices.LobbyService.CurrentLobby;
+
+            await Context.Message.ReplyAsync(
+                $"Players: {lobby.Players.Count}\n" +
+                $"TeamA null? {lobby.TeamA == null}\n" +
+                $"TeamB null? {lobby.TeamB == null}\n" +
+                $"DraftStarted: {lobby.DraftStarted}"
             );
         }
 

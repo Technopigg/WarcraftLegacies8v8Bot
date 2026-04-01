@@ -59,6 +59,7 @@ var factionManualAssignmentService = new FactionManualAssignmentService(
     nicknameService,
     gameService
 );
+
 GlobalServices.PermissionService = new PermissionService();
 GlobalServices.LobbyService = lobbyService;
 GlobalServices.GameService = gameService;
@@ -70,7 +71,7 @@ GlobalServices.NicknameService = nicknameService;
 GlobalServices.FactionManualAssignmentService = factionManualAssignmentService;
 GlobalServices.CaptainDraftService = captainDraftService;
 GlobalServices.SeasonService = seasonService;
-
+GlobalServices.FactionAssignmentService = factionAssignment;
 
 var services = new ServiceCollection()
     .AddSingleton<ILobbyService>(lobbyService)

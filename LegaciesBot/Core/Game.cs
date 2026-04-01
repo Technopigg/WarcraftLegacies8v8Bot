@@ -9,7 +9,9 @@ public class Game
     public int ScoreA { get; set; } = 0;
     public int ScoreB { get; set; } = 0;
     public int Id { get; set; }
+    public Dictionary<ulong, int> ScoreVotes { get; set; } = new();
     public Dictionary<ulong, (int scoreA, int scoreB)> ScoreSubmissions { get; set; }
+    
         = new();
 
 }
