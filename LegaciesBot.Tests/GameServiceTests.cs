@@ -182,10 +182,10 @@ public class GameServiceTests
 
         await service.StartDraft(lobby, 0);
 
-        foreach (var p in lobby.TeamA.Players)
+        foreach (var p in lobby.TeamA!.Players)
             Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
 
-        foreach (var p in lobby.TeamB.Players)
+        foreach (var p in lobby.TeamB!.Players)
             Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
     }
 
@@ -226,9 +226,13 @@ public class GameServiceTests
             rng
         );
 
-        var game = service.StartGame(lobby, teamA, teamB);
+        var game = service.CreatePendingGameIfMissing(lobby);
+        game.TeamA = teamA;
+        game.TeamB = teamB;
+        game.StartedAt = DateTime.UtcNow;
+        game.IsActive = true;
 
-        service.SubmitScore(game, 10, 5, statsService);
+        service.SubmitScore(game, 10, 5, statsService).GetAwaiter().GetResult();
 
         foreach (var p in teamA.Players)
         {

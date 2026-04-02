@@ -66,7 +66,6 @@ public class FullMatchFlowWithPreferencesTests
     public void FullMatchFlow_WithPreferences_WorksEndToEnd()
     {
         var registry = FreshRegistry();
-        var lobbyService = new LobbyService(registry);
         var history = FreshHistory();
 
         var elo = new EloStub();
@@ -84,6 +83,8 @@ public class FullMatchFlowWithPreferencesTests
             defaultPrefs,
             rng
         );
+
+        var lobbyService = new LobbyService(registry, gameService);
 
         foreach (var (id, name) in Players)
         {
@@ -130,7 +131,11 @@ public class FullMatchFlowWithPreferencesTests
 
         Assert.True(preferredCount > 0);
 
-        var game = gameService.StartGame(lobby, teamA, teamB);
+        var game = gameService.CreatePendingGameIfMissing(lobby);
+        game.TeamA = teamA;
+        game.TeamB = teamB;
+        game.StartedAt = DateTime.UtcNow;
+        game.IsActive = true;
 
         var stats = new PlayerStatsService();
         var changes = gameService.SubmitScore(game, 4, 2, stats).GetAwaiter().GetResult();

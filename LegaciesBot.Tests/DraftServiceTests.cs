@@ -66,13 +66,13 @@ public class DraftServiceTests
         Assert.Equal(8, lobby.TeamA!.Players.Count);
         Assert.Equal(8, lobby.TeamB!.Players.Count);
 
-        var game = service.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
+        var game = service.GetOngoingGames().Single();
 
         Assert.NotNull(game.TeamA);
         Assert.NotNull(game.TeamB);
 
-        Assert.Equal(8, game.TeamA.Players.Count);
-        Assert.Equal(8, game.TeamB.Players.Count);
+        Assert.Equal(8, game.TeamA!.Players.Count);
+        Assert.Equal(8, game.TeamB!.Players.Count);
 
         var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
         Assert.Equal(16, allPlayers.Count);

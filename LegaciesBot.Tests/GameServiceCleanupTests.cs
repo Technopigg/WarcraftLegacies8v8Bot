@@ -74,9 +74,13 @@ public class GameServiceCleanupTests
         var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
         factionAssign.AssignFactionsForGame(teamA, teamB, null, rng);
 
-        var game = service.StartGame(lobby, teamA, teamB);
+        var game = service.CreatePendingGameIfMissing(lobby);
+        game.TeamA = teamA;
+        game.TeamB = teamB;
+        game.StartedAt = DateTime.UtcNow;
+        game.IsActive = true;
 
-        service.SubmitScore(game, 10, 5, new PlayerStatsService());
+        service.SubmitScore(game, 10, 5, new PlayerStatsService()).GetAwaiter().GetResult();
 
         Assert.True(game.Finished);
         Assert.Empty(lobby.Players);

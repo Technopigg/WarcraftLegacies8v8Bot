@@ -2,10 +2,32 @@ using LegaciesBot.Services;
 
 public class LobbyServiceTests
 {
+    private GameService CreateGameService()
+    {
+        var rng = new Random(12345);
+        var client = new DummyGatewayClient();
+        var history = new MatchHistoryAdapter(new MatchHistoryService());
+        var elo = new EloStub();
+        var factionAssign = new RealFactionAssignmentService(new FactionRegistryStub());
+        var defaults = new DefaultPreferencesStub();
+        var factionRegistry = new FactionRegistryStub();
+
+        return new GameService(
+            client,
+            history,
+            elo,
+            factionAssign,
+            factionRegistry,
+            defaults,
+            rng
+        );
+    }
+
     private LobbyService CreateService()
     {
         var registry = new PlayerRegistryService(null);
-        return new LobbyService(registry);
+        var gameService = CreateGameService();
+        return new LobbyService(registry, gameService);
     }
 
     [Fact]
@@ -39,7 +61,7 @@ public class LobbyServiceTests
         
         service.JoinLobby(1);
         lobby.CaptainA = 1;
-        lobby.CaptainB = 2; // Someone else
+        lobby.CaptainB = 2;
 
         service.RemovePlayer(1);
 

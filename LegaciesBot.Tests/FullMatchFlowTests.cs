@@ -39,7 +39,6 @@ public class FullMatchFlowTests
     public void FullMatchFlow_WorksEndToEnd()
     {
         var registry = FreshRegistry();
-        var lobbyService = new LobbyService(registry);
         var history = FreshHistory();
 
         var elo = new EloStub();
@@ -57,6 +56,8 @@ public class FullMatchFlowTests
             defaultPrefs,
             rng
         );
+
+        var lobbyService = new LobbyService(registry, gameService);
 
         foreach (var (id, name) in Players)
         {
@@ -90,7 +91,12 @@ public class FullMatchFlowTests
         foreach (var p in lobby.TeamB!.Players)
             Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));
 
-        var game = gameService.StartGame(lobby, lobby.TeamA!, lobby.TeamB!);
+        var game = gameService.CreatePendingGameIfMissing(lobby);
+        game.TeamA = lobby.TeamA!;
+        game.TeamB = lobby.TeamB!;
+        game.StartedAt = DateTime.UtcNow;
+        game.IsActive = true;
+
         var stats = new PlayerStatsService();
         var changes = gameService.SubmitScore(game, 5, 3, stats).GetAwaiter().GetResult();
 
