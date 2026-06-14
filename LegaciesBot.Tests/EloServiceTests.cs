@@ -32,6 +32,16 @@ public class EloServiceTests
         return new SeasonService(path);
     }
 
+    private PlayerStatsService CreateStatsService()
+    {
+        const string path = "test_player_stats.json";
+
+        if (File.Exists(path))
+            File.Delete(path);
+
+        return new PlayerStatsService(path);
+    }
+
     [Fact]
     public void ApplyTeamResult_WinningTeamGainsLosingTeamLoses()
     {
@@ -100,7 +110,7 @@ public class EloServiceTests
     [Fact]
     public void ApplyTeamResult_Draw_DoesNotGiveFullPointsToEitherTeam()
     {
-        var stats = new PlayerStatsService();
+        var stats = CreateStatsService();
         var seasons = CreateSeasonService();
 
         var teamA = new List<Player> { P(1, 1000, stats), P(2, 1000, stats) };
@@ -120,7 +130,7 @@ public class EloServiceTests
     [Fact]
     public void ApplyTeamResult_Draw_EvenMatchProducesNoEloChange()
     {
-        var stats = new PlayerStatsService();
+        var stats = CreateStatsService();
         var seasons = CreateSeasonService();
 
         var teamA = new List<Player> { P(1, 1000, stats), P(2, 1000, stats) };

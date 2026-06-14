@@ -15,6 +15,16 @@ public class FullMatchFlowTests
         return new MatchHistoryService();
     }
 
+    private PlayerStatsService FreshStats()
+    {
+        const string path = "test_full_match_flow_stats.json";
+
+        if (File.Exists(path))
+            File.Delete(path);
+
+        return new PlayerStatsService(path);
+    }
+
     private readonly List<(ulong id, string name)> Players = new()
     {
         (1, "Boggywoggy"),
@@ -97,7 +107,7 @@ public class FullMatchFlowTests
         game.StartedAt = DateTime.UtcNow;
         game.IsActive = true;
 
-        var stats = new PlayerStatsService();
+        var stats = FreshStats();
         var changes = gameService.SubmitScore(game, 5, 3, stats).GetAwaiter().GetResult();
 
         Assert.True(game.Finished);
