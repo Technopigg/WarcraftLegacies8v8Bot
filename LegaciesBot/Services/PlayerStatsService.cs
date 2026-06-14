@@ -5,14 +5,14 @@ namespace LegaciesBot.Services
 {
     public class PlayerStatsService
     {
-        private readonly string? _filePath;
+        private readonly string _filePath;
         private readonly Dictionary<ulong, PlayerStats> _stats = new();
 
         public PlayerStatsService(string? filePath = null)
         {
-            _filePath = filePath;
+            _filePath = filePath ?? "player_stats.json";
 
-            if (_filePath != null && File.Exists(_filePath))
+            if (File.Exists(_filePath))
             {
                 var json = File.ReadAllText(_filePath);
                 var loaded = JsonSerializer.Deserialize<List<PlayerStats>>(json);
@@ -26,9 +26,6 @@ namespace LegaciesBot.Services
 
         private void Save()
         {
-            if (_filePath == null)
-                return;
-
             var list = new List<PlayerStats>(_stats.Values);
             var json = JsonSerializer.Serialize(list, new JsonSerializerOptions
             {

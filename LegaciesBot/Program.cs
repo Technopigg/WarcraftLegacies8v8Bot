@@ -29,7 +29,7 @@ var client = new GatewayClient(
 
 var matchHistoryService = new MatchHistoryService();
 var playerDataService = new PlayerDataService();
-var playerStatsService = new PlayerStatsService();
+var playerStatsService = new PlayerStatsService("player_stats.json");
 var playerRegistryService = new PlayerRegistryService();
 var seasonService = new SeasonService();
 

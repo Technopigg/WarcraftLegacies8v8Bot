@@ -104,6 +104,31 @@ public class PlayerStatsServiceTests
     }
 
     [Fact]
+    public void DefaultConstructor_PersistsToDefaultFile()
+    {
+        const string defaultFile = "player_stats.json";
+        if (File.Exists(defaultFile))
+            File.Delete(defaultFile);
+
+        try
+        {
+            var service = new PlayerStatsService();
+            var stats = service.GetOrCreate(42);
+            stats.Elo = 1500;
+            service.Update(stats);
+
+            var reloaded = new PlayerStatsService();
+
+            Assert.Equal(1500, reloaded.GetOrCreate(42).Elo);
+        }
+        finally
+        {
+            if (File.Exists(defaultFile))
+                File.Delete(defaultFile);
+        }
+    }
+
+    [Fact]
     public void FactionHistory_RoundTripSerialization_Works()
     {
         string file = CreateTempStatsFile();
