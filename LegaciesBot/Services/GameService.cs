@@ -182,22 +182,7 @@ namespace LegaciesBot.Services
 
             _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
 
-            if (game.Lobby.DraftRoleId.HasValue)
-            {
-                var draftRoleId = game.Lobby.DraftRoleId.Value;
-
-                var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
-
-                foreach (var player in allPlayers)
-                {
-                    await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, draftRoleId);
-                    await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, RoleConfig.Team1Role);
-                    await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, RoleConfig.Team2Role);
-                }
-
-                await _client.DeleteRoleAsync(GuildId, draftRoleId);
-                game.Lobby.DraftRoleId = null;
-            }
+            await ReleaseDraftAndTeamRoles(game.Lobby);
 
             game.Lobby.Players.Clear();
             game.Lobby.DraftStarted = false;
@@ -205,6 +190,37 @@ namespace LegaciesBot.Services
             game.Lobby.GameNumber = 0;
 
             return changes;
+        }
+
+        public async Task KillGame(Game game)
+        {
+            game.Finished = true;
+            game.IsActive = false;
+
+            await ReleaseDraftAndTeamRoles(game.Lobby);
+
+            game.Lobby.Players.Clear();
+            game.Lobby.DraftStarted = false;
+            game.Lobby.IsLocked = false;
+            game.Lobby.GameNumber = 0;
+        }
+
+        private async Task ReleaseDraftAndTeamRoles(Lobby lobby)
+        {
+            if (!lobby.DraftRoleId.HasValue)
+                return;
+
+            var draftRoleId = lobby.DraftRoleId.Value;
+
+            foreach (var player in lobby.Players)
+            {
+                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, draftRoleId);
+                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, RoleConfig.Team1Role);
+                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, RoleConfig.Team2Role);
+            }
+
+            await _client.DeleteRoleAsync(GuildId, draftRoleId);
+            lobby.DraftRoleId = null;
         }
 
         private void UpdateFactionStats(LTeam team, MatchResult result, PlayerStatsService statsService, bool isTeamA)

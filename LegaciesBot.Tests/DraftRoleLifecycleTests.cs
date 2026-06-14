@@ -119,4 +119,84 @@ public class DraftRoleLifecycleTests
         Assert.NotEmpty(gateway.RemovedRoles);
         Assert.NotEmpty(gateway.DeletedRoles);
     }
+
+    [Fact]
+    public async Task KillGame_RemovesDraftRole_And_ResetsLobby()
+    {
+        var gateway = new RoleTrackingGateway();
+        var service = CreateGameService(gateway);
+
+        var lobby = CreateLobbyWithPlayers(16);
+        lobby.IsCaptainDraft = true;
+        lobby.DraftRoleId = 999;
+        lobby.DraftStarted = true;
+        lobby.IsLocked = true;
+
+        var teamA = new LTeam("Team A");
+        var teamB = new LTeam("Team B");
+
+        for (int i = 0; i < 8; i++)
+            teamA.Players.Add(lobby.Players[i]);
+
+        for (int i = 8; i < 16; i++)
+            teamB.Players.Add(lobby.Players[i]);
+
+        lobby.TeamA = teamA;
+        lobby.TeamB = teamB;
+
+        var game = service.CreatePendingGameIfMissing(lobby);
+        game.TeamA = teamA;
+        game.TeamB = teamB;
+        game.StartedAt = DateTime.UtcNow;
+        game.IsActive = true;
+
+        await service.KillGame(game);
+
+        Assert.True(game.Finished);
+        Assert.False(game.IsActive);
+        Assert.Empty(lobby.Players);
+        Assert.False(lobby.DraftStarted);
+        Assert.False(lobby.IsLocked);
+        Assert.Equal(0, lobby.GameNumber);
+        Assert.False(lobby.DraftRoleId.HasValue);
+        Assert.NotEmpty(gateway.RemovedRoles);
+        Assert.NotEmpty(gateway.DeletedRoles);
+    }
+
+    [Fact]
+    public async Task KillGame_WithoutDraftRole_DoesNotTouchRoles_And_ResetsLobby()
+    {
+        var gateway = new RoleTrackingGateway();
+        var service = CreateGameService(gateway);
+
+        var lobby = CreateLobbyWithPlayers(16);
+        lobby.DraftStarted = true;
+        lobby.IsLocked = true;
+
+        var teamA = new LTeam("Team A");
+        var teamB = new LTeam("Team B");
+
+        for (int i = 0; i < 8; i++)
+            teamA.Players.Add(lobby.Players[i]);
+
+        for (int i = 8; i < 16; i++)
+            teamB.Players.Add(lobby.Players[i]);
+
+        var game = service.CreatePendingGameIfMissing(lobby);
+        game.TeamA = teamA;
+        game.TeamB = teamB;
+        game.StartedAt = DateTime.UtcNow;
+        game.IsActive = true;
+
+        await service.KillGame(game);
+
+        Assert.True(game.Finished);
+        Assert.False(game.IsActive);
+        Assert.Empty(lobby.Players);
+        Assert.False(lobby.DraftStarted);
+        Assert.False(lobby.IsLocked);
+        Assert.Equal(0, lobby.GameNumber);
+        Assert.Empty(gateway.RemovedRoles);
+        Assert.Empty(gateway.DeletedRoles);
+    }
 }

@@ -152,10 +152,7 @@ namespace LegaciesBot.Discord
                 }
             }
 
-            game.Lobby.Players.Clear();
-            game.Lobby.DraftStarted = false;
-            game.Finished = true;
-            game.IsActive = false;
+            await _gameService.KillGame(game);
 
             await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
         }
