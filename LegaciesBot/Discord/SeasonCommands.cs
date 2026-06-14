@@ -23,6 +23,12 @@ namespace LegaciesBot.Discord
 
             if (string.Equals(sub, "start", StringComparison.OrdinalIgnoreCase))
             {
+                if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+                {
+                    await ctx.Message.ReplyAsync("You do not have permission to use this command.");
+                    return;
+                }
+
                 _seasons.StartNewSeason();
                 await ctx.Message.ReplyAsync("A new season has begun!");
                 return;
