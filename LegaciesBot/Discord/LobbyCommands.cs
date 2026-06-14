@@ -1,6 +1,7 @@
 ﻿using LegaciesBot.Core;
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
+using LegaciesBot.Services.CaptainDraft;
 using LegaciesBot.GameData;
 using LegaciesBot.Moderation;
 
@@ -15,6 +16,7 @@ namespace LegaciesBot.Discord
         private readonly PlayerRegistryService _playerRegistry;
         private readonly ModerationService _moderation;
         private readonly NicknameService _nickname;
+        private readonly CaptainDraftService _captainDraft;
 
         public LobbyCommands()
         {
@@ -25,6 +27,7 @@ namespace LegaciesBot.Discord
             _playerRegistry = GlobalServices.PlayerRegistryService;
             _moderation = GlobalServices.ModerationService;
             _nickname = GlobalServices.NicknameService;
+            _captainDraft = GlobalServices.CaptainDraftService;
         }
         
 [Command("join")]
@@ -87,6 +90,9 @@ public async Task JoinLobby()
                 "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
                 "Drafting will take place in the dedicated draft channel."
             );
+
+            _captainDraft.BuildDraftOrder(lobby);
+            await _gameService.StartCaptainDraft(lobby, lobby.DraftChannelId);
 
             return;
         }
