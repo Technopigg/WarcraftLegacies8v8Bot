@@ -38,6 +38,12 @@ namespace LegaciesBot.Discord
         [Command("warn")]
         public async Task WarnAsync(string user, string reason)
         {
+            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            {
+                await _responder.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
@@ -59,6 +65,12 @@ namespace LegaciesBot.Discord
         [Command("removewarn")]
         public async Task RemoveWarnAsync(string user, int index)
         {
+            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            {
+                await _responder.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
@@ -90,6 +102,12 @@ namespace LegaciesBot.Discord
         [Command("ban")]
         public async Task BanAsync(string user, string reason)
         {
+            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            {
+                await _responder.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
@@ -104,6 +122,12 @@ namespace LegaciesBot.Discord
         [Command("unban")]
         public async Task UnbanAsync(string user)
         {
+            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            {
+                await _responder.ReplyAsync("You do not have permission to use this command.");
+                return;
+            }
+
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {

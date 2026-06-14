@@ -10,18 +10,6 @@ namespace LegaciesBot.Moderation
 
         private ModerationData _data;
 
-        private readonly HashSet<ulong> _admins = new();
-        private readonly HashSet<ulong> _mods = new();
-        public List<ulong> GetAdmins()
-        {
-            return _admins.ToList();
-        }
-
-        public List<ulong> GetMods()
-        {
-            return _mods.ToList();
-        }
-
         public ModerationService(TimeSpan defaultWarningDuration, int warningThresholdForBan)
         {
             _defaultWarningDuration = defaultWarningDuration;
@@ -38,26 +26,11 @@ namespace LegaciesBot.Moderation
                 Save();
             }
 
-            if (_data.Admins != null)
-            {
-                foreach (var id in _data.Admins)
-                    _admins.Add(id);
-            }
-
-            if (_data.Mods != null)
-            {
-                foreach (var id in _data.Mods)
-                    _mods.Add(id);
-            }
-
             CleanupExpiredWarnings();
         }
 
         private void Save()
         {
-            _data.Admins = _admins.ToList();
-            _data.Mods = _mods.ToList();
-
             var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions
             {
                 WriteIndented = true
@@ -190,40 +163,6 @@ namespace LegaciesBot.Moderation
             entry.Warnings = entry.Warnings
                 .Where(w => w.ExpiresAtUtc == null || w.ExpiresAtUtc > now)
                 .ToList();
-        }
-
-        public bool IsAdmin(ulong userId)
-        {
-            return _admins.Contains(userId);
-        }
-
-        public bool IsModerator(ulong userId)
-        {
-            return _mods.Contains(userId) || _admins.Contains(userId);
-        }
-
-        public void AddAdmin(ulong userId)
-        {
-            _admins.Add(userId);
-            Save();
-        }
-
-        public void AddModerator(ulong userId)
-        {
-            _mods.Add(userId);
-            Save();
-        }
-
-        public void RemoveAdmin(ulong userId)
-        {
-            _admins.Remove(userId);
-            Save();
-        }
-
-        public void RemoveModerator(ulong userId)
-        {
-            _mods.Remove(userId);
-            Save();
         }
     }
 }

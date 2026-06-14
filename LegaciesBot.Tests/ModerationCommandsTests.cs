@@ -190,4 +190,64 @@ public class ModerationCommandsTests
         Assert.Equal("<@5> is **not banned**.", responder.Messages[0]);
         Assert.Equal("No active warnings.", responder.Messages[1]);
     }
+
+    [Fact]
+    public async Task Warn_RejectsNonModerator()
+    {
+        var (commands, responder, mod, perm, nick, registry) = CreateCommands();
+        perm.Setup(p => p.IsModeratorOrAdmin(It.IsAny<ulong>())).Returns(false);
+
+        RegisterPlayer(registry, 5, "5");
+
+        await commands.WarnAsync("5", "test");
+
+        Assert.Equal("You do not have permission to use this command.", responder.Messages[0]);
+        Assert.Empty(mod.GetActiveWarnings(5));
+    }
+
+    [Fact]
+    public async Task Ban_RejectsNonModerator()
+    {
+        var (commands, responder, mod, perm, nick, registry) = CreateCommands();
+        perm.Setup(p => p.IsModeratorOrAdmin(It.IsAny<ulong>())).Returns(false);
+
+        RegisterPlayer(registry, 5, "5");
+
+        await commands.BanAsync("5", "bad");
+
+        Assert.Equal("You do not have permission to use this command.", responder.Messages[0]);
+        Assert.False(mod.IsBanned(5));
+    }
+
+    [Fact]
+    public async Task Unban_RejectsNonModerator()
+    {
+        var (commands, responder, mod, perm, nick, registry) = CreateCommands();
+
+        RegisterPlayer(registry, 5, "5");
+        mod.AddBan(5, 1, "bad");
+
+        perm.Setup(p => p.IsModeratorOrAdmin(It.IsAny<ulong>())).Returns(false);
+
+        await commands.UnbanAsync("5");
+
+        Assert.Equal("You do not have permission to use this command.", responder.Messages[0]);
+        Assert.True(mod.IsBanned(5));
+    }
+
+    [Fact]
+    public async Task RemoveWarn_RejectsNonModerator()
+    {
+        var (commands, responder, mod, perm, nick, registry) = CreateCommands();
+
+        RegisterPlayer(registry, 5, "5");
+        mod.AddWarning(5, 1, "a");
+
+        perm.Setup(p => p.IsModeratorOrAdmin(It.IsAny<ulong>())).Returns(false);
+
+        await commands.RemoveWarnAsync("5", 0);
+
+        Assert.Equal("You do not have permission to use this command.", responder.Messages[0]);
+        Assert.Single(mod.GetActiveWarnings(5));
+    }
 }
