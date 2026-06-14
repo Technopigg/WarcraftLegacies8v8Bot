@@ -385,7 +385,6 @@ namespace LegaciesBot.Discord
         }
 
         [Command("g")]
-        [Command("g")]
         [Command("games")]
         public async Task ListGames()
         {
