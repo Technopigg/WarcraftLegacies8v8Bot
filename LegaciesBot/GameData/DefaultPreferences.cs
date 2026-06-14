@@ -13,7 +13,7 @@ namespace LegaciesBot.GameData
             "Skywall",
             "Druids",
             "Gilneas",
-            "Illidan"
+            "Illidari"
         };
     }
 }
