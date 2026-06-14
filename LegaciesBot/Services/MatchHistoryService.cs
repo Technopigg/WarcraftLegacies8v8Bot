@@ -6,6 +6,7 @@ namespace LegaciesBot.Services
     public class MatchHistoryService
     {
         private const string FilePath = "match_history.json";
+        private readonly object _lock = new();
 
         public List<MatchRecord> History { get; private set; } = new();
 
@@ -49,18 +50,24 @@ namespace LegaciesBot.Services
                 }).ToList()
             };
 
-            History.Add(record);
-            Save();
+            lock (_lock)
+            {
+                History.Add(record);
+                Save();
+            }
         }
 
         public void Save()
         {
-            string json = JsonSerializer.Serialize(History, new JsonSerializerOptions
+            lock (_lock)
             {
-                WriteIndented = true
-            });
+                string json = JsonSerializer.Serialize(History, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
 
-            File.WriteAllText(FilePath, json);
+                File.WriteAllText(FilePath, json);
+            }
         }
     }
 

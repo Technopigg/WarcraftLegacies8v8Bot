@@ -7,6 +7,8 @@ public class PlayerDataService
     private Dictionary<ulong, List<string>> _prefs
         = new Dictionary<ulong, List<string>>();
 
+    private readonly object _lock = new();
+
     public PlayerDataService(string? filePath = null)
     {
         _filePath = filePath ?? "playerprefs.json";
@@ -14,15 +16,21 @@ public class PlayerDataService
     }
     public List<string> GetPreferences(ulong discordId)
     {
-        return _prefs.TryGetValue(discordId, out var prefs)
-            ? prefs
-            : new List<string>();
+        lock (_lock)
+        {
+            return _prefs.TryGetValue(discordId, out var prefs)
+                ? new List<string>(prefs)
+                : new List<string>();
+        }
     }
 
     public void SetPreferences(ulong discordId, List<string> prefs)
     {
-        _prefs[discordId] = prefs;
-        Save();
+        lock (_lock)
+        {
+            _prefs[discordId] = prefs;
+            Save();
+        }
     }
 
     private void Load()

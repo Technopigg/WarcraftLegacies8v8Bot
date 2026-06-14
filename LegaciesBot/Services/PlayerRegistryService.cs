@@ -8,6 +8,7 @@ namespace LegaciesBot.Services
         private readonly string? _filePath;
         public string FilePath => _filePath;
         private readonly Dictionary<ulong, Player> _players = new();
+        private readonly object _lock = new();
 
         public static Action<Player>? OnPlayerMutated;
 
@@ -15,7 +16,7 @@ namespace LegaciesBot.Services
         {
             _filePath = filePath ?? "players.json";
             Load();
-            OnPlayerMutated = _ => Save();
+            OnPlayerMutated = _ => { lock (_lock) { Save(); } };
         }
 
         public Player? Resolve(string input)
@@ -42,74 +43,89 @@ namespace LegaciesBot.Services
 
         public Player? FindByNameOrNickname(string input)
         {
-            return _players.Values.FirstOrDefault(p =>
-                p.Name.Equals(input, StringComparison.OrdinalIgnoreCase) ||
-                (p.Nickname != null &&
-                 p.Nickname.Equals(input, StringComparison.OrdinalIgnoreCase)));
+            lock (_lock)
+            {
+                return _players.Values.FirstOrDefault(p =>
+                    p.Name.Equals(input, StringComparison.OrdinalIgnoreCase) ||
+                    (p.Nickname != null &&
+                     p.Nickname.Equals(input, StringComparison.OrdinalIgnoreCase)));
+            }
         }
 
         public Player? GetPlayer(ulong discordId)
         {
-            return _players.TryGetValue(discordId, out var p) ? p : null;
+            lock (_lock)
+                return _players.TryGetValue(discordId, out var p) ? p : null;
         }
 
         public Player GetOrCreate(ulong discordId, string? name = null)
         {
-            if (_players.TryGetValue(discordId, out var existing))
-                return existing;
-
-            var player = new Player(discordId, name ?? discordId.ToString())
+            lock (_lock)
             {
-                JoinedAt = DateTime.UtcNow,
-                IsActive = true
-            };
+                if (_players.TryGetValue(discordId, out var existing))
+                    return existing;
 
-            _players[discordId] = player;
-            Save();
+                var player = new Player(discordId, name ?? discordId.ToString())
+                {
+                    JoinedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
 
-            return player;
+                _players[discordId] = player;
+                Save();
+
+                return player;
+            }
         }
 
         public bool SetNickname(ulong discordId, string nickname)
         {
-            if (!_players.TryGetValue(discordId, out var player))
-                return false;
+            lock (_lock)
+            {
+                if (!_players.TryGetValue(discordId, out var player))
+                    return false;
 
-            if (_players.Values.Any(p =>
-                    p.Nickname != null &&
-                    p.Nickname.Equals(nickname, StringComparison.OrdinalIgnoreCase)))
-                throw new InvalidOperationException("Nickname already taken.");
+                if (_players.Values.Any(p =>
+                        p.Nickname != null &&
+                        p.Nickname.Equals(nickname, StringComparison.OrdinalIgnoreCase)))
+                    throw new InvalidOperationException("Nickname already taken.");
 
-            player.Nickname = nickname;
-            Save();
-            return true;
+                player.Nickname = nickname;
+                Save();
+                return true;
+            }
         }
 
         public bool IsRegistered(ulong discordId)
         {
-            return _players.ContainsKey(discordId);
+            lock (_lock)
+                return _players.ContainsKey(discordId);
         }
 
         public Player RegisterPlayer(ulong discordId, string name)
         {
-            if (_players.ContainsKey(discordId))
-                return _players[discordId];
-
-            var player = new Player(discordId, name)
+            lock (_lock)
             {
-                JoinedAt = DateTime.UtcNow,
-                IsActive = true
-            };
+                if (_players.ContainsKey(discordId))
+                    return _players[discordId];
 
-            _players[discordId] = player;
-            Save();
+                var player = new Player(discordId, name)
+                {
+                    JoinedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
 
-            return player;
+                _players[discordId] = player;
+                Save();
+
+                return player;
+            }
         }
 
         public IReadOnlyCollection<Player> GetAllPlayers()
         {
-            return _players.Values;
+            lock (_lock)
+                return _players.Values.ToList();
         }
 
         private void Load()

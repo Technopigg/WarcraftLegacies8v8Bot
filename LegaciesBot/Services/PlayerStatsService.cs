@@ -7,6 +7,7 @@ namespace LegaciesBot.Services
     {
         private readonly string _filePath;
         private readonly Dictionary<ulong, PlayerStats> _stats = new();
+        private readonly object _lock = new();
 
         public PlayerStatsService(string? filePath = null)
         {
@@ -36,26 +37,36 @@ namespace LegaciesBot.Services
 
         public PlayerStats GetOrCreate(ulong discordId)
         {
-            if (!_stats.TryGetValue(discordId, out var stats))
+            lock (_lock)
             {
-                stats = new PlayerStats
+                if (!_stats.TryGetValue(discordId, out var stats))
                 {
-                    DiscordId = discordId,
-                    Elo = 800
-                };
-                _stats[discordId] = stats;
-                Save();
-            }
+                    stats = new PlayerStats
+                    {
+                        DiscordId = discordId,
+                        Elo = 800
+                    };
+                    _stats[discordId] = stats;
+                    Save();
+                }
 
-            return stats;
+                return stats;
+            }
         }
 
-        public IReadOnlyCollection<PlayerStats> GetAll() => _stats.Values;
+        public IReadOnlyCollection<PlayerStats> GetAll()
+        {
+            lock (_lock)
+                return _stats.Values.ToList();
+        }
 
         public void Update(PlayerStats stats)
         {
-            _stats[stats.DiscordId] = stats;
-            Save();
+            lock (_lock)
+            {
+                _stats[stats.DiscordId] = stats;
+                Save();
+            }
         }
     }
 }

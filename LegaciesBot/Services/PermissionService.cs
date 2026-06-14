@@ -5,6 +5,7 @@ namespace LegaciesBot.Services
     public class PermissionService
     {
         private string FilePath = Path.Combine(AppContext.BaseDirectory, "permissions.json");
+        private readonly object _lock = new();
 
 
         public PermissionData Data { get; private set; }
@@ -68,49 +69,64 @@ namespace LegaciesBot.Services
 
         public void AddMod(ulong userId)
         {
-            if (!Data.Mods.Contains(userId))
+            lock (_lock)
             {
-                Data.Mods.Add(userId);
-                Save();
+                if (!Data.Mods.Contains(userId))
+                {
+                    Data.Mods.Add(userId);
+                    Save();
+                }
             }
         }
 
         public void RemoveMod(ulong userId)
         {
-            if (Data.Mods.Contains(userId))
+            lock (_lock)
             {
-                Data.Mods.Remove(userId);
-                Save();
+                if (Data.Mods.Contains(userId))
+                {
+                    Data.Mods.Remove(userId);
+                    Save();
+                }
             }
         }
 
         public void AddAdmin(ulong userId)
         {
-            if (!Data.Admins.Contains(userId))
+            lock (_lock)
             {
-                Data.Admins.Add(userId);
-                Save();
+                if (!Data.Admins.Contains(userId))
+                {
+                    Data.Admins.Add(userId);
+                    Save();
+                }
             }
         }
 
         public void RemoveAdmin(ulong userId)
         {
-            if (Data.Admins.Contains(userId))
+            lock (_lock)
             {
-                Data.Admins.Remove(userId);
-                Save();
+                if (Data.Admins.Contains(userId))
+                {
+                    Data.Admins.Remove(userId);
+                    Save();
+                }
             }
         }
 
         public void Save()
         {
-            Console.WriteLine("Saving permissions to: " + FilePath);
-            string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions
+            lock (_lock)
             {
-                WriteIndented = true
-            });
+                Console.WriteLine("Saving permissions to: " + FilePath);
+                string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
 
-            File.WriteAllText(FilePath, json);
+                File.WriteAllText(FilePath, json);
+            }
         }
     }
 
