@@ -1,0 +1,6 @@
+**/bin/
+**/obj/
+.git/
+agent-docs/
+LegaciesBot.Tests/
+Tests/
