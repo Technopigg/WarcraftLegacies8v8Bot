@@ -19,7 +19,7 @@ namespace LegaciesBot.Services
 
         private int _nextGameId = 1;
 
-        private const ulong GuildId = 1218338908216229979;
+        private static ulong GuildId => DiscordConfig.GuildId;
 
         public IGatewayClient Client => _client;
 
@@ -215,8 +215,8 @@ namespace LegaciesBot.Services
             foreach (var player in lobby.Players)
             {
                 await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, draftRoleId);
-                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, RoleConfig.Team1Role);
-                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, RoleConfig.Team2Role);
+                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, DiscordConfig.Team1RoleId);
+                await _client.RemoveRoleFromMemberAsync(GuildId, player.DiscordId, DiscordConfig.Team2RoleId);
             }
 
             await _client.DeleteRoleAsync(GuildId, draftRoleId);

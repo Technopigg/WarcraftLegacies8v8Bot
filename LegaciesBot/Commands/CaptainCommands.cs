@@ -14,8 +14,8 @@ namespace LegaciesBot.Commands
         private readonly PlayerRegistryService _playerRegistry;
         private readonly IGatewayClient _client;
 
-        private const ulong GuildId = 1218338908216229979;
-        private const ulong DraftChannelId = 1488958363361349908;
+        private static ulong GuildId => DiscordConfig.GuildId;
+        private static ulong DraftChannelId => DiscordConfig.DraftChannelId;
         private const string CaptainRoleName = "Captain";
 
         public CaptainCommands()
@@ -179,10 +179,10 @@ namespace LegaciesBot.Commands
             var teamBPlayers = lobby.TeamBPicks.Select(id => _playerRegistry.GetPlayer(id)).Where(p => p != null).ToList();
 
             foreach (var p in teamAPlayers)
-                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, RoleConfig.Team1Role);
+                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, DiscordConfig.Team1RoleId);
 
             foreach (var p in teamBPlayers)
-                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, RoleConfig.Team2Role);
+                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, DiscordConfig.Team2RoleId);
 
             if (lobby.CaptainRoleId.HasValue)
             {

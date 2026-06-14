@@ -1,4 +1,6 @@
-﻿namespace LegaciesBot.Core
+﻿using LegaciesBot.Config;
+
+namespace LegaciesBot.Core
 {
     public class Lobby
     {
@@ -38,7 +40,7 @@
 
         public bool IsCaptainDraft { get; set; } = false;
         public bool IsLocked { get; set; }
-        public ulong DraftChannelId { get; set; } = 1488958363361349908;
+        public ulong DraftChannelId { get; set; } = DiscordConfig.DraftChannelId;
         public ulong? CaptainRoleId { get; set; }
 
 
