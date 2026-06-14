@@ -1,93 +1,106 @@
 GENERAL / PLAYER COMMANDS
 
-!register
-!reg
-!recent
-!nickname
+!register / !reg — register yourself and get a starting Elo
+!recent — show the last 5 recorded matches
+!nickname <nickname> — set your own display nickname
+!nickname <user> <nickname> — (mod/admin) set another player's nickname
 
 LOBBY COMMANDS
 
-!join
-!j
-!leave
-!l
-!here
-!h
-!lobby
-!debugfill
-!captain
-!captains
-!uncaptain/drop
-!pass
-!draft/d
-!draft/!d
-!setfaction
-!setfactions
-!submit
-!forcescore 
+!join / !j — join the lobby
+!leave / !l — leave the lobby
+!lobby — show current lobby members
 
-MODERATION COMMANDS
+CAPTAIN DRAFT COMMANDS
 
-!warn <user> <reason> (7 days)
-!warn <user> <duration d/h/m> <reason>
-!warnings/!warns
-!removewarn/!unwarn
-!ban <user> <reason>
-!unban <user>
+!captain — claim a captain slot (must be in the lobby)
+!uncaptain / !drop — give up your captain slot
+!captains — list current captains
+!pass — (Captain A only, before any pick) pass first pick to Captain B
+!draft <player> / !d <player> — pick a player for your team (your turn only)
 
 PREFERENCE COMMANDS
 
-!prefs
-!prefs show
-!prefs clear
-!prefs add <Faction> [Position]
-!prefs remove <Faction>
-!prefs <list of factions>
+!prefs — show your faction preferences
+!prefs show — show your faction preferences
+!prefs @user — show another player's faction preferences
+!prefs clear — clear your faction preferences
+!prefs add <Faction> — add a faction to your preferences
+!prefs remove <Faction> — remove a faction from your preferences
+!prefs <Faction1> <Faction2> ... — set your full preference list
+
+FACTION ASSIGNMENT COMMANDS (manual modes)
+
+!assignf <player> <faction> — assign a faction to a player on your team
+!assignfactions <bulk text> — bulk-assign factions for your team
+!lockfactions — lock in your team's faction assignments
+
+DRAFT MODE COMMANDS
+
+!mode — show the current draft mode
+!mode show — show the current draft mode
+!mode auto — AutoDraft, Auto Faction
+!mode auto-manual — AutoDraft, Manual Faction
+!mode captain — Captain Draft, Manual Faction
+!mode captain-auto — Captain Draft, Auto Faction
+
+(Mode changes require a captain or admin/mod.)
+
+GAME & SCORE COMMANDS
+
+!games / !g — list ongoing games
+!score 1 — vote for Team A win
+!score 0 — vote for Team B win
+!scores — show score voting summary for your game
+!forcescore <scoreA> <scoreB> — (mod or captain) force-set the result of your game
+!forcescore <gameId> <scoreA> <scoreB> — same, when multiple games are ongoing
+!kill — (mod/admin) terminate the ongoing game with no Elo changes
+!kill <gameId> — same, when multiple games are ongoing
 
 STATS COMMANDS
 
-!stats
-!stats <user>
-!stats season
-!stats lifetime
-!stats <user> lifetime
-!leaderboard [count]
-!leaderboard lifetime
-!compare <user1> <user2>
-!compare <user1> <user2> season
-!compare <user1< <user2> lifetime
-!season history
-!season show <n>
-!season summary
-!season show <n> summary
-!season leaderboard <n>
+!stats — your season stats
+!stats <user> — season stats for a player
+!stats lifetime — your lifetime stats
+!stats <user> lifetime — lifetime stats for a player
+!leaderboard — season leaderboard (top 10)
+!leaderboard <count> — season leaderboard (custom size, max 50)
+!leaderboard lifetime — lifetime leaderboard
+!compare <user1> <user2> — season comparison
+!compare <user1> <user2> lifetime — lifetime comparison
 
-FACTION COMMANDS
+SEASON COMMANDS
 
-!assignf
-!assignfactions
-!lockfactions
+!season — show the current season
+!season history — list all recorded seasons
+!season show <n> — show details for season <n>
+!season summary — current season highlights (top Elo, best winrate, etc.)
+!season showleaderboard <n> — Elo leaderboard for season <n>
+!season start — (mod/admin) end the current season and start a new one
 
-DRAFT MODE COMMANDS 
-!mode show
-!mode auto
-!mode auto-manual
-!mode captain
-!mode captain-tuo
+MODERATION COMMANDS (mod/admin only)
 
-MODERATION COMMANDS
+!warn <user> <reason> — warn a player
+!warns <user> — list a player's active warnings
+!removewarn <user> <index> — remove a warning by index
+!ban <user> <reason> — ban a player
+!unban <user> — unban a player
 
-!admins
-!mods
-!addadmin
-!addmod <userId>
-!removemod <userId>
-!kill
-!season start
+ADMIN COMMANDS (admin only)
 
-DEBUG COMMANDS (admin/mod only)
+!addadmin <@mention or userId> — grant admin
+!removeadmin <@mention or userId> — revoke admin
+!addmod <@mention or userId> — grant moderator
+!removemod <@mention or userId> — revoke moderator
+!admins — list admins
+!mods — list moderators
 
-!debugclear
-!debugfill
-!debugstart
+DEBUG COMMANDS (mod/admin only)
 
+!debugfill — fill the lobby with dummy players
+!debugstart <gameId> — force-start a game
+!debugclear <gameId> — clear a game's state
+!debugcaptains <gameId> — show captain draft debug info
+!debugdraft <gameId> — show draft debug info
+!debugfactions <gameId> — show faction assignment debug info
+!debugstate <gameId> — show full game state
