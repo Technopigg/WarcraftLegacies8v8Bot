@@ -17,12 +17,12 @@ namespace LegaciesBot.Services
         public Dictionary<ulong, int> ApplyTeamResult(
             List<Player> teamA,
             List<Player> teamB,
-            bool teamAWon)
+            MatchResult result)
         {
             return EloService.ApplyTeamResult(
                 teamA,
                 teamB,
-                teamAWon,
+                result,
                 _lifetime,
                 _seasons
             );

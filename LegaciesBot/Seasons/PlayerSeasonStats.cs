@@ -24,6 +24,9 @@ namespace LegaciesBot.Seasons
         public int Losses { get; set; }
 
         [JsonInclude]
+        public int Draws { get; set; }
+
+        [JsonInclude]
         public Dictionary<string, FactionRecord> FactionHistory { get; set; } = new();
 
         [JsonIgnore]

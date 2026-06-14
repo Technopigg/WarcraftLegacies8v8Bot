@@ -30,7 +30,7 @@ public class EloStub : IEloService
     public Dictionary<ulong, int> ApplyTeamResult(
         List<Player> teamA,
         List<Player> teamB,
-        bool teamAWon)
+        MatchResult result)
     {
         return teamA.Concat(teamB)
             .ToDictionary(p => p.DiscordId, p => 5);

@@ -167,16 +167,18 @@ namespace LegaciesBot.Services
             game.IsActive = false;
             game.FinishedAt = DateTime.UtcNow;
 
-            bool teamAWon = scoreA > scoreB;
+            MatchResult result = scoreA > scoreB ? MatchResult.TeamAWin
+                : scoreB > scoreA ? MatchResult.TeamBWin
+                : MatchResult.Draw;
 
             var changes = _eloService.ApplyTeamResult(
                 game.TeamA.Players,
                 game.TeamB.Players,
-                teamAWon
+                result
             );
 
-            UpdateFactionStats(game.TeamA, teamAWon, stats, true);
-            UpdateFactionStats(game.TeamB, teamAWon, stats, false);
+            UpdateFactionStats(game.TeamA, result, stats, isTeamA: true);
+            UpdateFactionStats(game.TeamB, result, stats, isTeamA: false);
 
             _matchHistoryService.RecordMatch(game, scoreA, scoreB, changes);
 
@@ -205,8 +207,10 @@ namespace LegaciesBot.Services
             return changes;
         }
 
-        private void UpdateFactionStats(Team team, bool teamAWon, PlayerStatsService statsService, bool isTeamA)
+        private void UpdateFactionStats(LTeam team, MatchResult result, PlayerStatsService statsService, bool isTeamA)
         {
+            var winResult = isTeamA ? MatchResult.TeamAWin : MatchResult.TeamBWin;
+
             foreach (var player in team.Players)
             {
                 if (string.IsNullOrWhiteSpace(player.AssignedFaction))
@@ -220,9 +224,9 @@ namespace LegaciesBot.Services
                     stats.FactionHistory[player.AssignedFaction] = record;
                 }
 
-                bool won = isTeamA == teamAWon;
-
-                if (won)
+                if (result == MatchResult.Draw)
+                    record.Draws++;
+                else if (result == winResult)
                     record.Wins++;
                 else
                     record.Losses++;

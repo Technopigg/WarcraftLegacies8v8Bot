@@ -7,6 +7,6 @@ namespace LegaciesBot.Services
         Dictionary<ulong, int> ApplyTeamResult(
             List<Player> teamA,
             List<Player> teamB,
-            bool teamAWon);
+            MatchResult result);
     }
 }

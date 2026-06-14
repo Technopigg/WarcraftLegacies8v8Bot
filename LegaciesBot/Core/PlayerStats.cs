@@ -7,7 +7,8 @@
         public int GamesPlayed { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
-        
+        public int Draws { get; set; }
+
         public Dictionary<string, FactionRecord> FactionHistory { get; set; } = new();
 
         public double WinRate =>
@@ -18,8 +19,9 @@
     {
         public int Wins { get; set; }
         public int Losses { get; set; }
+        public int Draws { get; set; }
 
         public double WinRate =>
-            Wins + Losses == 0 ? 0 : (double)Wins / (Wins + Losses) * 100.0;
+            Wins + Losses + Draws == 0 ? 0 : (double)Wins / (Wins + Losses + Draws) * 100.0;
     }
 }
