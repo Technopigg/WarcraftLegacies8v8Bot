@@ -8,12 +8,9 @@ public static class DraftService
     {
         rng ??= new Random();
 
-        foreach (var player in players)
-        {
-            player.Elo += rng.Next(-10, 11);
-        }
-
-        var sorted = players.OrderByDescending(p => p.Elo).ToList();
+        var sorted = players
+            .OrderByDescending(p => p.Elo + rng.Next(-10, 11))
+            .ToList();
 
         var teamA = new Team("Team A");
         var teamB = new Team("Team B");
