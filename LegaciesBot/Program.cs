@@ -1,5 +1,6 @@
 ﻿using LegaciesBot;
 using LegaciesBot.Commands;
+using LegaciesBot.Config;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Services.Commands;
@@ -104,6 +105,12 @@ commandService.AddModule(typeof(DebugCommands));
 client.MessageCreate += async message =>
 {
     if (message.Author.IsBot || !message.Content.StartsWith('!'))
+        return;
+
+    if (message.GuildId is { } guildId && guildId != DiscordConfig.GuildId)
+        return;
+
+    if (DiscordConfig.CommandChannelId != 0 && message.ChannelId != DiscordConfig.CommandChannelId)
         return;
 
     var ctx = new CommandContext(message, client);
