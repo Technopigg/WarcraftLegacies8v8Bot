@@ -1,0 +1,13 @@
+services:
+  legacies-bot:
+    build:
+      context: .
+      dockerfile: LegaciesBot/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - bot_data:/app/data
+
+volumes:
+  bot_data:

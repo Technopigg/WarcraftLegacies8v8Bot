@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master, main]
+    branches: [master, main, claude/season5-planning]
 
 jobs:
   test:
@@ -16,3 +16,20 @@ jobs:
       - run: dotnet restore LegaciesBot.slnx
       - run: dotnet build LegaciesBot.slnx --no-restore -c Release
       - run: dotnet test LegaciesBot.slnx --no-build -c Release
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/claude/season5-planning' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /srv/warcraft-legacies-bot
+            git fetch origin claude/season5-planning
+            git reset --hard origin/claude/season5-planning
+            docker compose build legacies-bot
+            docker compose up -d legacies-bot

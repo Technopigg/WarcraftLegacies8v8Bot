@@ -21,3 +21,6 @@ TestResults/
 
 # Internal planning docs (Claude-assisted analysis, not part of upstream repo)
 /agent-docs/
+
+# Deploy environment (real secrets live on the host only)
+.env
