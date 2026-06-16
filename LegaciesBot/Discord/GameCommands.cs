@@ -48,66 +48,9 @@ namespace LegaciesBot.Discord
         [Command("recent")]
         public async Task RecentMatches()
         {
-            var ctx = this.Context;
-            var history = _matchHistoryService.History;
-
-            if (history.Count == 0)
-            {
-                await ctx.Message.ReplyAsync("No matches have been recorded yet.");
-                return;
-            }
-
-            var lastMatches = history.OrderByDescending(m => m.Timestamp).Take(5).ToList();
-            string msg = "=== RECENT MATCHES ===\n\n";
-
-            foreach (var match in lastMatches)
-            {
-                bool teamAWon = match.ScoreA > match.ScoreB;
-                bool draw = match.ScoreA == 0 && match.ScoreB == 0;
-
-                string result = draw ? "Draw" : teamAWon ? "Team A Win" : "Team B Win";
-
-                var date = match.Timestamp.ToLocalTime().ToString("dd/MM/yy");
-                var ago = FormatAgo(match.Timestamp);
-
-                var duration = match.Timestamp - match.StartedAt;
-                string durationStr = duration.ToString(@"hh\:mm\:ss");
-
-                msg += $"**Game {match.GameId}** — {result} — {date} ({ago}) — Duration: {durationStr}\n";
-                msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
-
-                msg += "Team A: ";
-                msg += string.Join(", ", match.TeamA.Select(p =>
-                {
-                    string sign = p.EloChange >= 0 ? "+" : "";
-                    return $"{p.DisplayName} [{p.Faction}] ({sign}{p.EloChange})";
-                }));
-
-                msg += "\nTeam B: ";
-                msg += string.Join(", ", match.TeamB.Select(p =>
-                {
-                    string sign = p.EloChange >= 0 ? "+" : "";
-                    return $"{p.DisplayName} [{p.Faction}] ({sign}{p.EloChange})";
-                }));
-
-                msg += "\n\n";
-            }
-
-            await ctx.Message.ReplyAsync(msg);
-        }
-
-        private string FormatAgo(DateTime time)
-        {
-            var span = DateTime.UtcNow - time;
-
-            if (span.TotalMinutes < 1)
-                return "just now";
-            if (span.TotalMinutes < 60)
-                return $"{(int)span.TotalMinutes} minutes ago";
-            if (span.TotalHours < 24)
-                return $"{(int)span.TotalHours} hours ago";
-
-            return $"{(int)span.TotalDays} days ago";
+            await this.Context.Message.ReplyAsync(
+                "Match history is available on the site: **https://warcraftlegacies.com/replays**\n" +
+                "Results are recorded automatically when a replay is uploaded.");
         }
 
         [Command("kill")]
@@ -160,228 +103,23 @@ namespace LegaciesBot.Discord
         [Command("forcescore")]
         public async Task ForceScore(params int[] args)
         {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            var ongoingGames = _gameService.GetOngoingGames();
-            if (!ongoingGames.Any())
-            {
-                await ctx.Message.ReplyAsync("There are no ongoing games.");
-                return;
-            }
-
-            bool isMod = _permissions.IsMod(userId) || _permissions.IsAdmin(userId);
-            bool isCaptain = ongoingGames.Any(g =>
-                g.TeamA.CaptainId == userId ||
-                g.TeamB.CaptainId == userId);
-
-            if (!isMod && !isCaptain)
-            {
-                await ctx.Message.ReplyAsync("Only mods or game captains can score the match.");
-                return;
-            }
-
-            int scoreA, scoreB;
-            Game game;
-
-            if (args.Length == 2)
-            {
-                scoreA = args[0];
-                scoreB = args[1];
-
-                if (ongoingGames.Count > 1)
-                {
-                    await ctx.Message.ReplyAsync("Multiple games active. Use: `!forcescore <gameId> <scoreA> <scoreB>`");
-                    return;
-                }
-
-                game = ongoingGames.First();
-            }
-            else if (args.Length == 3)
-            {
-                int gameId = args[0];
-                scoreA = args[1];
-                scoreB = args[2];
-
-                game = ongoingGames.FirstOrDefault(g => g.Id == gameId);
-                if (game == null)
-                {
-                    await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
-                    return;
-                }
-            }
-            else
-            {
-                await ctx.Message.ReplyAsync(
-                    "Invalid arguments. Use `!forcescore <scoreA> <scoreB>` or `!forcescore <gameId> <scoreA> <scoreB>`");
-                return;
-            }
-
-            if (!game.IsActive)
-            {
-                await ctx.Message.ReplyAsync("The game has not started yet. Factions must be locked first.");
-                return;
-            }
-
-            if (!((scoreA == 0 || scoreA == 1) && (scoreB == 0 || scoreB == 1)))
-            {
-                await ctx.Message.ReplyAsync("Invalid score. Only 1 0, 0 1, or 0 0 are allowed.");
-                return;
-            }
-
-            await FinalizeForcedScore(game, scoreA, scoreB);
-        }
-
-        private async Task FinalizeForcedScore(Game game, int scoreA, int scoreB)
-        {
-            var ctx = this.Context;
-            var changes = await _gameService.SubmitScore(game, scoreA, scoreB, _stats);
-
-            bool teamAWon = scoreA > scoreB;
-            bool draw = scoreA == 0 && scoreB == 0;
-
-            string resultText = draw ? "🤝 **The match ends in a draw!**" :
-                teamAWon ? "🏆 **Team A wins!**" :
-                "🏆 **Team B wins!**";
-
-            string msg = $"**Game {game.Id}**\n\n";
-            msg += $"{resultText}\n\n";
-            msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
-            msg += "**Elo changes:**\n\n";
-
-            msg += "**Team A:**\n";
-            foreach (var p in game.TeamA.Players)
-            {
-                int delta = changes[p.DiscordId];
-                var stats = _stats.GetOrCreate(p.DiscordId);
-                int oldElo = stats.Elo - delta;
-                string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} ({oldElo}) {sign}{delta}\n";
-            }
-
-            msg += "\n**Team B:**\n";
-            foreach (var p in game.TeamB.Players)
-            {
-                int delta = changes[p.DiscordId];
-                var stats = _stats.GetOrCreate(p.DiscordId);
-                int oldElo = stats.Elo - delta;
-                string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} ({oldElo}) {sign}{delta}\n";
-            }
-
-            await ctx.Message.ReplyAsync(msg);
+            await this.Context.Message.ReplyAsync(
+                "Result recording is handled on the site via replay upload. " +
+                "To close a stuck game without recording a result, use `!kill [gameId]`.");
         }
 
         [Command("score")]
         public async Task ScoreVote(int vote)
         {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            if (vote != 0 && vote != 1)
-            {
-                await ctx.Message.ReplyAsync("Use `!score 1` for Team A or `!score 0` for Team B.");
-                return;
-            }
-
-            var games = _gameService.GetOngoingGames();
-            if (!games.Any())
-            {
-                await ctx.Message.ReplyAsync("There are no ongoing games.");
-                return;
-            }
-
-            var game = games.FirstOrDefault(g =>
-                g.TeamA.Players.Any(p => p.DiscordId == userId) ||
-                g.TeamB.Players.Any(p => p.DiscordId == userId));
-
-            if (game == null)
-            {
-                await ctx.Message.ReplyAsync("You are not a player in this game.");
-                return;
-            }
-
-            if (!game.IsActive)
-            {
-                await ctx.Message.ReplyAsync("The game has not started yet. Factions must be locked first.");
-                return;
-            }
-
-            if (game.ScoreVotes.ContainsKey(userId))
-            {
-                await ctx.Message.ReplyAsync("You have already voted.");
-                return;
-            }
-
-            game.ScoreVotes[userId] = vote;
-
-            int votesA = game.ScoreVotes.Values.Count(v => v == 1);
-            int votesB = game.ScoreVotes.Values.Count(v => v == 0);
-
-            int required = 6;
-
-            await ctx.Message.ReplyAsync(
-                $"Vote recorded for **Game {game.Id}**. Team A: {votesA}/{required}, Team B: {votesB}/{required}");
-
-            if (votesA >= required || votesB >= required)
-            {
-                int scoreA = votesA >= required ? 1 : 0;
-                int scoreB = votesB >= required ? 1 : 0;
-
-                await FinalizeForcedScore(game, scoreA, scoreB);
-            }
+            await this.Context.Message.ReplyAsync(
+                "Voting is no longer used. Upload the replay to record the result: **https://warcraftlegacies.com/upload**");
         }
 
         [Command("scores")]
         public async Task ScoreSummary()
         {
-            var ctx = this.Context;
-            ulong userId = ctx.Message.Author.Id;
-
-            var games = _gameService.GetOngoingGames();
-            if (!games.Any())
-            {
-                await ctx.Message.ReplyAsync("There are no ongoing games.");
-                return;
-            }
-
-            var game = games.FirstOrDefault(g =>
-                g.TeamA.Players.Any(p => p.DiscordId == userId) ||
-                g.TeamB.Players.Any(p => p.DiscordId == userId));
-
-            if (game == null)
-            {
-                await ctx.Message.ReplyAsync("You are not a player in this game.");
-                return;
-            }
-
-            if (!game.IsActive)
-            {
-                await ctx.Message.ReplyAsync("The game has not started yet. Factions must be locked first.");
-                return;
-            }
-
-            var votesA = game.ScoreVotes.Where(v => v.Value == 1).Select(v => v.Key).ToList();
-            var votesB = game.ScoreVotes.Where(v => v.Value == 0).Select(v => v.Key).ToList();
-
-            var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
-            var notVoted = allPlayers.Where(p => !game.ScoreVotes.ContainsKey(p.DiscordId)).ToList();
-
-            string msg = $"**Score Voting Summary — Game {game.Id}**\n\n";
-
-            msg += "**Team A Votes (1):**\n";
-            foreach (var id in votesA)
-                msg += _playerRegistry.GetOrCreate(id).DisplayName() + "\n";
-
-            msg += "\n**Team B Votes (0):**\n";
-            foreach (var id in votesB)
-                msg += _playerRegistry.GetOrCreate(id).DisplayName() + "\n";
-
-            msg += "\n**Not Voted:**\n";
-            foreach (var p in notVoted)
-                msg += p.DisplayName() + "\n";
-
-            await ctx.Message.ReplyAsync(msg);
+            await this.Context.Message.ReplyAsync(
+                "Voting is no longer used. Upload the replay to record the result: **https://warcraftlegacies.com/upload**");
         }
 
         [Command("g")]
