@@ -26,5 +26,6 @@ namespace LegaciesBot
 
         public static IMessageResponder MessageResponder;
         public static IUserContext UserContext;
+        public static SiteApiService SiteApiService;
     }
 }
