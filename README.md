@@ -117,4 +117,3 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 
 ---
 
-**Not implemented:** `!recalc` (Phase 4)
