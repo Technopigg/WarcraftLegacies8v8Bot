@@ -14,6 +14,7 @@ namespace LegaciesBot.Discord
         private readonly PlayerDataService _playerDataService;
         private readonly MatchHistoryService _matchHistoryService;
         private readonly PlayerRegistryService _playerRegistry;
+        private readonly NicknameService _nicknames;
 
         public GameCommands()
         {
@@ -24,6 +25,7 @@ namespace LegaciesBot.Discord
             _permissions = GlobalServices.PermissionService;
             _matchHistoryService = GlobalServices.MatchHistoryService;
             _playerRegistry = GlobalServices.PlayerRegistryService;
+            _nicknames = GlobalServices.NicknameService;
         }
 
         [Command("register")]
@@ -418,6 +420,67 @@ namespace LegaciesBot.Discord
 
             var embed = EmbedFactory.Info($"Ongoing Games ({games.Count})").WithFields(fields);
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([embed]));
+        }
+
+        [Command("sub")]
+        public async Task SubstitutePlayer(string outArg, string inArg)
+        {
+            var ctx = this.Context;
+            var callerId = ctx.Message.Author.Id;
+
+            if (!_permissions.IsMod(callerId) && !_permissions.IsAdmin(callerId))
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Permission denied", "Only moderators can substitute players.")]));
+                return;
+            }
+
+            var mentions = ctx.Message.MentionedUsers;
+            ulong? outId = mentions.Count >= 1 ? mentions[0].Id : _nicknames.ResolvePlayerId(outArg);
+            ulong? inId  = mentions.Count >= 2 ? mentions[1].Id : _nicknames.ResolvePlayerId(inArg);
+
+            if (!outId.HasValue)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Player not found", $"Could not resolve out-player: `{outArg}`")]));
+                return;
+            }
+
+            if (!inId.HasValue)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Player not found", $"Could not resolve in-player: `{inArg}`")]));
+                return;
+            }
+
+            var game = _gameService.FindGameByPlayer(outId.Value);
+            if (game == null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("No active game", $"<@{outId.Value}> is not in any ongoing game.")]));
+                return;
+            }
+
+            var outPlayer = _playerRegistry.GetOrCreate(outId.Value);
+            var inPlayer  = _playerRegistry.GetOrCreate(inId.Value);
+
+            if (_gameService.FindGameByPlayer(inId.Value) != null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Already in game", $"{inPlayer.DisplayName()} is already in an ongoing game.")]));
+                return;
+            }
+
+            var inStats = _stats.GetOrCreate(inId.Value);
+            inPlayer.Elo = inStats.Elo;
+
+            var (team, faction) = await _gameService.SubstitutePlayer(game, outPlayer, inPlayer);
+
+            string factionStr = string.IsNullOrEmpty(faction) ? "—" : faction;
+            string desc = $"**{outPlayer.DisplayName()}** → **{inPlayer.DisplayName()}**\nTeam: **{team.Name}** | Faction: **{factionStr}**";
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Success($"Sub — Game #{game.Id}", desc)]));
         }
 
         [Command("nickname")]

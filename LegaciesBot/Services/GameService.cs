@@ -258,12 +258,49 @@ namespace LegaciesBot.Services
             }
         }
 
+        public async Task<(Team team, string? faction)> SubstitutePlayer(
+            Game game,
+            Player outPlayer,
+            Player inPlayer)
+        {
+            var team =
+                game.TeamA?.Players.Any(p => p.DiscordId == outPlayer.DiscordId) == true ? game.TeamA :
+                game.TeamB?.Players.Any(p => p.DiscordId == outPlayer.DiscordId) == true ? game.TeamB :
+                throw new InvalidOperationException("Player not found in game teams.");
+
+            inPlayer.AssignedFaction = outPlayer.AssignedFaction;
+
+            int idx = team.Players.FindIndex(p => p.DiscordId == outPlayer.DiscordId);
+            team.Players[idx] = inPlayer;
+
+            var lobbyPlayer = game.Lobby.Players.FindIndex(p => p.DiscordId == outPlayer.DiscordId);
+            if (lobbyPlayer >= 0)
+                game.Lobby.Players[lobbyPlayer] = inPlayer;
+
+            if (game.IsActive)
+            {
+                ulong teamRoleId = team == game.TeamA ? DiscordConfig.Team1RoleId : DiscordConfig.Team2RoleId;
+                await _client.RemoveRoleFromMemberAsync(GuildId, outPlayer.DiscordId, teamRoleId);
+                await _client.AddRoleToMemberAsync(GuildId, inPlayer.DiscordId, teamRoleId);
+            }
+
+            return (team, inPlayer.AssignedFaction);
+        }
+
         public List<Game> GetOngoingGames() =>
             _games.Where(g => !g.Finished).ToList();
 
         public Game? GetGameById(int id)
         {
             return _games.FirstOrDefault(g => g.Id == id);
+        }
+
+        public Game? FindGameByPlayer(ulong discordId)
+        {
+            return _games.FirstOrDefault(g =>
+                !g.Finished &&
+                (g.TeamA?.Players.Any(p => p.DiscordId == discordId) == true ||
+                 g.TeamB?.Players.Any(p => p.DiscordId == discordId) == true));
         }
     }
 }

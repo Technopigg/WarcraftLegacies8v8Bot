@@ -64,56 +64,57 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 
 26. `!games` / `!g` — list active and unfinished games.
 27. `!kill [gameId]` — emergency termination: removes Discord roles, resets lobby. No result recorded. Permission: mod/admin.
+28. `!sub <out> <in>` — substitute a player in an active game. `out` = leaving player (@mention or nickname), `in` = replacement. Faction is transferred; Discord team roles are reassigned. Permission: mod/admin.
 
 ### 8. Stats and history
 
 > Season 5: ratings and match history are on the site. These commands redirect to warcraftlegacies.com.
 
-28. `!stats` — player stats → **https://warcraftlegacies.com/players**
-29. `!leaderboard` — leaderboard → **https://warcraftlegacies.com/leaderboard**
-30. `!compare` — player comparison → **https://warcraftlegacies.com/players**
-31. `!recent` — match history → **https://warcraftlegacies.com/replays**
+29. `!stats` — player stats → **https://warcraftlegacies.com/players**
+30. `!leaderboard` — leaderboard → **https://warcraftlegacies.com/leaderboard**
+31. `!compare` — player comparison → **https://warcraftlegacies.com/players**
+32. `!recent` — match history → **https://warcraftlegacies.com/replays**
 
 ### 9. Seasons
 
-32. `!season` — current season: number, start date, player count with matches.
-33. `!season history` — all seasons.
-34. `!season show <n>` — details for a specific season.
-35. `!season summary` — hall of fame: top Elo, Best Winrate (≥5 games only), Most Games/Wins/Losses, Most Improved.
-36. `!season showleaderboard <n>` — top 20 players for a specific season.
-37. `!season start` — **irreversible**: end the current season and start a new one. Permission: mod/admin.
+33. `!season` — current season: number, start date, player count with matches.
+34. `!season history` — all seasons.
+35. `!season show <n>` — details for a specific season.
+36. `!season summary` — hall of fame: top Elo, Best Winrate (≥5 games only), Most Games/Wins/Losses, Most Improved.
+37. `!season showleaderboard <n>` — top 20 players for a specific season.
+38. `!season start` — **irreversible**: end the current season and start a new one. Permission: mod/admin.
 
 ### 10. Moderation
 
-38. `!warn <user> <reason>` — issue a warning. At ≥3 active warnings — auto-ban. Permission: mod/admin.
-39. `!removewarn <user> <index>` — remove a warning (0-based). Drops below 3 → auto-unban. Permission: mod/admin.
-40. `!ban <user> <reason>` — direct ban. Permission: mod/admin.
-41. `!unban <user>` — lift a ban. ⚠️ Clears the entire `Bans[]` list. Permission: mod/admin.
-42. `!warns <user>` — ban status and active warnings. Permission: none (anyone can read).
+39. `!warn <user> <reason>` — issue a warning. At ≥3 active warnings — auto-ban. Permission: mod/admin.
+40. `!removewarn <user> <index>` — remove a warning (0-based). Drops below 3 → auto-unban. Permission: mod/admin.
+41. `!ban <user> <reason>` — direct ban. Permission: mod/admin.
+42. `!unban <user>` — lift a ban. ⚠️ Clears the entire `Bans[]` list. Permission: mod/admin.
+43. `!warns <user>` — ban status and active warnings. Permission: none (anyone can read).
 
 ### 11. Permission management
 
-43. `!addadmin <@/id>` — add an admin. Current admins only.
-44. `!removeadmin <@/id>` — remove an admin. Self-removal is possible.
-45. `!addmod <@/id>` — add a moderator. Admins only.
-46. `!removemod <@/id>` — remove a moderator. Admins only.
-47. `!admins` — list admins.
-48. `!mods` — list moderators. ⚠️ Does not include admins.
+44. `!addadmin <@/id>` — add an admin. Current admins only.
+45. `!removeadmin <@/id>` — remove an admin. Self-removal is possible.
+46. `!addmod <@/id>` — add a moderator. Admins only.
+47. `!removemod <@/id>` — remove a moderator. Admins only.
+48. `!admins` — list admins.
+49. `!mods` — list moderators. ⚠️ Does not include admins.
 
 ### 12. Debug (mod/admin)
 
-49. `!debugfill` — fill the lobby with 16 fake players (clears current players).
-50. `!debugcaptains [gameId]` — assign Captain A/B to the first two players.
-51. `!debugdraft [gameId]` — run the draft engine with seed 12345.
-52. `!debugfactions [gameId]` — auto-assign factions.
-53. `!debugstart [gameId]` — set the game to `IsActive = true`.
-54. `!debugstate [gameId]` — dump lobby state. ⚠️ No permission check.
-55. `!debugclear [gameId]` — reset lobby.
+50. `!debugfill` — fill the lobby with 16 fake players (clears current players).
+51. `!debugcaptains [gameId]` — assign Captain A/B to the first two players.
+52. `!debugdraft [gameId]` — run the draft engine with seed 12345.
+53. `!debugfactions [gameId]` — auto-assign factions.
+54. `!debugstart [gameId]` — set the game to `IsActive = true`.
+55. `!debugstate [gameId]` — dump lobby state. ⚠️ No permission check.
+56. `!debugclear [gameId]` — reset lobby.
 
 ### 13. Help
 
-56. `!help` — command list.
+57. `!help` — command list.
 
 ---
 
-**Not implemented:** `!replay` (Phase 1.5) · `!sub` (Phase 3) · `!recalc` (Phase 4)
+**Not implemented:** `!recalc` (Phase 4)
