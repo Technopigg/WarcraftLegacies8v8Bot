@@ -62,7 +62,7 @@ var factionManualAssignmentService = new FactionManualAssignmentService(
     gameService
 );
 
-GlobalServices.PermissionService = new PermissionService();
+GlobalServices.PermissionService = new PermissionService("permissions.json");
 GlobalServices.LobbyService = lobbyService;
 GlobalServices.GameService = gameService;
 GlobalServices.PlayerDataService = playerDataService;

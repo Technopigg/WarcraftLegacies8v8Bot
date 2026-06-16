@@ -23,32 +23,18 @@ namespace LegaciesBot.Services
 
         private void Load()
         {
-            Console.WriteLine("=== PermissionService Debug ===");
-            Console.WriteLine("Working directory: " + Directory.GetCurrentDirectory());
-            Console.WriteLine("Permissions file path: " + FilePath);
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
             if (File.Exists(FilePath))
             {
-                Console.WriteLine("permissions.json FOUND. Loading...");
-
                 string json = File.ReadAllText(FilePath);
                 Data = JsonSerializer.Deserialize<PermissionData>(json, options) ?? new PermissionData();
             }
             else
             {
-                Console.WriteLine("permissions.json NOT FOUND. Creating new file...");
                 Data = new PermissionData();
                 Save();
             }
-
-            Console.WriteLine("Loaded Admins: " + string.Join(", ", Data.Admins));
-            Console.WriteLine("Loaded Mods: " + string.Join(", ", Data.Mods));
-            Console.WriteLine("================================");
         }
 
         public bool IsAdmin(ulong userId)
@@ -119,12 +105,7 @@ namespace LegaciesBot.Services
         {
             lock (_lock)
             {
-                Console.WriteLine("Saving permissions to: " + FilePath);
-                string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-
+                string json = JsonSerializer.Serialize(Data, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(FilePath, json);
             }
         }
