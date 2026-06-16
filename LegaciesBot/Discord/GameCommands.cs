@@ -1,6 +1,7 @@
 using NetCord.Services.Commands;
 using LegaciesBot.Services;
 using LegaciesBot.Core;
+using NetCord.Rest;
 
 namespace LegaciesBot.Discord
 {
@@ -155,7 +156,8 @@ namespace LegaciesBot.Discord
 
             await _gameService.KillGame(game);
 
-            await ctx.Message.ReplyAsync($"Game {game.Id} has been terminated with no Elo changes.");
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Warning($"Game #{game.Id} terminated", "No result recorded. Upload the replay to warcraftlegacies.com to register the match.")]));
+
         }
 
         // DISABLED (Season 5): result recording is done on the site via replay upload.
@@ -395,31 +397,27 @@ namespace LegaciesBot.Discord
 
             if (!games.Any())
             {
-                await ctx.Message.ReplyAsync("There are no ongoing games.");
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Info("Games", "No ongoing games.")]));
                 return;
             }
 
-            string msg = "=== ONGOING GAMES ===\n";
+            var fields = new List<EmbedFieldProperties>();
             foreach (var game in games)
             {
-                string status = game.IsActive ? "In Progress" : "Drafting/Factions";
+                string status = game.IsActive ? "In Progress" : "Drafting / Factions";
 
-                string teamA = string.Join(", ",
-                    game.TeamA?.Players.Select(p =>
-                        $"{p.DisplayName()} [{p.AssignedFaction}]"
-                    ) ?? Array.Empty<string>()
-                );
+                string teamA = game.TeamA?.Players.Any() == true
+                    ? string.Join("\n", game.TeamA.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]"))
+                    : "—";
+                string teamB = game.TeamB?.Players.Any() == true
+                    ? string.Join("\n", game.TeamB.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]"))
+                    : "—";
 
-                string teamB = string.Join(", ",
-                    game.TeamB?.Players.Select(p =>
-                        $"{p.DisplayName()} [{p.AssignedFaction}]"
-                    ) ?? Array.Empty<string>()
-                );
-
-                msg += $"**Game {game.Id}** ({status}) — Team A ({teamA}) vs Team B ({teamB})\n";
+                fields.Add(new EmbedFieldProperties().WithName($"Game #{game.Id} — {status}").WithValue($"**Team A**\n{teamA}\n\n**Team B**\n{teamB}").WithInline(false));
             }
 
-            await ctx.Message.ReplyAsync(msg);
+            var embed = EmbedFactory.Info($"Ongoing Games ({games.Count})").WithFields(fields);
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([embed]));
         }
 
         [Command("nickname")]

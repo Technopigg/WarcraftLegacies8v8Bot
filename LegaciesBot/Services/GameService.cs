@@ -1,6 +1,7 @@
 ﻿using LegaciesBot.Core;
 using LegaciesBot.Config;
 using LTeam = LegaciesBot.Core.Team;
+using NetCord.Rest;
 
 namespace LegaciesBot.Services
 {
@@ -87,7 +88,13 @@ namespace LegaciesBot.Services
 
             var channel = await _client.GetTextChannelAsync(channelId);
             if (channel != null)
-                await channel.SendMessageAsync("=== DRAFT COMPLETE ===\nTeams have been drafted.");
+            {
+                var aLines = teamA.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]");
+                var bLines = teamB.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]");
+                string desc = $"**Team A**\n{string.Join("\n", aLines)}\n\n**Team B**\n{string.Join("\n", bLines)}";
+                var embed = EmbedFactory.Success($"Draft Complete — Game #{game.Id}", desc);
+                await channel.SendMessageAsync(new MessageProperties().WithEmbeds([embed]));
+            }
 
             _factionAssignment.AssignFactionsForGame(teamA, teamB, null, null);
 

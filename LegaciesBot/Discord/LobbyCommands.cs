@@ -4,6 +4,7 @@ using LegaciesBot.Services;
 using LegaciesBot.Services.CaptainDraft;
 using LegaciesBot.GameData;
 using LegaciesBot.Moderation;
+using NetCord.Rest;
 
 namespace LegaciesBot.Discord
 {
@@ -113,18 +114,18 @@ public async Task JoinLobby()
 
             if (lobby.Players.Count == 0)
             {
-                await Context.Message.ReplyAsync("The lobby is currently empty.");
+                await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Info("Lobby", "The lobby is currently empty.")]));
                 return;
             }
 
-            string header = lobby.GameNumber > 0
-                ? $"**Lobby #{lobby.GameNumber} — Current lobby members ({lobby.Players.Count}/16):**\n"
-                : $"**Lobby — Current lobby members ({lobby.Players.Count}/16):**\n";
+            string title = lobby.GameNumber > 0
+                ? $"Lobby #{lobby.GameNumber} — {lobby.Players.Count}/16"
+                : $"Lobby — {lobby.Players.Count}/16";
 
-            var lines = lobby.Players.Select(p => $"- {p.DisplayName()} ({p.Elo})");
-            string msg = header + string.Join("\n", lines);
+            var lines = lobby.Players.Select((p, i) => $"`{i + 1,2}.` {p.DisplayName()} — **{p.Elo}** Elo");
+            var embed = EmbedFactory.Info(title, string.Join("\n", lines));
 
-            await Context.Message.ReplyAsync(msg);
+            await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([embed]));
         }
 
         [Command("leave")]
@@ -139,14 +140,15 @@ public async Task JoinLobby()
 
             if (player == null)
             {
-                await ctx.Message.ReplyAsync("You are not in the lobby.");
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Warning("Not in lobby", "You are not in the lobby.")]));
                 return;
             }
 
             string display = $"{player.DisplayName()} ({player.Elo})";
             _lobbyService.RemovePlayer(userId);
 
-            await ctx.Message.ReplyAsync($"{display} has left the lobby.");
+            int remaining = _lobbyService.CurrentLobby.Players.Count;
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Neutral("Left lobby", $"{display} has left. ({remaining}/16)")]));
         }
 
         [Command("prefs")]

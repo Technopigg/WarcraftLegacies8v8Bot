@@ -1,4 +1,5 @@
 using NetCord;
+using NetCord.Rest;
 
 namespace LegaciesBot.Services;
 
@@ -12,6 +13,11 @@ public class RealTextChannel : ITextChannel
     }
 
     public Task SendMessageAsync(string message)
+    {
+        return _channel.SendMessageAsync(message);
+    }
+
+    public Task SendMessageAsync(MessageProperties message)
     {
         return _channel.SendMessageAsync(message);
     }

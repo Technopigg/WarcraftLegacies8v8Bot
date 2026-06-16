@@ -3,6 +3,7 @@ using LegaciesBot.Services;
 using LegaciesBot.Services.CaptainDraft;
 using LegaciesBot.Config;
 using NetCord.Services.Commands;
+using NetCord.Rest;
 
 namespace LegaciesBot.Commands
 {
@@ -167,7 +168,20 @@ namespace LegaciesBot.Commands
             }
 
             var pickedName = _playerRegistry.GetPlayer(targetId.Value)?.DisplayName() ?? targetId.Value.ToString();
-            await SendDraftMessage($"Lobby #{lobby.GameNumber} — Picked {pickedName}");
+
+            int pickIndex = lobby.CurrentPickIndex;
+            int total = lobby.DraftOrder.Count;
+            int remaining = total - pickIndex;
+
+            var nextPickerId = pickIndex < total ? (ulong?)lobby.DraftOrder[pickIndex] : null;
+            var nextName = nextPickerId.HasValue
+                ? _playerRegistry.GetPlayer(nextPickerId.Value)?.DisplayName() ?? "?"
+                : null;
+
+            string desc = $"**{pickedName}** was picked. ({pickIndex}/{total} picks done)";
+            if (nextName != null) desc += $"\nNext pick: **{nextName}**";
+
+            await SendDraftEmbed(EmbedFactory.Info($"Pick #{pickIndex} — Lobby #{lobby.GameNumber}", desc));
 
             if (_captainDraft.DraftComplete(lobby))
                 await FinalizeDraft(lobby);
@@ -195,8 +209,11 @@ namespace LegaciesBot.Commands
 
             lobby.FactionAssignmentStarted = true;
 
-            await SendDraftMessage(
-                $"Lobby #{lobby.GameNumber} — Draft complete! Team roles assigned.\nProceed to faction assignment.");
+            var teamANames = teamAPlayers.Select(p => $"• {p!.DisplayName()}");
+            var teamBNames = teamBPlayers.Select(p => $"• {p!.DisplayName()}");
+
+            string desc = $"**Team A**\n{string.Join("\n", teamANames)}\n\n**Team B**\n{string.Join("\n", teamBNames)}\n\nProceed to faction assignment (`!assignf` / `!lockfactions`).";
+            await SendDraftEmbed(EmbedFactory.Success($"Draft Complete — Lobby #{lobby.GameNumber}", desc));
         }
 
         private async Task SendDraftMessage(string message)
@@ -204,6 +221,13 @@ namespace LegaciesBot.Commands
             var channel = await _client.GetTextChannelAsync(DraftChannelId);
             if (channel != null)
                 await channel.SendMessageAsync(message);
+        }
+
+        private async Task SendDraftEmbed(NetCord.Rest.EmbedProperties embed)
+        {
+            var channel = await _client.GetTextChannelAsync(DraftChannelId);
+            if (channel != null)
+                await channel.SendMessageAsync(new MessageProperties().WithEmbeds([embed]));
         }
 
         private string[] GetCaptainNames(Lobby lobby)
