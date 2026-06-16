@@ -9,6 +9,7 @@ using LegaciesBot.Discord;
 using LegaciesBot.Services.CaptainDraft;
 using Microsoft.Extensions.DependencyInjection;
 using LegaciesBot.Seasons;
+using NetCord.Rest;
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
@@ -27,6 +28,9 @@ var client = new GatewayClient(
                   | GatewayIntents.MessageContent
     }
 );
+
+var httpClient = new HttpClient();
+var replayUploadService = new ReplayUploadService(httpClient, DiscordConfig.SiteBaseUrl);
 
 var matchHistoryService = new MatchHistoryService();
 var playerDataService = new PlayerDataService();
@@ -116,6 +120,83 @@ client.MessageCreate += async message =>
     var ctx = new CommandContext(message, client);
     await commandService.ExecuteAsync(1, ctx, services);
 };
+
+client.MessageCreate += async message =>
+{
+    if (message.Author.IsBot) return;
+    if (DiscordConfig.ReplayChannelId == 0) return;
+    if (message.ChannelId != DiscordConfig.ReplayChannelId) return;
+
+    var replays = message.Attachments
+        .Where(a => a.FileName.EndsWith(".w3g", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    if (replays.Count == 0) return;
+
+    foreach (var attachment in replays)
+    {
+        byte[] data;
+        try
+        {
+            data = await httpClient.GetByteArrayAsync(attachment.Url);
+        }
+        catch (Exception ex)
+        {
+            await client.Rest.SendMessageAsync(message.ChannelId,
+                new MessageProperties().WithContent($"Failed to download `{attachment.FileName}`: {ex.Message}"));
+            continue;
+        }
+
+        var result = await replayUploadService.UploadAsync(data, attachment.FileName);
+        var reply = FormatReplayResult(result, attachment.FileName, DiscordConfig.SiteBaseUrl);
+
+        await client.Rest.SendMessageAsync(message.ChannelId,
+            new MessageProperties().WithContent(reply).WithMessageReference(
+                MessageReferenceProperties.Reply(message.Id, failIfNotExists: false)));
+    }
+};
+
+static string FormatReplayResult(ReplayUploadResult result, string filename, string siteBaseUrl)
+{
+    if (result.NetworkError != null)
+        return $"**{filename}** — upload failed: {result.NetworkError}";
+
+    if (result.RateLimited)
+        return $"**{filename}** — rate limit reached, try again in a minute.";
+
+    if (result.TooLarge)
+        return $"**{filename}** — file too large.";
+
+    if (result.IsSuccess)
+    {
+        var matchUrl = result.MatchPublicId != null
+            ? $"{siteBaseUrl}/replays/{result.MatchPublicId}"
+            : null;
+
+        string pool = result.RatingPool == "discord" ? "ranked" : "unranked (public pool)";
+        string line = $"**{filename}** — match recorded ({pool}, {result.PlayersCount} players, {result.MapVersion})";
+        if (matchUrl != null) line += $"\n{matchUrl}";
+        return line;
+    }
+
+    if (result.IsDuplicate)
+    {
+        var matchUrl = result.MatchPublicId != null
+            ? $"{siteBaseUrl}/replays/{result.MatchPublicId}"
+            : null;
+        string line = $"**{filename}** — already uploaded (duplicate).";
+        if (matchUrl != null) line += $"\n{matchUrl}";
+        return line;
+    }
+
+    if (result.IsRejected)
+    {
+        string reason = result.Reason ?? "unknown reason";
+        return $"**{filename}** — rejected: {reason}";
+    }
+
+    return $"**{filename}** — unexpected response: {result.Status}";
+}
 
 client.Ready += args =>
 {

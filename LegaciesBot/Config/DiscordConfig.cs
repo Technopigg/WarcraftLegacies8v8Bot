@@ -21,10 +21,16 @@ namespace LegaciesBot.Config
             GetUlongEnv("WL_DISCORD_COMMAND_CHANNEL_ID", 0);
 
         /// <summary>
-        /// Channel used for replay uploads (Phase 1.5). 0 means not configured.
+        /// Channel used for replay uploads. 0 means not configured — uploads are ignored.
         /// </summary>
         public static ulong ReplayChannelId { get; } =
             GetUlongEnv("WL_DISCORD_REPLAY_CHANNEL_ID", 0);
+
+        /// <summary>
+        /// Base URL of the warcraftlegacies.com site used for replay upload API.
+        /// </summary>
+        public static string SiteBaseUrl { get; } =
+            Environment.GetEnvironmentVariable("WL_SITE_BASE_URL") ?? "https://warcraftlegacies.com";
 
         private static ulong GetUlongEnv(string name, ulong fallback)
         {
