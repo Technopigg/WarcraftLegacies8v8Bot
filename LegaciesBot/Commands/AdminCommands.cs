@@ -170,6 +170,46 @@ namespace LegaciesBot.Commands
             await Context.Message.ReplyAsync("Moderators:\n" + string.Join("\n", names));
         }
 
+        [Command("status")]
+        public async Task SiteStatus()
+        {
+            var ctx = this.Context;
+
+            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Forbidden", "Only admins and moderators can check site status.")]));
+                return;
+            }
+
+            var health = await GlobalServices.SiteApiService.GetHealthAsync();
+
+            if (health == null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Site unreachable", "Could not connect to warcraftlegacies.com.")]));
+                return;
+            }
+
+            bool ok = health.Status == "ok";
+            int ocrPct = health.OcrMonthlyCap > 0
+                ? (int)Math.Round(health.OcrProviderCallsThisMonth * 100.0 / health.OcrMonthlyCap)
+                : 0;
+
+            string desc =
+                $"**DB:** {health.Db}\n" +
+                $"**Season:** {health.SeasonKey}\n\n" +
+                $"**Discord ranked matches:** {health.DiscordRankedMatches}\n" +
+                $"**Public ranked matches:** {health.PublicRankedMatches}\n\n" +
+                $"**OCR this month:** {health.OcrProviderCallsThisMonth} / {health.OcrMonthlyCap} ({ocrPct}%)";
+
+            var embed = ok
+                ? EmbedFactory.Success("Site status — OK", desc)
+                : EmbedFactory.Warning("Site status — degraded", desc);
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([embed]));
+        }
+
         [Command("recompute")]
         public async Task Recompute(string pool = "discord")
         {

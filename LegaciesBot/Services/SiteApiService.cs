@@ -34,6 +34,16 @@ namespace LegaciesBot.Services
         IReadOnlyList<LeaderboardEntry> Entries
     );
 
+    public record SiteHealthResult(
+        string Status,
+        string Db,
+        string SeasonKey,
+        int DiscordRankedMatches,
+        int PublicRankedMatches,
+        int OcrProviderCallsThisMonth,
+        int OcrMonthlyCap
+    );
+
     public record RecentMatchParticipant(
         string Battletag,
         string PlayerKey,
@@ -118,6 +128,29 @@ namespace LegaciesBot.Services
                     .ToList();
 
                 return new LeaderboardResult(dto.Pool, dto.SeasonKey, entries);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<SiteHealthResult?> GetHealthAsync()
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/bot/health");
+            AddAuth(req);
+
+            try
+            {
+                using var resp = await http.SendAsync(req);
+                var body = await resp.Content.ReadAsStringAsync();
+                var dto = JsonSerializer.Deserialize<HealthDto>(body, JsonOpts);
+                if (dto is null) return null;
+
+                return new SiteHealthResult(
+                    dto.Status, dto.Db, dto.SeasonKey,
+                    dto.DiscordRankedMatches, dto.PublicRankedMatches,
+                    dto.OcrProviderCallsThisMonth, dto.OcrMonthlyCap);
             }
             catch
             {
@@ -242,6 +275,17 @@ namespace LegaciesBot.Services
         private sealed class ErrorDto
         {
             [JsonPropertyName("detail")] public string? Detail { get; set; }
+        }
+
+        private sealed class HealthDto
+        {
+            [JsonPropertyName("status")] public string Status { get; set; } = "";
+            [JsonPropertyName("db")] public string Db { get; set; } = "";
+            [JsonPropertyName("season_key")] public string SeasonKey { get; set; } = "";
+            [JsonPropertyName("discord_ranked_matches")] public int DiscordRankedMatches { get; set; }
+            [JsonPropertyName("public_ranked_matches")] public int PublicRankedMatches { get; set; }
+            [JsonPropertyName("ocr_provider_calls_this_month")] public int OcrProviderCallsThisMonth { get; set; }
+            [JsonPropertyName("ocr_monthly_cap")] public int OcrMonthlyCap { get; set; }
         }
 
         private sealed class RecentMatchesDto
