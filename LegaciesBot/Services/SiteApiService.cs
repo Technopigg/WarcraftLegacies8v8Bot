@@ -34,6 +34,27 @@ namespace LegaciesBot.Services
         IReadOnlyList<LeaderboardEntry> Entries
     );
 
+    public record RecentMatchParticipant(
+        string Battletag,
+        string PlayerKey,
+        bool IsWinner,
+        string? Faction
+    );
+
+    public record RecentMatch(
+        string PublicId,
+        string? PlayedAt,
+        string RatingPool,
+        IReadOnlyList<RecentMatchParticipant> TeamA,
+        IReadOnlyList<RecentMatchParticipant> TeamB,
+        string MatchUrl
+    );
+
+    public record RecentMatchesResult(
+        string SeasonKey,
+        IReadOnlyList<RecentMatch> Matches
+    );
+
     public record RecomputeResult(
         string SeasonKey,
         string RatingPool,
@@ -97,6 +118,38 @@ namespace LegaciesBot.Services
                     .ToList();
 
                 return new LeaderboardResult(dto.Pool, dto.SeasonKey, entries);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<RecentMatchesResult?> GetRecentMatchesAsync(string pool = "discord", int limit = 5)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get,
+                $"{baseUrl}/api/bot/matches?pool={pool}&limit={limit}");
+            AddAuth(req);
+
+            try
+            {
+                using var resp = await http.SendAsync(req);
+                if (!resp.IsSuccessStatusCode) return null;
+
+                var body = await resp.Content.ReadAsStringAsync();
+                var dto = JsonSerializer.Deserialize<RecentMatchesDto>(body, JsonOpts);
+                if (dto is null) return null;
+
+                var matches = dto.Matches.Select(m => new RecentMatch(
+                    m.PublicId,
+                    m.PlayedAt,
+                    m.RatingPool,
+                    m.TeamA.Select(p => new RecentMatchParticipant(p.Battletag, p.PlayerKey, p.IsWinner, p.Faction)).ToList(),
+                    m.TeamB.Select(p => new RecentMatchParticipant(p.Battletag, p.PlayerKey, p.IsWinner, p.Faction)).ToList(),
+                    m.MatchUrl
+                )).ToList();
+
+                return new RecentMatchesResult(dto.SeasonKey, matches);
             }
             catch
             {
@@ -189,6 +242,30 @@ namespace LegaciesBot.Services
         private sealed class ErrorDto
         {
             [JsonPropertyName("detail")] public string? Detail { get; set; }
+        }
+
+        private sealed class RecentMatchesDto
+        {
+            [JsonPropertyName("season_key")] public string SeasonKey { get; set; } = "";
+            [JsonPropertyName("matches")] public List<RecentMatchDto> Matches { get; set; } = [];
+        }
+
+        private sealed class RecentMatchDto
+        {
+            [JsonPropertyName("public_id")] public string PublicId { get; set; } = "";
+            [JsonPropertyName("played_at")] public string? PlayedAt { get; set; }
+            [JsonPropertyName("rating_pool")] public string RatingPool { get; set; } = "";
+            [JsonPropertyName("team_a")] public List<ParticipantDto> TeamA { get; set; } = [];
+            [JsonPropertyName("team_b")] public List<ParticipantDto> TeamB { get; set; } = [];
+            [JsonPropertyName("match_url")] public string MatchUrl { get; set; } = "";
+        }
+
+        private sealed class ParticipantDto
+        {
+            [JsonPropertyName("battletag")] public string Battletag { get; set; } = "";
+            [JsonPropertyName("player_key")] public string PlayerKey { get; set; } = "";
+            [JsonPropertyName("is_winner")] public bool IsWinner { get; set; }
+            [JsonPropertyName("faction")] public string? Faction { get; set; }
         }
     }
 }

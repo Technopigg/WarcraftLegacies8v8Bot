@@ -49,56 +49,49 @@ namespace LegaciesBot.Discord
                 EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName()}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your Season 5 rating.")]));
 
         }
-        // DISABLED (Season 5): match history is on the site via replay upload.
-        // To re-enable: restore [Command("recent")] attribute.
+        [Command("recent")]
         public async Task RecentMatches()
         {
             var ctx = this.Context;
-            var history = _matchHistoryService.History;
+            var site = GlobalServices.SiteApiService;
+            var result = await site.GetRecentMatchesAsync(limit: 5);
 
-            if (history.Count == 0)
+            if (result == null || result.Matches.Count == 0)
             {
-                await ctx.Message.ReplyAsync("No matches have been recorded yet.");
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("No recent matches", "No ranked matches found yet, or the site is unavailable.")]));
                 return;
             }
 
-            var lastMatches = history.OrderByDescending(m => m.Timestamp).Take(5).ToList();
-            string msg = "=== RECENT MATCHES ===\n\n";
-
-            foreach (var match in lastMatches)
+            var lines = new List<string>();
+            foreach (var match in result.Matches)
             {
-                bool teamAWon = match.ScoreA > match.ScoreB;
-                bool draw = match.ScoreA == 0 && match.ScoreB == 0;
+                var winners = match.TeamA.Any(p => p.IsWinner) ? match.TeamA : match.TeamB;
+                var losers = match.TeamA.Any(p => p.IsWinner) ? match.TeamB : match.TeamA;
 
-                string result = draw ? "Draw" : teamAWon ? "Team A Win" : "Team B Win";
+                bool isDraw = !match.TeamA.Any(p => p.IsWinner) && !match.TeamB.Any(p => p.IsWinner);
 
-                var date = match.Timestamp.ToLocalTime().ToString("dd/MM/yy");
-                var ago = FormatAgo(match.Timestamp);
-
-                var duration = match.Timestamp - match.StartedAt;
-                string durationStr = duration.ToString(@"hh\:mm\:ss");
-
-                msg += $"**Game {match.GameId}** — {result} — {date} ({ago}) — Duration: {durationStr}\n";
-                msg += $"Score: **{match.ScoreA} - {match.ScoreB}**\n";
-
-                msg += "Team A: ";
-                msg += string.Join(", ", match.TeamA.Select(p =>
+                static string FormatTeam(IReadOnlyList<RecentMatchParticipant> team)
                 {
-                    string sign = p.EloChange >= 0 ? "+" : "";
-                    return $"{p.DisplayName} [{p.Faction}] ({sign}{p.EloChange})";
-                }));
+                    var names = team.Select(p => p.Faction != null ? $"{p.Battletag} [{p.Faction}]" : p.Battletag);
+                    return string.Join(", ", names);
+                }
 
-                msg += "\nTeam B: ";
-                msg += string.Join(", ", match.TeamB.Select(p =>
-                {
-                    string sign = p.EloChange >= 0 ? "+" : "";
-                    return $"{p.DisplayName} [{p.Faction}] ({sign}{p.EloChange})";
-                }));
+                string resultLine = isDraw
+                    ? $"Draw — {FormatTeam(match.TeamA)} vs {FormatTeam(match.TeamB)}"
+                    : $"**{FormatTeam(winners)}** def. {FormatTeam(losers)}";
 
-                msg += "\n\n";
+                string dateStr = match.PlayedAt != null && DateTime.TryParse(match.PlayedAt, out var dt)
+                    ? dt.ToLocalTime().ToString("dd MMM yyyy")
+                    : "unknown date";
+
+                lines.Add($"[{dateStr}]({match.MatchUrl}) — {resultLine}");
             }
 
-            await ctx.Message.ReplyAsync(msg);
+            string desc = string.Join("\n\n", lines) + $"\n\n[Full match archive](https://warcraftlegacies.com/matches)";
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Info("Recent Matches — Discord Pool", desc)]));
         }
 
         private string FormatAgo(DateTime time)
