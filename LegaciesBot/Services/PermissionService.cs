@@ -4,18 +4,12 @@ namespace LegaciesBot.Services
 {
     public class PermissionService
     {
-        private string FilePath = Path.Combine(AppContext.BaseDirectory, "permissions.json");
+        private readonly string FilePath;
         private readonly object _lock = new();
-
 
         public PermissionData Data { get; private set; }
 
-        public PermissionService()
-        {
-            Load();
-        }
-
-        public PermissionService(string filePath)
+        public PermissionService(string filePath = "permissions.json")
         {
             FilePath = filePath;
             Load();

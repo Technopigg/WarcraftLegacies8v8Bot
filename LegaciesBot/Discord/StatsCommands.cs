@@ -73,12 +73,35 @@ namespace LegaciesBot.Discord
                 EmbedFactory.Info($"Top {result.Entries.Count} — Discord Pool", desc)]));
         }
 
-        // DISABLED (Season 5): compare comes from site API — requires battletag lookup, not yet wired.
-        // To re-enable: restore [Command("compare")] attribute and implement two GetPlayerAsync calls.
+        [Command("compare")]
         public async Task Compare(string name1, string name2)
         {
-            await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                EmbedFactory.Info("Compare players", $"Visit: <https://warcraftlegacies.com/players>")]));
+            var ctx = this.Context;
+            var results = await Task.WhenAll(_site.GetPlayerAsync(name1), _site.GetPlayerAsync(name2));
+            var r1 = results[0];
+            var r2 = results[1];
+
+            if (r1 == null && r2 == null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("Not found", $"Neither `{name1}` nor `{name2}` found in the discord pool.")]));
+                return;
+            }
+
+            static string Row(PlayerRatingResult? r, string key) => r == null
+                ? $"`{key}` — not found"
+                : $"**{r.DisplayName}** — {r.Rating} ({r.WinsCount}W/{r.LossesCount}L {(r.Winrate * 100):F0}%)";
+
+            string desc = Row(r1, name1) + "\n" + Row(r2, name2);
+            if (r1 != null && r2 != null)
+            {
+                int diff = r1.Rating - r2.Rating;
+                string leader = diff > 0 ? r1.DisplayName : r2.DisplayName;
+                desc += $"\n\n{leader} leads by **{Math.Abs(diff)}** rating points.";
+            }
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Info("Compare", desc)]));
         }
     }
 }

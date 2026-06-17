@@ -13,7 +13,8 @@ Bootstrap: if `Admins[]` is empty — add the first admin manually to `permissio
 **Season 5 architecture:** match results and ratings (Elo) are stored exclusively on **warcraftlegacies.com**.
 The bot manages lobby, draft, factions, and Discord roles. The winner is determined on the site via replay.
 `!score`, `!scores`, `!forcescore` are disabled — they contradict this architecture.
-`!stats`, `!leaderboard`, `!compare`, `!recent` redirect to the site (Phase 5 — full API integration).
+`!stats` and `!leaderboard` fetch live data from the site API and reply with an embed in Discord.
+`!compare` and `!recent` are disabled (pending implementation — site endpoint for match history not yet built).
 
 ---
 
@@ -68,12 +69,10 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 
 ### 8. Stats and history
 
-> Season 5: ratings and match history are on the site. These commands redirect to warcraftlegacies.com.
-
-29. `!stats` — player stats → **https://warcraftlegacies.com/players**
-30. `!leaderboard` — leaderboard → **https://warcraftlegacies.com/leaderboard**
-31. `!compare` — player comparison → **https://warcraftlegacies.com/players**
-32. `!recent` — match history → **https://warcraftlegacies.com/replays**
+29. `!stats <battletag>` — player stats: rating, σ, matches, W/L, winrate. Live from site API, Discord embed. ✅ Works.
+30. `!leaderboard [N]` — top N players (default 10, max 25) from the Discord pool. Live from site API, embed. ✅ Works.
+31. `!compare <player1> <player2>` — side-by-side comparison: rating, W/L, winrate. Live from site API, embed. ✅ Works.
+32. `!recent` — recent matches. ❌ Disabled — requires a new site API endpoint (`GET /api/bot/matches`).
 
 ### 9. Seasons
 
