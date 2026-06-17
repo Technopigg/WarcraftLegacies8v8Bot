@@ -1,6 +1,7 @@
 using LegaciesBot.Core;
 using LegaciesBot.Seasons;
 using LegaciesBot.Services;
+using NetCord.Rest;
 using NetCord.Services.Commands;
 
 namespace LegaciesBot.Discord
@@ -9,11 +10,13 @@ namespace LegaciesBot.Discord
     {
         private readonly SeasonService _seasons;
         private readonly PlayerRegistryService _registry;
+        private readonly SiteApiService _site;
 
         public SeasonCommands()
         {
             _seasons = GlobalServices.SeasonService;
             _registry = GlobalServices.PlayerRegistryService;
+            _site = GlobalServices.SiteApiService;
         }
 
         [Command("season")]
@@ -80,72 +83,31 @@ namespace LegaciesBot.Discord
 
             if (string.Equals(sub, "summary", StringComparison.OrdinalIgnoreCase))
             {
-                var s = _seasons.CurrentSeason;
-                var stats = s.PlayerStats.Values.ToList();
+                var result = await _site.GetLeaderboardAsync(pool: "discord", limit: 10);
 
-                if (!stats.Any())
+                if (result == null || result.Entries.Count == 0)
                 {
-                    await ctx.Message.ReplyAsync("No players this season.");
+                    await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Warning("No data", "Could not fetch Season 5 standings from warcraftlegacies.com.")]));
                     return;
                 }
 
-                var topElo = stats.OrderByDescending(p => p.Elo).First();
-                var bestWinrate = stats.Where(p => p.GamesPlayed >= 5).OrderByDescending(p => p.WinRate).FirstOrDefault();
-                var mostGames = stats.OrderByDescending(p => p.GamesPlayed).First();
-                var mostWins = stats.OrderByDescending(p => p.Wins).First();
-                var mostLosses = stats.OrderByDescending(p => p.Losses).First();
-                var mostImproved = stats.OrderByDescending(p => p.Elo - p.PreviousSeasonElo).First();
-
-                string name(ulong id) => _registry.GetPlayer(id)?.DisplayName() ?? "<@" + id + ">";
-
-                var lines = new List<string>
+                var lines = result.Entries.Take(5).Select(e =>
                 {
-                    "Season " + s.SeasonNumber + " Summary",
-                    "",
-                    "Top Elo: " + name(topElo.DiscordId) + " (" + topElo.Elo + ")",
-                    "Best Winrate: " + (bestWinrate == null ? "N/A" : name(bestWinrate.DiscordId) + " (" + bestWinrate.WinRate.ToString("F1") + "%)"),
-                    "Most Games: " + name(mostGames.DiscordId) + " (" + mostGames.GamesPlayed + ")",
-                    "Most Wins: " + name(mostWins.DiscordId) + " (" + mostWins.Wins + ")",
-                    "Most Losses: " + name(mostLosses.DiscordId) + " (" + mostLosses.Losses + ")",
-                    "Most Improved: " + name(mostImproved.DiscordId) + " (+" + (mostImproved.Elo - mostImproved.PreviousSeasonElo) + " Elo)"
-                };
+                    string wr = (e.Winrate * 100).ToString("F0") + "%";
+                    return $"`{e.Rank,2}.` **{e.DisplayName}** — {e.Rating} ({e.WinsCount}W/{e.LossesCount}L {wr})";
+                });
 
-                await ctx.Message.ReplyAsync(string.Join("\n", lines));
+                string desc = string.Join("\n", lines) + "\n\n[Full leaderboard](https://warcraftlegacies.com/leaderboard)";
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("Season 5 Summary — Top 5", desc)]));
                 return;
             }
 
             if (string.Equals(sub, "showleaderboard", StringComparison.OrdinalIgnoreCase))
             {
-                if (!int.TryParse(arg, out int seasonNumber))
-                {
-                    await ctx.Message.ReplyAsync("Usage: !season showleaderboard <number>");
-                    return;
-                }
-
-                var s = _seasons.GetSeason(seasonNumber);
-                if (s == null)
-                {
-                    await ctx.Message.ReplyAsync("Season " + seasonNumber + " does not exist.");
-                    return;
-                }
-
-                var stats = s.PlayerStats.Values
-                    .OrderByDescending(p => p.Elo)
-                    .Take(20)
-                    .ToList();
-
-                if (!stats.Any())
-                {
-                    await ctx.Message.ReplyAsync("No players in that season.");
-                    return;
-                }
-
-                string name(ulong id) => _registry.GetPlayer(id)?.DisplayName() ?? "<@" + id + ">";
-
-                var lines = stats.Select((p, i) =>
-                    (i + 1) + ". " + name(p.DiscordId) + " — Elo: " + p.Elo);
-
-                await ctx.Message.ReplyAsync("Season " + seasonNumber + " Leaderboard:\n" + string.Join("\n", lines));
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("Season Leaderboard", "Season 5 ratings are on the site:\n<https://warcraftlegacies.com/leaderboard>")]));
                 return;
             }
 

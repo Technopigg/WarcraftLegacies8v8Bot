@@ -45,8 +45,9 @@ namespace LegaciesBot.Discord
             var player = _playerRegistry.RegisterPlayer(userId, name);
             _stats.GetOrCreate(userId);
 
-            await ctx.Message.ReplyAsync(
-                $"Registration complete. Welcome, **{player.DisplayName()}**! Your starting Elo is **{player.Elo}**.");
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName()}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your Season 5 rating.")]));
+
         }
         // DISABLED (Season 5): match history is on the site via replay upload.
         // To re-enable: restore [Command("recent")] attribute.
@@ -250,32 +251,20 @@ namespace LegaciesBot.Discord
                 teamAWon ? "🏆 **Team A wins!**" :
                 "🏆 **Team B wins!**";
 
-            string msg = $"**Game {game.Id}**\n\n";
-            msg += $"{resultText}\n\n";
-            msg += $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n";
-            msg += "**Elo changes:**\n\n";
+            string aLines = string.Join("\n", game.TeamA.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]"));
+            string bLines = string.Join("\n", game.TeamB.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]"));
+            string desc =
+                $"{resultText}\n\n" +
+                $"**Final Score:** Team A {scoreA} — Team B {scoreB}\n\n" +
+                $"**Team A:**\n{aLines}\n\n" +
+                $"**Team B:**\n{bLines}\n\n" +
+                $"Upload the replay to [warcraftlegacies.com](https://warcraftlegacies.com) to record the result and update ratings.";
 
-            msg += "**Team A:**\n";
-            foreach (var p in game.TeamA.Players)
-            {
-                int delta = changes[p.DiscordId];
-                var stats = _stats.GetOrCreate(p.DiscordId);
-                int oldElo = stats.Elo - delta;
-                string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} ({oldElo}) {sign}{delta}\n";
-            }
+            var embed = scoreA > scoreB || scoreB > scoreA
+                ? EmbedFactory.Success($"Game #{game.Id} — Result", desc)
+                : EmbedFactory.Info($"Game #{game.Id} — Draw", desc);
 
-            msg += "\n**Team B:**\n";
-            foreach (var p in game.TeamB.Players)
-            {
-                int delta = changes[p.DiscordId];
-                var stats = _stats.GetOrCreate(p.DiscordId);
-                int oldElo = stats.Elo - delta;
-                string sign = delta >= 0 ? "+" : "";
-                msg += $"{p.DisplayName()} ({oldElo}) {sign}{delta}\n";
-            }
-
-            await ctx.Message.ReplyAsync(msg);
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([embed]));
         }
 
         // DISABLED (Season 5): winner is determined on the site via replay, not by player vote.

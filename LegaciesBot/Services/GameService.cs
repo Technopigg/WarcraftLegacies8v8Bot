@@ -178,11 +178,8 @@ namespace LegaciesBot.Services
                 : scoreB > scoreA ? MatchResult.TeamBWin
                 : MatchResult.Draw;
 
-            var changes = _eloService.ApplyTeamResult(
-                game.TeamA.Players,
-                game.TeamB.Players,
-                result
-            );
+            // Season 5: local Elo is disabled — ratings come from the site via replay upload.
+            var changes = new Dictionary<ulong, int>();
 
             UpdateFactionStats(game.TeamA, result, stats, isTeamA: true);
             UpdateFactionStats(game.TeamB, result, stats, isTeamA: false);
