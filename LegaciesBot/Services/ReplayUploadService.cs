@@ -25,6 +25,7 @@ namespace LegaciesBot.Services
             var content = new ByteArrayContent(data);
             content.Headers.ContentLength = data.Length;
             content.Headers.TryAddWithoutValidation("X-Original-Filename", Uri.EscapeDataString(filename));
+            content.Headers.TryAddWithoutValidation("X-Rating-Pool", "discord");
 
             HttpResponseMessage response;
             try
