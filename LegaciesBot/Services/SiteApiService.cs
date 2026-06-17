@@ -34,6 +34,17 @@ namespace LegaciesBot.Services
         IReadOnlyList<LeaderboardEntry> Entries
     );
 
+    public record RecomputeResult(
+        string SeasonKey,
+        string RatingPool,
+        string AlgorithmVersion,
+        int DeletedPlayerRatings,
+        int DeletedRatingEvents,
+        int MatchesReplayed,
+        int EventsCreated,
+        int PlayerRatingsUpdated
+    );
+
     public class SiteApiService(HttpClient http, string baseUrl, string apiToken)
     {
         private static readonly JsonSerializerOptions JsonOpts = new()
@@ -93,6 +104,37 @@ namespace LegaciesBot.Services
             }
         }
 
+        public async Task<(RecomputeResult? Result, string? Error)> RecomputeRatingsAsync(string pool = "discord")
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/api/bot/ratings/recompute?pool={pool}");
+            AddAuth(req);
+            req.Content = new StringContent("");
+
+            try
+            {
+                using var resp = await http.SendAsync(req);
+                var body = await resp.Content.ReadAsStringAsync();
+
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var errDto = JsonSerializer.Deserialize<ErrorDto>(body, JsonOpts);
+                    return (null, errDto?.Detail ?? resp.ReasonPhrase ?? "Unknown error");
+                }
+
+                var dto = JsonSerializer.Deserialize<RecomputeDto>(body, JsonOpts);
+                if (dto is null) return (null, "Empty response");
+
+                return (new RecomputeResult(
+                    dto.SeasonKey, dto.RatingPool, dto.AlgorithmVersion,
+                    dto.DeletedPlayerRatings, dto.DeletedRatingEvents,
+                    dto.MatchesReplayed, dto.EventsCreated, dto.PlayerRatingsUpdated), null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex.Message);
+            }
+        }
+
         private void AddAuth(HttpRequestMessage req)
         {
             if (!string.IsNullOrEmpty(apiToken))
@@ -130,6 +172,23 @@ namespace LegaciesBot.Services
             [JsonPropertyName("losses_count")] public int LossesCount { get; set; }
             [JsonPropertyName("winrate")] public double Winrate { get; set; }
             [JsonPropertyName("profile_url")] public string ProfileUrl { get; set; } = "";
+        }
+
+        private sealed class RecomputeDto
+        {
+            [JsonPropertyName("season_key")] public string SeasonKey { get; set; } = "";
+            [JsonPropertyName("rating_pool")] public string RatingPool { get; set; } = "";
+            [JsonPropertyName("algorithm_version")] public string AlgorithmVersion { get; set; } = "";
+            [JsonPropertyName("deleted_player_ratings")] public int DeletedPlayerRatings { get; set; }
+            [JsonPropertyName("deleted_rating_events")] public int DeletedRatingEvents { get; set; }
+            [JsonPropertyName("matches_replayed")] public int MatchesReplayed { get; set; }
+            [JsonPropertyName("events_created")] public int EventsCreated { get; set; }
+            [JsonPropertyName("player_ratings_updated")] public int PlayerRatingsUpdated { get; set; }
+        }
+
+        private sealed class ErrorDto
+        {
+            [JsonPropertyName("detail")] public string? Detail { get; set; }
         }
     }
 }

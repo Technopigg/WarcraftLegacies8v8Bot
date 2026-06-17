@@ -1,4 +1,6 @@
+using NetCord.Rest;
 using NetCord.Services.Commands;
+using LegaciesBot.Services;
 
 namespace LegaciesBot.Commands
 {
@@ -166,6 +168,47 @@ namespace LegaciesBot.Commands
 
             var names = list.Select(id => $"<@{id}>");
             await Context.Message.ReplyAsync("Moderators:\n" + string.Join("\n", names));
+        }
+
+        [Command("recompute")]
+        public async Task Recompute(string pool = "discord")
+        {
+            var ctx = this.Context;
+            var caller = ctx.User.Id;
+
+            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(caller))
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Forbidden", "Only admins and moderators can trigger a rating recompute.")]));
+                return;
+            }
+
+            pool = pool.Trim().ToLowerInvariant();
+            if (pool != "discord" && pool != "public")
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("Invalid pool", "Usage: `!recompute [discord|public]`")]));
+                return;
+            }
+
+            var (result, error) = await GlobalServices.SiteApiService.RecomputeRatingsAsync(pool);
+
+            if (error != null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Recompute failed", error)]));
+                return;
+            }
+
+            string desc =
+                $"**Pool:** {result!.RatingPool} — **Season:** {result.SeasonKey}\n" +
+                $"Matches replayed: **{result.MatchesReplayed}**\n" +
+                $"Events created: **{result.EventsCreated}**\n" +
+                $"Player ratings updated: **{result.PlayerRatingsUpdated}**\n" +
+                $"_(deleted {result.DeletedRatingEvents} old events, {result.DeletedPlayerRatings} old ratings)_";
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Success("Rating recompute complete", desc)]));
         }
     }
 }
