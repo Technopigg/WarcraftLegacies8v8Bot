@@ -15,6 +15,13 @@ public class GameServiceTests
             SentMessages.Add(message);
             return Task.CompletedTask;
         }
+
+        public Task SendMessageAsync(NetCord.Rest.MessageProperties message)
+        {
+            var embed = message.Embeds?.FirstOrDefault();
+            SentMessages.Add(embed?.Title?.ToUpperInvariant() ?? "[embed]");
+            return Task.CompletedTask;
+        }
     }
 
     private class FakeGatewayClient : IGatewayClient

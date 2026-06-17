@@ -78,6 +78,6 @@ public class DraftServiceTests
         Assert.Equal(16, allPlayers.Count);
         Assert.Equal(16, allPlayers.Select(p => p.DiscordId).Distinct().Count());
 
-        channel.Verify(c => c.SendMessageAsync(It.IsAny<string>()), Times.Once);
+        channel.Verify(c => c.SendMessageAsync(It.IsAny<NetCord.Rest.MessageProperties>()), Times.Once);
     }
 }

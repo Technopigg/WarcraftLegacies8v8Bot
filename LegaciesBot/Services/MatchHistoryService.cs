@@ -37,7 +37,7 @@ namespace LegaciesBot.Services
                     DiscordId = p.DiscordId,
                     Name = p.DisplayName(),
                     DisplayName = p.DisplayName(),
-                    EloChange = eloChanges[p.DiscordId],
+                    EloChange = eloChanges.GetValueOrDefault(p.DiscordId, 0),
                     Faction = p.AssignedFaction
                 }).ToList(),
                 TeamB = game.TeamB.Players.Select(p => new PlayerRecord
@@ -45,7 +45,7 @@ namespace LegaciesBot.Services
                     DiscordId = p.DiscordId,
                     Name = p.DisplayName(),
                     DisplayName = p.DisplayName(),
-                    EloChange = eloChanges[p.DiscordId],
+                    EloChange = eloChanges.GetValueOrDefault(p.DiscordId, 0),
                     Faction = p.AssignedFaction
                 }).ToList()
             };

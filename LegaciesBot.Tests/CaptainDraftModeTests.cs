@@ -15,6 +15,8 @@ public class CaptainDraftModeTests
             Messages.Add(message);
             return Task.CompletedTask;
         }
+
+        public Task SendMessageAsync(NetCord.Rest.MessageProperties message) => Task.CompletedTask;
     }
 
     private class FakeGateway : IGatewayClient

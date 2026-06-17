@@ -25,6 +25,9 @@ public class ModerationCommandsTests
 
         if (File.Exists("players.json"))
             File.Delete("players.json");
+
+        if (File.Exists("test_permissions.json"))
+            File.Delete("test_permissions.json");
     }
 
     private (ModerationCommands commands,
@@ -44,7 +47,7 @@ public class ModerationCommandsTests
             3
         );
 
-        var permMock = new Mock<PermissionService>() { CallBase = true };
+        var permMock = new Mock<PermissionService>("test_permissions.json") { CallBase = true };
         permMock.Setup(p => p.IsModeratorOrAdmin(It.IsAny<ulong>())).Returns(true);
 
         var registry = new PlayerRegistryService("players.json");

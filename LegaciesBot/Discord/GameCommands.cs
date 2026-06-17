@@ -466,7 +466,8 @@ namespace LegaciesBot.Discord
             var (team, faction) = await _gameService.SubstitutePlayer(game, outPlayer, inPlayer);
 
             string factionStr = string.IsNullOrEmpty(faction) ? "—" : faction;
-            string desc = $"**{outPlayer.DisplayName()}** → **{inPlayer.DisplayName()}**\nTeam: **{team.Name}** | Faction: **{factionStr}**";
+            string teamStr = team?.Name ?? "Undrafted";
+            string desc = $"**{outPlayer.DisplayName()}** → **{inPlayer.DisplayName()}**\nTeam: **{teamStr}** | Faction: **{factionStr}**";
 
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Success($"Sub — Game #{game.Id}", desc)]));

@@ -151,7 +151,8 @@ public class FullMatchFlowWithPreferencesTests
         var changes = gameService.SubmitScore(game, 4, 2, stats).GetAwaiter().GetResult();
 
         Assert.True(game.Finished);
-        Assert.NotEmpty(changes);
+        // Season 5: local Elo is disabled; changes is always empty.
+        Assert.Empty(changes);
         Assert.NotEmpty(history.History);
 
         foreach (var p in teamA.Players)

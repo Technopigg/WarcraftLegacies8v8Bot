@@ -255,30 +255,55 @@ namespace LegaciesBot.Services
             }
         }
 
-        public async Task<(Team team, string? faction)> SubstitutePlayer(
+        public async Task<(Team? team, string? faction)> SubstitutePlayer(
             Game game,
             Player outPlayer,
             Player inPlayer)
         {
-            var team =
-                game.TeamA?.Players.Any(p => p.DiscordId == outPlayer.DiscordId) == true ? game.TeamA :
-                game.TeamB?.Players.Any(p => p.DiscordId == outPlayer.DiscordId) == true ? game.TeamB :
-                throw new InvalidOperationException("Player not found in game teams.");
+            var outId = outPlayer.DiscordId;
+
+            // Determine which team the outgoing player belongs to (null if still undrafted).
+            Team? team =
+                game.TeamA?.Players.Any(p => p.DiscordId == outId) == true ? game.TeamA :
+                game.TeamB?.Players.Any(p => p.DiscordId == outId) == true ? game.TeamB :
+                null;
 
             inPlayer.AssignedFaction = outPlayer.AssignedFaction;
 
-            int idx = team.Players.FindIndex(p => p.DiscordId == outPlayer.DiscordId);
-            team.Players[idx] = inPlayer;
+            // Replace in the finalized team roster (active game or post-draft manual-faction phase).
+            if (team != null)
+            {
+                int teamIdx = team.Players.FindIndex(p => p.DiscordId == outId);
+                if (teamIdx >= 0)
+                    team.Players[teamIdx] = inPlayer;
+            }
 
-            var lobbyPlayer = game.Lobby.Players.FindIndex(p => p.DiscordId == outPlayer.DiscordId);
-            if (lobbyPlayer >= 0)
-                game.Lobby.Players[lobbyPlayer] = inPlayer;
+            // Replace in the lobby player list (authoritative during all phases).
+            int lobbyIdx = game.Lobby.Players.FindIndex(p => p.DiscordId == outId);
+            if (lobbyIdx >= 0)
+                game.Lobby.Players[lobbyIdx] = inPlayer;
 
-            if (game.IsActive)
+            // Replace in captain-draft pick lists if the player was already picked.
+            int pickAIdx = game.Lobby.TeamAPicks.IndexOf(outId);
+            if (pickAIdx >= 0)
+                game.Lobby.TeamAPicks[pickAIdx] = inPlayer.DiscordId;
+
+            int pickBIdx = game.Lobby.TeamBPicks.IndexOf(outId);
+            if (pickBIdx >= 0)
+                game.Lobby.TeamBPicks[pickBIdx] = inPlayer.DiscordId;
+
+            // Discord role handover.
+            if (game.IsActive && team != null)
             {
                 ulong teamRoleId = team == game.TeamA ? DiscordConfig.Team1RoleId : DiscordConfig.Team2RoleId;
-                await _client.RemoveRoleFromMemberAsync(GuildId, outPlayer.DiscordId, teamRoleId);
+                await _client.RemoveRoleFromMemberAsync(GuildId, outId, teamRoleId);
                 await _client.AddRoleToMemberAsync(GuildId, inPlayer.DiscordId, teamRoleId);
+            }
+            else if (game.Lobby.DraftRoleId.HasValue)
+            {
+                // Transfer the captain-draft role during the pick phase.
+                await _client.RemoveRoleFromMemberAsync(GuildId, outId, game.Lobby.DraftRoleId.Value);
+                await _client.AddRoleToMemberAsync(GuildId, inPlayer.DiscordId, game.Lobby.DraftRoleId.Value);
             }
 
             return (team, inPlayer.AssignedFaction);
@@ -297,7 +322,8 @@ namespace LegaciesBot.Services
             return _games.FirstOrDefault(g =>
                 !g.Finished &&
                 (g.TeamA?.Players.Any(p => p.DiscordId == discordId) == true ||
-                 g.TeamB?.Players.Any(p => p.DiscordId == discordId) == true));
+                 g.TeamB?.Players.Any(p => p.DiscordId == discordId) == true ||
+                 g.Lobby.Players.Any(p => p.DiscordId == discordId)));
         }
     }
 }
