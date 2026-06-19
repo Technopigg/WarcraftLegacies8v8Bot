@@ -36,18 +36,39 @@ public class RealGatewayClient : IGatewayClient
         });
     }
 
-    public Task AddRoleToMemberAsync(ulong guildId, ulong userId, ulong roleId)
+    public async Task AddRoleToMemberAsync(ulong guildId, ulong userId, ulong roleId)
     {
-        return _client.Rest.AddGuildUserRoleAsync(guildId, userId, roleId);
+        try
+        {
+            await _client.Rest.AddGuildUserRoleAsync(guildId, userId, roleId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WARN] AddRole {roleId} to user {userId}: {ex.Message}");
+        }
     }
 
-    public Task RemoveRoleFromMemberAsync(ulong guildId, ulong userId, ulong roleId)
+    public async Task RemoveRoleFromMemberAsync(ulong guildId, ulong userId, ulong roleId)
     {
-        return _client.Rest.RemoveGuildUserRoleAsync(guildId, userId, roleId);
+        try
+        {
+            await _client.Rest.RemoveGuildUserRoleAsync(guildId, userId, roleId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WARN] RemoveRole {roleId} from user {userId}: {ex.Message}");
+        }
     }
 
-    public Task DeleteRoleAsync(ulong guildId, ulong roleId)
+    public async Task DeleteRoleAsync(ulong guildId, ulong roleId)
     {
-        return _client.Rest.DeleteGuildRoleAsync(guildId, roleId);
+        try
+        {
+            await _client.Rest.DeleteGuildRoleAsync(guildId, roleId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WARN] DeleteRole {roleId}: {ex.Message}");
+        }
     }
 }

@@ -149,7 +149,14 @@ client.MessageCreate += async message =>
             continue;
         }
 
-        var result = await replayUploadService.UploadAsync(data, attachment.FileName);
+        var discordCtx = new DiscordUploadContext(
+            GuildId: message.GuildId ?? 0,
+            ChannelId: message.ChannelId,
+            MessageId: message.Id,
+            AttachmentId: attachment.Id,
+            UploaderId: message.Author.Id
+        );
+        var result = await replayUploadService.UploadAsync(data, attachment.FileName, discordCtx);
         var embed = BuildReplayEmbed(result, attachment.FileName, DiscordConfig.SiteBaseUrl);
 
         await client.Rest.SendMessageAsync(message.ChannelId,
@@ -194,8 +201,31 @@ static EmbedProperties BuildReplayEmbed(ReplayUploadResult result, string filena
 
 client.Ready += args =>
 {
-    Console.WriteLine("Bot is online!");
+    Console.WriteLine($"Bot is online! Guild={DiscordConfig.GuildId} Team1Role={DiscordConfig.Team1RoleId} Team2Role={DiscordConfig.Team2RoleId}");
+    _ = ValidateRoleConfigAsync();
     return new ValueTask();
+};
+
+async Task ValidateRoleConfigAsync()
+{
+    try
+    {
+        var guild = await client.Rest.GetGuildAsync(DiscordConfig.GuildId);
+        var roleIds = guild.Roles.Keys.ToHashSet();
+
+        if (!roleIds.Contains(DiscordConfig.Team1RoleId))
+            Console.WriteLine($"[WARN] Team1 role {DiscordConfig.Team1RoleId} not found in guild. Set WL_DISCORD_TEAM1_ROLE_ID to override.");
+
+        if (!roleIds.Contains(DiscordConfig.Team2RoleId))
+            Console.WriteLine($"[WARN] Team2 role {DiscordConfig.Team2RoleId} not found in guild. Set WL_DISCORD_TEAM2_ROLE_ID to override.");
+
+        if (roleIds.Contains(DiscordConfig.Team1RoleId) && roleIds.Contains(DiscordConfig.Team2RoleId))
+            Console.WriteLine("[OK] Team1 and Team2 roles verified in guild.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[WARN] Could not validate role config: {ex.Message}");
+    }
 };
 
 _ = Task.Run(async () =>
