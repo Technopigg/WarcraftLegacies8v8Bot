@@ -9,10 +9,10 @@ namespace LegaciesBot.Config
             GetUlongEnv("WL_DISCORD_DRAFT_CHANNEL_ID", 1488958363361349908);
 
         public static ulong Team1RoleId { get; } =
-            GetUlongEnv("WL_DISCORD_TEAM1_ROLE_ID", 1488594785500397698);
+            GetUlongEnv("WL_DISCORD_TEAM1_ROLE_ID", 1472341864366608414);
 
         public static ulong Team2RoleId { get; } =
-            GetUlongEnv("WL_DISCORD_TEAM2_ROLE_ID", 1488594866970824904);
+            GetUlongEnv("WL_DISCORD_TEAM2_ROLE_ID", 1472341837011226798);
 
         /// <summary>
         /// Channel commands are restricted to. 0 means no restriction (commands work in any channel).
