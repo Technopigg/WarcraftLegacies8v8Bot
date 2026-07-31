@@ -11,6 +11,12 @@ namespace LegaciesBot.Services.CaptainDraft
             if (lobby.CaptainA != null && lobby.CaptainB != null)
                 return false;
 
+            // Without this the same person could claim twice and captain both
+            // sides. !captain guards against it, but it is the only caller and
+            // the service should not depend on that staying true.
+            if (lobby.CaptainA == userId || lobby.CaptainB == userId)
+                return false;
+
             if (lobby.CaptainA == null)
             {
                 lobby.CaptainA = userId;
