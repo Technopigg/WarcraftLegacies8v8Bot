@@ -8,11 +8,17 @@ namespace LegaciesBot.Config
         public static ulong DraftChannelId { get; } =
             GetUlongEnv("WL_DISCORD_DRAFT_CHANNEL_ID", 1488958363361349908);
 
+        // "Team 1" and "Team 2" as they exist in Technopig's Server
+        // (1218338908216229979), which is where this bot actually runs. 06433f5
+        // replaced them with ids from the Stoer bot's server; the bot is not a
+        // member of that server, so it could not see those roles and every
+        // draft ended with the roles unassigned. Asked live on 2026-08-01, the
+        // guild returns exactly these two ids.
         public static ulong Team1RoleId { get; } =
-            GetUlongEnv("WL_DISCORD_TEAM1_ROLE_ID", 1472341864366608414);
+            GetUlongEnv("WL_DISCORD_TEAM1_ROLE_ID", 1488594785500397698);
 
         public static ulong Team2RoleId { get; } =
-            GetUlongEnv("WL_DISCORD_TEAM2_ROLE_ID", 1472341837011226798);
+            GetUlongEnv("WL_DISCORD_TEAM2_ROLE_ID", 1488594866970824904);
 
         /// <summary>
         /// Channel commands are restricted to. 0 means no restriction (commands work in any channel).
