@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using LegaciesBot.Core;
 using LegaciesBot.Services;
 using NetCord;
@@ -13,13 +14,13 @@ public class GameServiceCleanupTests
 
         public Task<RestGuild> GetGuildAsync(ulong guildId, bool withCounts = false)
         {
-            var g = (RestGuild)FormatterServices.GetUninitializedObject(typeof(RestGuild));
+            var g = (RestGuild)RuntimeHelpers.GetUninitializedObject(typeof(RestGuild));
             return Task.FromResult(g);
         }
 
         public Task<Role> CreateRoleAsync(ulong guildId, string name)
         {
-            var r = (Role)FormatterServices.GetUninitializedObject(typeof(Role));
+            var r = (Role)RuntimeHelpers.GetUninitializedObject(typeof(Role));
             return Task.FromResult(r);
         }
 

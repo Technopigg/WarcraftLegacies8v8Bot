@@ -10,7 +10,6 @@ using LegaciesBot.Services.CaptainDraft;
 using Microsoft.Extensions.DependencyInjection;
 using LegaciesBot.Seasons;
 using NetCord.Rest;
-using LegaciesBot.Services;
 
 string token = Environment.GetEnvironmentVariable("WL8v8_BOT_TOKEN");
 
