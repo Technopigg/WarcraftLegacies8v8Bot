@@ -70,3 +70,58 @@ public class ReplayVerdictTests
         Assert.Equal("some_new_code", ReplayVerdict.DescribeExclusion("some_new_code"));
     }
 }
+
+/// <summary>
+/// The other two vocabularies the site speaks: why it would not take a file,
+/// and why it already had it. A player reading "replay_parse_error" or
+/// "same_game_shorter_or_equal" learns nothing.
+/// </summary>
+public class ReplayReasonTests
+{
+    [Theory]
+    [InlineData("replay_parse_error")]
+    [InlineData("empty_replay_file")]
+    [InlineData("replay_file_too_large")]
+    [InlineData("invalid_content_length")]
+    [InlineData("missing_map_info")]
+    [InlineData("unsupported_map_family")]
+    [InlineData("map_family_not_registered")]
+    [InlineData("unregistered_map_version")]
+    [InlineData("rate_limit_exceeded")]
+    [InlineData("storage_unavailable")]
+    public void EveryRejectionCodeTheSiteSendsBecomesASentence(string code)
+    {
+        var text = ReplayVerdict.DescribeRejection(code);
+
+        Assert.NotEqual(code, text);
+        Assert.DoesNotContain("_", text);
+    }
+
+    [Theory]
+    [InlineData("file_sha256_exists")]
+    [InlineData("parsed_replay_exists")]
+    [InlineData("discord_ids_exist")]
+    [InlineData("same_game_shorter_or_equal")]
+    [InlineData("duplicate_replay")]
+    public void EveryDuplicateCodeTheSiteSendsBecomesASentence(string code)
+    {
+        var text = ReplayVerdict.DescribeDuplicate(code);
+
+        Assert.NotEqual(code, text);
+        Assert.DoesNotContain("_", text);
+    }
+
+    [Fact]
+    public void AMissingReasonStillReads()
+    {
+        Assert.Equal("no reason given", ReplayVerdict.DescribeRejection(null));
+        Assert.Equal("this replay is already uploaded", ReplayVerdict.DescribeDuplicate(null));
+    }
+
+    [Fact]
+    public void AnUnknownCodeIsShownRatherThanHidden()
+    {
+        Assert.Equal("brand_new_code", ReplayVerdict.DescribeRejection("brand_new_code"));
+        Assert.Equal("brand_new_code", ReplayVerdict.DescribeDuplicate("brand_new_code"));
+    }
+}

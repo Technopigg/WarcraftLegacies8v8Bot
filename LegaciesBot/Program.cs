@@ -192,14 +192,14 @@ static EmbedProperties BuildReplayEmbed(ReplayUploadResult result, string filena
 
     if (result.IsDuplicate)
     {
-        string desc = $"`{filename}`\nThis replay has already been uploaded.";
+        string desc = $"`{filename}`\n{ReplayVerdict.DescribeDuplicate(result.Reason)}.";
         if (result.MatchPublicId != null)
             desc += $"\n{siteBaseUrl}/replays/{result.MatchPublicId}";
         return EmbedFactory.Warning("Duplicate", desc);
     }
 
     if (result.IsRejected)
-        return EmbedFactory.Error("Rejected", $"`{filename}`\n{result.Reason ?? "Unknown reason"}");
+        return EmbedFactory.Error("Rejected", $"`{filename}`\n{ReplayVerdict.DescribeRejection(result.Reason)}");
 
     return EmbedFactory.Error("Unexpected response", $"`{filename}` — {result.Status}");
 }

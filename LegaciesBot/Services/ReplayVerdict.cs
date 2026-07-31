@@ -33,6 +33,43 @@ namespace LegaciesBot.Services
         public static bool IsNotRanked(string? matchStatus) => matchStatus == NotRanked;
 
         /// <summary>
+        /// Why the site would not take the file at all. These are the codes it
+        /// answers a rejected or errored upload with; a player reading
+        /// "replay_parse_error" learns nothing.
+        /// </summary>
+        public static string DescribeRejection(string? reason) => reason switch
+        {
+            "replay_parse_error" => "this file is not a Warcraft III replay the site can read",
+            "empty_replay_file" => "the file is empty",
+            "replay_file_too_large" => "the file is too large",
+            "invalid_content_length" => "the upload was malformed",
+            "missing_map_info" => "the replay does not say which map it was played on",
+            "unsupported_map_family" => "that map is not tracked here",
+            "map_family_not_registered" => "that map is not tracked here",
+            "unregistered_map_version" => "this map version is not part of the season",
+            "rate_limit_exceeded" => "too many uploads just now, try again shortly",
+            "storage_unavailable" => "replay storage is unavailable, try again shortly",
+            null => "no reason given",
+            _ => reason,
+        };
+
+        /// <summary>
+        /// Why the site already had this replay. Every one of these means the
+        /// game is on the site already, so the player wants the link, not an
+        /// error.
+        /// </summary>
+        public static string DescribeDuplicate(string? reason) => reason switch
+        {
+            "file_sha256_exists" => "this exact file is already uploaded",
+            "parsed_replay_exists" => "this replay is already uploaded",
+            "discord_ids_exist" => "this attachment was already uploaded",
+            "same_game_shorter_or_equal" => "a longer recording of this game is already uploaded",
+            "duplicate_replay" => "this replay is already uploaded",
+            null => "this replay is already uploaded",
+            _ => reason,
+        };
+
+        /// <summary>
         /// Every code the site can put in ranked_exclusion_reason. The last one
         /// cannot reach an upload — it appears when two accounts that both
         /// played a match are merged into one profile — but leaving it to the
