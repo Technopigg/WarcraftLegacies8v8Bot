@@ -64,6 +64,7 @@ namespace LegaciesBot.Services
                     Reason = payload?.Reason,
                     MatchPublicId = payload?.Match?.PublicId,
                     MatchStatus = payload?.Match?.Status,
+                    RankedExclusionReason = payload?.Match?.RankedExclusionReason,
                     RatingPool = payload?.Match?.RatingPool,
                     MapVersion = payload?.Match?.MapVersionLabel,
                     PlayersCount = payload?.Match?.PlayersCount
@@ -82,6 +83,7 @@ namespace LegaciesBot.Services
         public string? Reason { get; init; }
         public string? MatchPublicId { get; init; }
         public string? MatchStatus { get; init; }
+        public string? RankedExclusionReason { get; init; }
         public string? RatingPool { get; init; }
         public string? MapVersion { get; init; }
         public int? PlayersCount { get; init; }
@@ -143,5 +145,8 @@ namespace LegaciesBot.Services
 
         [JsonPropertyName("map_version_label")]
         public string? MapVersionLabel { get; set; }
+
+        [JsonPropertyName("ranked_exclusion_reason")]
+        public string? RankedExclusionReason { get; set; }
     }
 }
