@@ -30,7 +30,7 @@ var client = new GatewayClient(
 );
 
 var httpClient = new HttpClient();
-var replayUploadService = new ReplayUploadService(httpClient, DiscordConfig.SiteBaseUrl);
+var replayUploadService = new ReplayUploadService(httpClient, DiscordConfig.SiteBaseUrl, DiscordConfig.SiteApiToken);
 GlobalServices.SiteApiService = new SiteApiService(httpClient, DiscordConfig.SiteBaseUrl, DiscordConfig.SiteApiToken);
 
 var matchHistoryService = new MatchHistoryService();

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,6 +8,7 @@ namespace LegaciesBot.Services
     {
         private readonly HttpClient _http;
         private readonly string _siteBaseUrl;
+        private readonly string _apiToken;
 
         private static readonly JsonSerializerOptions _json = new()
         {
@@ -14,10 +16,11 @@ namespace LegaciesBot.Services
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        public ReplayUploadService(HttpClient http, string siteBaseUrl)
+        public ReplayUploadService(HttpClient http, string siteBaseUrl, string apiToken = "")
         {
             _http = http;
             _siteBaseUrl = siteBaseUrl.TrimEnd('/');
+            _apiToken = apiToken;
         }
 
         public async Task<ReplayUploadResult> UploadAsync(byte[] data, string filename, DiscordUploadContext? discord = null)
@@ -37,10 +40,21 @@ namespace LegaciesBot.Services
                 content.Headers.TryAddWithoutValidation("X-Bot-Version", discord.BotVersion);
             }
 
+            // The rating pool override and the six X-Discord-* dedup keys above are
+            // privileged: the site accepts them only from a request carrying the bot
+            // token, and drops them from anyone else with a warning in its log. Sent
+            // without it, every header this method sets was silently discarded.
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_siteBaseUrl}/api/replays/uploads")
+            {
+                Content = content,
+            };
+            if (!string.IsNullOrEmpty(_apiToken))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+
             HttpResponseMessage response;
             try
             {
-                response = await _http.PostAsync($"{_siteBaseUrl}/api/replays/uploads", content);
+                response = await _http.SendAsync(request);
             }
             catch (Exception ex)
             {
