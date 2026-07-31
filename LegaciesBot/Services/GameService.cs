@@ -11,6 +11,9 @@ namespace LegaciesBot.Services
 
         private readonly IGatewayClient _client;
         private readonly IMatchHistoryService _matchHistoryService;
+        // Kept wired but deliberately never called: since Season 5 the site owns
+        // rating, and a match scored here as well would count twice. The service
+        // and its tests stay for lobby balancing, which is a separate number.
         private readonly IEloService _eloService;
         private readonly IFactionAssignmentService _factionAssignment;
         private readonly IFactionRegistry _factionRegistry;
