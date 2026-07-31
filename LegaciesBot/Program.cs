@@ -180,12 +180,12 @@ static EmbedProperties BuildReplayEmbed(ReplayUploadResult result, string filena
         // The rating pool says which ladder a match would belong to, not whether it counts.
         // Only the site's match status does — a game on a map outside the season is recorded
         // but not ranked, and telling the player otherwise is a lie.
-        string verdict = DescribeRatingVerdict(result);
+        string verdict = ReplayVerdict.Describe(result.MatchStatus, result.RatingPool, result.RankedExclusionReason);
         string desc = $"`{filename}`\n**{verdict}** — {result.PlayersCount} players — {result.MapVersion}";
         if (result.MatchPublicId != null)
             desc += $"\n{siteBaseUrl}/replays/{result.MatchPublicId}";
 
-        return result.MatchStatus == "not_ranked"
+        return ReplayVerdict.IsNotRanked(result.MatchStatus)
             ? EmbedFactory.Warning("Match recorded, not ranked", desc)
             : EmbedFactory.Success("Match recorded", desc);
     }
@@ -203,32 +203,6 @@ static EmbedProperties BuildReplayEmbed(ReplayUploadResult result, string filena
 
     return EmbedFactory.Error("Unexpected response", $"`{filename}` — {result.Status}");
 }
-
-static string DescribeRatingVerdict(ReplayUploadResult result)
-{
-    string pool = result.RatingPool == "discord" ? "discord pool" : "public pool";
-
-    return result.MatchStatus switch
-    {
-        "not_ranked" => $"Not ranked — {DescribeExclusion(result.RankedExclusionReason)}",
-        "ranked" => $"Ranked ({pool})",
-        _ => $"Awaiting review ({pool})",
-    };
-}
-
-// Every code the site can put in ranked_exclusion_reason. The last one is not
-// reachable from an upload — it appears when two accounts that both played a
-// match are merged into one profile — but leaving it to the fallback would
-// print a raw identifier at a player.
-static string DescribeExclusion(string? reason) => reason switch
-{
-    "unregistered_map_version" => "this map version is not part of the season",
-    "map_version_not_ranked" => "this map version does not count towards the rating",
-    "single_player_replay" => "single player replays do not count",
-    "merged_profile_duplicate_participation" => "two merged accounts played this match; it is back in review",
-    null => "see the match page for details",
-    _ => reason,
-};
 
 client.Ready += args =>
 {
