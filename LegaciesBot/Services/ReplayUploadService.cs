@@ -20,12 +20,22 @@ namespace LegaciesBot.Services
             _siteBaseUrl = siteBaseUrl.TrimEnd('/');
         }
 
-        public async Task<ReplayUploadResult> UploadAsync(byte[] data, string filename)
+        public async Task<ReplayUploadResult> UploadAsync(byte[] data, string filename, DiscordUploadContext? discord = null)
         {
             var content = new ByteArrayContent(data);
             content.Headers.ContentLength = data.Length;
             content.Headers.TryAddWithoutValidation("X-Original-Filename", Uri.EscapeDataString(filename));
             content.Headers.TryAddWithoutValidation("X-Rating-Pool", "discord");
+
+            if (discord != null)
+            {
+                content.Headers.TryAddWithoutValidation("X-Discord-Guild-Id", discord.GuildId.ToString());
+                content.Headers.TryAddWithoutValidation("X-Discord-Channel-Id", discord.ChannelId.ToString());
+                content.Headers.TryAddWithoutValidation("X-Discord-Message-Id", discord.MessageId.ToString());
+                content.Headers.TryAddWithoutValidation("X-Discord-Attachment-Id", discord.AttachmentId.ToString());
+                content.Headers.TryAddWithoutValidation("X-Discord-Uploader-Id", discord.UploaderId.ToString());
+                content.Headers.TryAddWithoutValidation("X-Bot-Version", discord.BotVersion);
+            }
 
             HttpResponseMessage response;
             try
@@ -84,6 +94,15 @@ namespace LegaciesBot.Services
         public bool IsRejected => Status == "rejected";
         public bool HasError => NetworkError != null || RateLimited || TooLarge;
     }
+
+    public record DiscordUploadContext(
+        ulong GuildId,
+        ulong ChannelId,
+        ulong MessageId,
+        ulong AttachmentId,
+        ulong UploaderId,
+        string BotVersion = "1.0"
+    );
 
     // Site response shape (CONTRACT.md §1)
     internal class SiteUploadPayload
