@@ -98,7 +98,7 @@ namespace LegaciesBot.Discord
                     return $"`{e.Rank,2}.` **{e.DisplayName}** — {e.Rating} ({e.WinsCount}W/{e.LossesCount}L {wr})";
                 });
 
-                string desc = string.Join("\n", lines) + "\n\n[Full leaderboard](https://warcraftlegacies.com/leaderboard)";
+                string desc = string.Join("\n", lines) + "\n\n[Full leaderboard](https://warcraftlegacies.com/rankings)";
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                     EmbedFactory.Info("Season 5 Summary — Top 5", desc)]));
                 return;
@@ -107,7 +107,7 @@ namespace LegaciesBot.Discord
             if (string.Equals(sub, "showleaderboard", StringComparison.OrdinalIgnoreCase))
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Info("Season Leaderboard", "Season 5 ratings are on the site:\n<https://warcraftlegacies.com/leaderboard>")]));
+                    EmbedFactory.Info("Season Leaderboard", "Season 5 ratings are on the site:\n<https://warcraftlegacies.com/rankings>")]));
                 return;
             }
 

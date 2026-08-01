@@ -21,7 +21,7 @@ namespace LegaciesBot.Discord
             if (string.IsNullOrWhiteSpace(playerKey))
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Info("Player Stats", "Usage: `!stats <battletag>` (e.g. `!stats Nick#1234`)\nFull profile: <https://warcraftlegacies.com/players>")]));
+                    EmbedFactory.Info("Player Stats", "Usage: `!stats <battletag>` (e.g. `!stats Nick#1234`)\nEvery player: <https://warcraftlegacies.com/rankings>")]));
                 return;
             }
 
@@ -30,7 +30,7 @@ namespace LegaciesBot.Discord
             if (result == null)
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Warning("Not found", $"No data for `{playerKey}` in the discord pool.\nCheck your battletag or visit <https://warcraftlegacies.com/players>")]));
+                    EmbedFactory.Warning("Not found", $"No data for `{playerKey}` in the discord pool.\nCheck your battletag, or find yourself at <https://warcraftlegacies.com/rankings>")]));
                 return;
             }
 
@@ -67,7 +67,7 @@ namespace LegaciesBot.Discord
                 return $"`{e.Rank,2}.` **{e.DisplayName}** — {e.Rating} ({e.WinsCount}W/{e.LossesCount}L {wr})";
             });
 
-            string desc = string.Join("\n", lines) + $"\n\n[Full leaderboard](https://warcraftlegacies.com/leaderboard)";
+            string desc = string.Join("\n", lines) + $"\n\n[Full leaderboard](https://warcraftlegacies.com/rankings)";
 
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Info($"Top {result.Entries.Count} — Discord Pool", desc)]));
