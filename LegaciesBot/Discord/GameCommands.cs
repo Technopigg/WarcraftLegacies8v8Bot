@@ -46,7 +46,7 @@ namespace LegaciesBot.Discord
             _stats.GetOrCreate(userId);
 
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName()}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your Season 5 rating.")]));
+                EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName(name)}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your ranked rating.")]));
 
         }
         [Command("recent")]

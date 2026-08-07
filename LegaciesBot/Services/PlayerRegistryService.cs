@@ -63,7 +63,10 @@ namespace LegaciesBot.Services
             lock (_lock)
             {
                 if (_players.TryGetValue(discordId, out var existing))
+                {
+                    RepairStaleName(existing, name);
                     return existing;
+                }
 
                 var player = new Player(discordId, name ?? discordId.ToString())
                 {
@@ -106,8 +109,11 @@ namespace LegaciesBot.Services
         {
             lock (_lock)
             {
-                if (_players.ContainsKey(discordId))
-                    return _players[discordId];
+                if (_players.TryGetValue(discordId, out var existing))
+                {
+                    RepairStaleName(existing, name);
+                    return existing;
+                }
 
                 var player = new Player(discordId, name)
                 {
@@ -159,6 +165,21 @@ namespace LegaciesBot.Services
 
             File.WriteAllText(_filePath, json);
         }
+        // Older records were stored with Name == discordId.ToString(). When we now
+        // know a real Discord username, overwrite the numeric placeholder so it is
+        // never shown to users. Must be called while holding _lock.
+        private static void RepairStaleName(Player player, string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+
+            if (name == player.DiscordId.ToString())
+                return;
+
+            if (!player.HasRealName())
+                player.Name = name;
+        }
+
         public static void ResetForTests()
         {
             if (File.Exists("players.json"))

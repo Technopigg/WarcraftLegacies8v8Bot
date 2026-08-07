@@ -5,7 +5,7 @@ namespace LegaciesBot.Services
     public interface ILobbyService
     {
         Lobby CurrentLobby { get; }
-        Player JoinLobby(ulong discordId);
+        Player JoinLobby(ulong discordId, string? username = null);
         bool RemovePlayer(ulong discordId);
         bool MarkActive(ulong discordId);
         List<Player> GetLobbyMembers();

@@ -40,7 +40,7 @@ namespace LegaciesBot.Services
             return lobby;
         }
 
-        public Player JoinLobby(ulong discordId)
+        public Player JoinLobby(ulong discordId, string? username = null)
         {
             var lobby = CurrentLobby;
 
@@ -55,7 +55,7 @@ namespace LegaciesBot.Services
             var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
             if (player == null)
             {
-                player = _playerRegistry.GetOrCreate(discordId);
+                player = _playerRegistry.GetOrCreate(discordId, username);
                 player.JoinedAt = DateTime.UtcNow;
                 lobby.Players.Add(player);
             }

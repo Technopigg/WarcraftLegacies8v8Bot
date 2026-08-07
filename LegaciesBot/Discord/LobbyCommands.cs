@@ -18,6 +18,7 @@ namespace LegaciesBot.Discord
         private readonly ModerationService _moderation;
         private readonly NicknameService _nickname;
         private readonly CaptainDraftService _captainDraft;
+        private readonly SiteApiService _site;
 
         public LobbyCommands()
         {
@@ -29,6 +30,24 @@ namespace LegaciesBot.Discord
             _moderation = GlobalServices.ModerationService;
             _nickname = GlobalServices.NicknameService;
             _captainDraft = GlobalServices.CaptainDraftService;
+            _site = GlobalServices.SiteApiService;
+        }
+
+        // The lobby used to print a local "(800)" constant that meant nothing.
+        // Prefer the site rating for a linked user; show "unrated" when the site
+        // says they are not linked; omit the rating entirely if the site is down
+        // rather than invent a number.
+        private async Task<string> ResolveRatingLabelAsync(ulong discordId)
+        {
+            var result = await _site.GetPlayerByDiscordAsync(discordId);
+
+            if (result.IsOk && result.Value != null)
+                return result.Value.Rating.ToString();
+
+            if (result.IsNotFound)
+                return "unrated";
+
+            return "";
         }
         
 [Command("join")]
@@ -37,6 +56,7 @@ public async Task JoinLobby()
 {
     var ctx = this.Context;
     var discordId = ctx.Message.Author.Id;
+    var username = ctx.Message.Author.Username;
 
     if (_moderation.IsBanned(discordId))
     {
@@ -50,19 +70,19 @@ public async Task JoinLobby()
     if (existing != null)
     {
         await ctx.Message.ReplyAsync(
-            $"{existing.DisplayName()} ({existing.Elo}), you are already in the lobby.");
+            $"{existing.DisplayName(username)}, you are already in the lobby.");
         return;
     }
 
-    var player = _lobbyService.JoinLobby(discordId);
-    var stats = _playerStats.GetOrCreate(player.DiscordId);
-    player.Elo = stats.Elo;
+    var player = _lobbyService.JoinLobby(discordId, username);
 
     var savedPrefs = _playerData.GetPreferences(player.DiscordId);
     if (savedPrefs.Count > 0)
         player.FactionPreferences = savedPrefs.ToList();
 
-    string display = $"{player.DisplayName()} ({player.Elo})";
+    string rating = await ResolveRatingLabelAsync(discordId);
+    string name = player.DisplayName(username);
+    string display = string.IsNullOrEmpty(rating) ? name : $"{name} ({rating})";
 
     if (savedPrefs.Count > 0)
     {
@@ -122,7 +142,7 @@ public async Task JoinLobby()
                 ? $"Lobby #{lobby.GameNumber} — {lobby.Players.Count}/16"
                 : $"Lobby — {lobby.Players.Count}/16";
 
-            var lines = lobby.Players.Select((p, i) => $"`{i + 1,2}.` {p.DisplayName()} — **{p.Elo}** Elo");
+            var lines = lobby.Players.Select((p, i) => $"`{i + 1,2}.` {p.DisplayName()}");
             var embed = EmbedFactory.Info(title, string.Join("\n", lines));
 
             await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([embed]));
@@ -144,7 +164,7 @@ public async Task JoinLobby()
                 return;
             }
 
-            string display = $"{player.DisplayName()} ({player.Elo})";
+            string display = player.DisplayName(ctx.Message.Author.Username);
             _lobbyService.RemovePlayer(userId);
 
             int remaining = _lobbyService.CurrentLobby.Players.Count;
