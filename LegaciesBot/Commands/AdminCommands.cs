@@ -170,6 +170,83 @@ namespace LegaciesBot.Commands
             await Context.Message.ReplyAsync("Moderators:\n" + string.Join("\n", names));
         }
 
+        [Command("link")]
+        public async Task LinkPlayer(string userInput, [CommandParameter(Remainder = true)] string? battletag = null)
+        {
+            var ctx = this.Context;
+
+            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Forbidden", "Only admins and moderators can link players.")]));
+                return;
+            }
+
+            var userId = ResolveUserId(userInput);
+            if (userId == null || string.IsNullOrWhiteSpace(battletag))
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("Usage", "`!link @user Name#1234`")]));
+                return;
+            }
+
+            var result = await GlobalServices.SiteApiService.LinkDiscordAsync(userId.Value, battletag.Trim());
+
+            if (result.IsUnavailable)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Site unavailable", "Could not reach warcraftlegacies.com — please try again in a minute.")]));
+                return;
+            }
+
+            if (result.IsNotFound)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("No such player", $"No player `{battletag.Trim()}` on the site yet — have they uploaded a replay?")]));
+                return;
+            }
+
+            var link = result.Value!;
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Success("Linked", $"Linked <@{userId}> to **{link.Battletag}** ({link.DisplayName}).")]));
+        }
+
+        [Command("unlink")]
+        public async Task UnlinkPlayer(string? userInput = null)
+        {
+            var ctx = this.Context;
+
+            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Forbidden", "Only admins and moderators can unlink players.")]));
+                return;
+            }
+
+            var userId = userInput != null ? ResolveUserId(userInput) : null;
+            if (userId == null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("Usage", "`!unlink @user`")]));
+                return;
+            }
+
+            var result = await GlobalServices.SiteApiService.UnlinkDiscordAsync(userId.Value);
+
+            if (result.IsUnavailable)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Site unavailable", "Could not reach warcraftlegacies.com — please try again in a minute.")]));
+                return;
+            }
+
+            var unlink = result.Value!;
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                unlink.Unlinked
+                    ? EmbedFactory.Success("Unlinked", $"<@{userId}> is no longer linked to a site profile.")
+                    : EmbedFactory.Info("Nothing to do", $"<@{userId}> was not linked to any site profile.")]));
+        }
+
         [Command("status")]
         public async Task SiteStatus()
         {
