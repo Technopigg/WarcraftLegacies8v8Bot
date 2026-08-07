@@ -41,7 +41,7 @@ var seasonService = new SeasonService();
 
 var gateway = new RealGatewayClient(client);
 var matchHistory = new RealMatchHistoryService(matchHistoryService);
-var elo = new RealEloService(playerStatsService, seasonService);
+var elo = new RealEloService();
 
 var factionRegistry = new RealFactionRegistry();
 var factionAssignment = new RealFactionAssignmentService(factionRegistry);

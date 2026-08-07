@@ -1,31 +1,18 @@
 using LegaciesBot.Core;
-using LegaciesBot.Seasons;
 
 namespace LegaciesBot.Services
 {
+    // Season 5+: the site is the single source of truth for all ratings. The local
+    // Elo engine has been retired. This implementation is a no-op kept only to
+    // satisfy the GameService constructor; it never mutates any local rating store.
     public class RealEloService : IEloService
     {
-        private readonly PlayerStatsService _lifetime;
-        private readonly SeasonService _seasons;
-
-        public RealEloService(PlayerStatsService lifetime, SeasonService seasons)
-        {
-            _lifetime = lifetime;
-            _seasons = seasons;
-        }
-
         public Dictionary<ulong, int> ApplyTeamResult(
             List<Player> teamA,
             List<Player> teamB,
             MatchResult result)
         {
-            return EloService.ApplyTeamResult(
-                teamA,
-                teamB,
-                result,
-                _lifetime,
-                _seasons
-            );
+            return new Dictionary<ulong, int>();
         }
     }
 }

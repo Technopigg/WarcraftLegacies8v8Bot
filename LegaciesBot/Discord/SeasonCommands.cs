@@ -100,24 +100,31 @@ namespace LegaciesBot.Discord
 
                 string desc = string.Join("\n", lines) + "\n\n[Full leaderboard](https://warcraftlegacies.com/rankings)";
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Info("Season 5 Summary — Top 5", desc)]));
+                    EmbedFactory.Info($"{result.SeasonKey} Summary — Top 5", desc)]));
                 return;
             }
 
             if (string.Equals(sub, "showleaderboard", StringComparison.OrdinalIgnoreCase))
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Info("Season Leaderboard", "Season 5 ratings are on the site:\n<https://warcraftlegacies.com/rankings>")]));
+                    EmbedFactory.Info("Season Leaderboard", "Current-season ratings are on the site:\n<https://warcraftlegacies.com/rankings>")]));
                 return;
             }
 
-            var current = _seasons.CurrentSeason;
+            // The site is the single source of truth for which season is live.
+            // The bot no longer prints its own local season counter.
+            var health = await _site.GetHealthAsync();
 
-            await ctx.Message.ReplyAsync(
-                "Season " + current.SeasonNumber + "\n" +
-                "- Started: " + current.StartedAt.ToString("yyyy-MM-dd") + "\n" +
-                "- Players this season: " + current.PlayerStats.Count
-            );
+            if (health == null)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Error("Site unavailable", "Could not reach warcraftlegacies.com to read the current season.")]));
+                return;
+            }
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Info($"Current season — {health.SeasonKey}",
+                    "Ratings and standings live on the site:\n<https://warcraftlegacies.com/rankings>")]));
         }
     }
 }
