@@ -6,6 +6,8 @@ namespace LegaciesBot.Discord
 {
     public class StatsCommands : CommandModule<CommandContext>
     {
+        private const string RankingsUrl = "https://warcraftlegacies.com/rankings";
+
         private readonly SiteApiService _site;
 
         public StatsCommands()
@@ -14,34 +16,69 @@ namespace LegaciesBot.Discord
         }
 
         [Command("stats")]
-        public async Task Stats(string? playerKey = null)
+        public async Task Stats([CommandParameter(Remainder = true)] string? query = null)
         {
             var ctx = this.Context;
 
-            if (string.IsNullOrWhiteSpace(playerKey))
+            // Bare `!stats` — "about me" via the caller's linked Discord id.
+            if (string.IsNullOrWhiteSpace(query))
             {
+                var me = await _site.GetPlayerByDiscordAsync(ctx.Message.Author.Id);
+
+                if (me.IsUnavailable)
+                {
+                    await ReplySiteUnavailable();
+                    return;
+                }
+
+                if (me.IsNotFound)
+                {
+                    await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Info("Not linked yet",
+                            "Your Discord account is not linked to a site profile.\n" +
+                            "Ask a mod to link you with `!link @you Name#1234`, or look someone up with `!stats <name>`.")]));
+                    return;
+                }
+
+                var r = me.Value!;
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Info("Player Stats", "Usage: `!stats <battletag>` (e.g. `!stats Nick#1234`)\nEvery player: <https://warcraftlegacies.com/rankings>")]));
+                    BuildStatsEmbed(r.DisplayName, r.Rating, r.Sigma, r.MatchesCount,
+                        r.WinsCount, r.LossesCount, r.Winrate, r.ProfileUrl)]));
                 return;
             }
 
-            var result = await _site.GetPlayerAsync(playerKey);
+            // `!stats <query>` — fuzzy search.
+            var search = await _site.SearchPlayersAsync(query);
 
-            if (result == null)
+            if (search.IsUnavailable)
             {
-                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Warning("Not found", $"No data for `{playerKey}` in the discord pool.\nCheck your battletag, or find yourself at <https://warcraftlegacies.com/rankings>")]));
+                await ReplySiteUnavailable();
                 return;
             }
 
-            string winratePct = (result.Winrate * 100).ToString("F1") + "%";
-            string desc =
-                $"**Rating:** {result.Rating} (σ {result.Sigma:F0})\n" +
-                $"**Matches:** {result.MatchesCount} — {result.WinsCount}W / {result.LossesCount}L — {winratePct}\n" +
-                $"[Full profile]({result.ProfileUrl})";
+            var results = search.Value!;
 
+            if (results.Count == 0)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("Not found",
+                        $"No player matching `{query}` in the discord pool.\nEvery player: <{RankingsUrl}>")]));
+                return;
+            }
+
+            if (results.Count > 1)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("Which one did you mean?",
+                        $"Found: {string.Join(", ", results.Select(r => r.Battletag))} — which one did you mean?")]));
+                return;
+            }
+
+            var hit = results[0];
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                EmbedFactory.Info($"Stats — {result.DisplayName}", desc)]));
+                BuildStatsEmbed(hit.DisplayName, hit.Rating, hit.Sigma, hit.MatchesCount,
+                    hit.WinsCount, hit.LossesCount, hit.Winrate, hit.ProfileUrl,
+                    prefixLine: $"Showing stats for {hit.Battletag}")]));
         }
 
         [Command("leaderboard")]
@@ -67,7 +104,7 @@ namespace LegaciesBot.Discord
                 return $"`{e.Rank,2}.` **{e.DisplayName}** — {e.Rating} ({e.WinsCount}W/{e.LossesCount}L {wr})";
             });
 
-            string desc = string.Join("\n", lines) + $"\n\n[Full leaderboard](https://warcraftlegacies.com/rankings)";
+            string desc = string.Join("\n", lines) + $"\n\n[Full leaderboard]({RankingsUrl})";
 
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Info($"Top {result.Entries.Count} — Discord Pool", desc)]));
@@ -77,18 +114,42 @@ namespace LegaciesBot.Discord
         public async Task Compare(string name1, string name2)
         {
             var ctx = this.Context;
-            var results = await Task.WhenAll(_site.GetPlayerAsync(name1), _site.GetPlayerAsync(name2));
-            var r1 = results[0];
-            var r2 = results[1];
 
-            if (r1 == null && r2 == null)
+            var left = await ResolveOneAsync(name1);
+            var right = await ResolveOneAsync(name2);
+
+            if (left.State == Resolution.Unavailable || right.State == Resolution.Unavailable)
+            {
+                await ReplySiteUnavailable();
+                return;
+            }
+
+            // Ambiguity beats missing: tell the user how to disambiguate first.
+            if (left.State == Resolution.Many || right.State == Resolution.Many)
+            {
+                var parts = new List<string>();
+                if (left.State == Resolution.Many)
+                    parts.Add($"`{name1}` matches: {string.Join(", ", left.Many!.Select(r => r.Battletag))}");
+                if (right.State == Resolution.Many)
+                    parts.Add($"`{name2}` matches: {string.Join(", ", right.Many!.Select(r => r.Battletag))}");
+
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("Which one did you mean?",
+                        string.Join("\n", parts) + "\n\nBe more specific and try again.")]));
+                return;
+            }
+
+            if (left.State == Resolution.None && right.State == Resolution.None)
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                     EmbedFactory.Warning("Not found", $"Neither `{name1}` nor `{name2}` found in the discord pool.")]));
                 return;
             }
 
-            static string Row(PlayerRatingResult? r, string key) => r == null
+            var r1 = left.Player;
+            var r2 = right.Player;
+
+            static string Row(PlayerSearchResult? r, string key) => r == null
                 ? $"`{key}` — not found"
                 : $"**{r.DisplayName}** — {r.Rating} ({r.WinsCount}W/{r.LossesCount}L {(r.Winrate * 100):F0}%)";
 
@@ -96,12 +157,51 @@ namespace LegaciesBot.Discord
             if (r1 != null && r2 != null)
             {
                 int diff = r1.Rating - r2.Rating;
-                string leader = diff > 0 ? r1.DisplayName : r2.DisplayName;
+                string leader = diff >= 0 ? r1.DisplayName : r2.DisplayName;
                 desc += $"\n\n{leader} leads by **{Math.Abs(diff)}** rating points.";
             }
 
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Info("Compare", desc)]));
+        }
+
+        private enum Resolution { Ok, None, Many, Unavailable }
+
+        private async Task<(Resolution State, PlayerSearchResult? Player, IReadOnlyList<PlayerSearchResult>? Many)>
+            ResolveOneAsync(string query)
+        {
+            var search = await _site.SearchPlayersAsync(query);
+
+            if (search.IsUnavailable)
+                return (Resolution.Unavailable, null, null);
+
+            var results = search.Value!;
+
+            return results.Count switch
+            {
+                0 => (Resolution.None, null, null),
+                1 => (Resolution.Ok, results[0], null),
+                _ => (Resolution.Many, null, results),
+            };
+        }
+
+        private Task ReplySiteUnavailable() =>
+            Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Error("Site unavailable",
+                    "Could not reach warcraftlegacies.com — please try again in a minute.")]));
+
+        private static NetCord.Rest.EmbedProperties BuildStatsEmbed(
+            string displayName, int rating, double sigma, int matches,
+            int wins, int losses, double winrate, string profileUrl, string? prefixLine = null)
+        {
+            string winratePct = (winrate * 100).ToString("F1") + "%";
+            string desc =
+                (prefixLine != null ? prefixLine + "\n\n" : "") +
+                $"**Rating:** {rating} (σ {sigma:F0})\n" +
+                $"**Matches:** {matches} — {wins}W / {losses}L — {winratePct}\n" +
+                $"[Full profile]({profileUrl})";
+
+            return EmbedFactory.Info($"Stats — {displayName}", desc);
         }
     }
 }
