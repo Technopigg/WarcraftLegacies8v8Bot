@@ -37,6 +37,12 @@ namespace LegaciesBot.Commands
                 return;
             }
 
+            if (lobby.IsLocked)
+            {
+                await ctx.Message.ReplyAsync("Draft mode is locked once the draft starts.");
+                return;
+            }
+
             DraftMode? newMode = input.ToLowerInvariant() switch
             {
                 "auto" => DraftMode.AutoDraft_AutoFaction,

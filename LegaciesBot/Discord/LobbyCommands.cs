@@ -104,16 +104,33 @@ public async Task JoinLobby()
     {
         if (lobby.CaptainA != null && lobby.CaptainB != null)
         {
-            lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
-            lobby.IsCaptainDraft = true;
+            // Captains might have already set a mode with !mode before the lobby
+            // filled. Only default to Captain Draft (Manual Faction) if they never touched it.
+            if (lobby.DraftMode == DraftMode.AutoDraft_AutoFaction)
+                lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
+
+            if (lobby.DraftMode is DraftMode.CaptainDraft_ManualFaction or DraftMode.CaptainDraft_AutoFaction)
+            {
+                lobby.IsCaptainDraft = true;
+
+                string modeLabel = lobby.DraftMode == DraftMode.CaptainDraft_AutoFaction ? "Auto Faction" : "Manual Faction";
+                await ctx.Message.ReplyAsync(
+                    $"Two captains detected — switching to **Captain Draft ({modeLabel})**.\n" +
+                    "Drafting will take place in the dedicated draft channel."
+                );
+
+                _captainDraft.BuildDraftOrder(lobby);
+                await _gameService.StartCaptainDraft(lobby, lobby.DraftChannelId);
+
+                return;
+            }
 
             await ctx.Message.ReplyAsync(
-                "Two captains detected — switching to **Captain Draft (Manual Faction)**.\n" +
-                "Drafting will take place in the dedicated draft channel."
+                "Two captains detected — switching to **AutoDraft (Manual Faction)**.\n" +
+                "Teams will be auto-balanced; captains assign factions afterward."
             );
 
-            _captainDraft.BuildDraftOrder(lobby);
-            await _gameService.StartCaptainDraft(lobby, lobby.DraftChannelId);
+            await _gameService.StartDraft(lobby, ctx.Message.ChannelId);
 
             return;
         }
