@@ -24,3 +24,11 @@ TestResults/
 
 # Deploy environment (real secrets live on the host only)
 .env
+
+# Local runtime data (mounted from /app/data in prod, never baked into the image)
+/LegaciesBot/permissions.json
+/LegaciesBot/player_stats.json
+/LegaciesBot/players.json
+/LegaciesBot/playerprefs.json
+/LegaciesBot/seasons.json
+/LegaciesBot/moderation.json
