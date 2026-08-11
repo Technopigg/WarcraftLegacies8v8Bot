@@ -109,7 +109,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("kill")]
-        public async Task KillGame(params int[] args)
+        public async Task KillGame(int? gameId = null)
         {
             var ctx = this.Context;
             ulong userId = ctx.Message.Author.Id;
@@ -129,7 +129,7 @@ namespace LegaciesBot.Discord
 
             Game game;
 
-            if (args.Length == 0)
+            if (gameId == null)
             {
                 if (games.Count > 1)
                 {
@@ -141,8 +141,7 @@ namespace LegaciesBot.Discord
             }
             else
             {
-                int gameId = args[0];
-                game = games.FirstOrDefault(g => g.Id == gameId);
+                game = games.FirstOrDefault(g => g.Id == gameId.Value);
                 if (game == null)
                 {
                     await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
