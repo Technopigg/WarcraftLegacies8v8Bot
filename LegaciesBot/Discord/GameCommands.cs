@@ -202,9 +202,8 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            var mentions = ctx.Message.MentionedUsers;
-            ulong? outId = mentions.Count >= 1 ? mentions[0].Id : _nicknames.ResolvePlayerId(outArg);
-            ulong? inId  = mentions.Count >= 2 ? mentions[1].Id : _nicknames.ResolvePlayerId(inArg);
+            ulong? outId = _nicknames.ResolvePlayerId(outArg);
+            ulong? inId  = _nicknames.ResolvePlayerId(inArg);
 
             if (!outId.HasValue)
             {
