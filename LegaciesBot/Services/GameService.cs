@@ -266,9 +266,16 @@ namespace LegaciesBot.Services
             var outId = outPlayer.DiscordId;
 
             // Determine which team the outgoing player belongs to (null if still undrafted).
+            // game.TeamA/TeamB don't get filled in until the game actually goes active, so
+            // check the lobby's teams too. Otherwise a sub done before that point only updates
+            // the lobby list and gets silently wiped out later when the game copies the
+            // (unchanged) teams over from the lobby.
+            Team? teamA = game.TeamA ?? game.Lobby.TeamA;
+            Team? teamB = game.TeamB ?? game.Lobby.TeamB;
+
             Team? team =
-                game.TeamA?.Players.Any(p => p.DiscordId == outId) == true ? game.TeamA :
-                game.TeamB?.Players.Any(p => p.DiscordId == outId) == true ? game.TeamB :
+                teamA?.Players.Any(p => p.DiscordId == outId) == true ? teamA :
+                teamB?.Players.Any(p => p.DiscordId == outId) == true ? teamB :
                 null;
 
             inPlayer.AssignedFaction = outPlayer.AssignedFaction;
