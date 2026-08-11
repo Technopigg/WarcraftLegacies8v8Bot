@@ -173,8 +173,12 @@ public async Task JoinLobby()
 
         [Command("prefs")]
         [Command("p")]
-        public async Task Preferences(params string[] args)
+        public async Task Preferences([CommandParameter(Remainder = true)] string? argsText = null)
         {
+            var args = string.IsNullOrWhiteSpace(argsText)
+                ? Array.Empty<string>()
+                : argsText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
             var ctx = this.Context;
             ulong callerId = ctx.Message.Author.Id;
 
