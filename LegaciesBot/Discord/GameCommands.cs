@@ -308,9 +308,10 @@ namespace LegaciesBot.Discord
 
             try
             {
+                string previousName = targetPlayer.DisplayName();
                 _playerRegistry.SetNickname(targetPlayer.DiscordId, adminNickname);
                 await ctx.Message.ReplyAsync(
-                    $"Nickname for **{targetPlayer.DisplayName()}** has been changed to **{adminNickname}**.");
+                    $"Nickname for **{previousName}** has been changed to **{adminNickname}**.");
             }
             catch (InvalidOperationException)
             {
