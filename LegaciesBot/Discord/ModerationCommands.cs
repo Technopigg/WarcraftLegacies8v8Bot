@@ -9,8 +9,16 @@ namespace LegaciesBot.Discord
         private readonly ModerationService _mod;
         private readonly PermissionService _perm;
         private readonly NicknameService _nick;
-        private readonly IMessageResponder _responder;
-        private readonly IUserContext _user;
+        private IMessageResponder? _responder;
+        private IUserContext? _user;
+
+        // These used to be set from GlobalServices, but nothing ever assigned them there,
+        // so every moderation command was silently crashing. They need to wrap the live
+        // message/user for whichever command is running, not a single global value, so
+        // build them here the first time a command actually needs one. Tests still pass
+        // their own fakes in through the other constructor, which this never overwrites.
+        private IMessageResponder Responder => _responder ??= new DiscordMessageResponder(Context);
+        private IUserContext UserCtx => _user ??= new DiscordUserContext(Context);
 
         public ModerationCommands(
             ModerationService mod,
@@ -31,33 +39,31 @@ namespace LegaciesBot.Discord
             _mod = GlobalServices.ModerationService;
             _perm = GlobalServices.PermissionService;
             _nick = GlobalServices.NicknameService;
-            _responder = GlobalServices.MessageResponder;
-            _user = GlobalServices.UserContext;
         }
 
         [Command("warn")]
         public async Task WarnAsync(string user, [CommandParameter(Remainder = true)] string reason)
         {
-            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            if (!_perm.IsModeratorOrAdmin(UserCtx.UserId))
             {
-                await _responder.ReplyAsync("You do not have permission to use this command.");
+                await Responder.ReplyAsync("You do not have permission to use this command.");
                 return;
             }
 
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
-                await _responder.ReplyAsync("Could not resolve user.");
+                await Responder.ReplyAsync("Could not resolve user.");
                 return;
             }
 
-            bool autoBanned = _mod.AddWarning(userId.Value, _user.UserId, reason);
+            bool autoBanned = _mod.AddWarning(userId.Value, UserCtx.UserId, reason);
 
-            await _responder.ReplyAsync($"Warned <@{userId}>: {reason}");
+            await Responder.ReplyAsync($"Warned <@{userId}>: {reason}");
 
             if (autoBanned)
             {
-                await _responder.ReplyAsync(
+                await Responder.ReplyAsync(
                     $"<@{userId}> has been automatically banned: Reached warning threshold");
             }
         }
@@ -65,84 +71,84 @@ namespace LegaciesBot.Discord
         [Command("removewarn")]
         public async Task RemoveWarnAsync(string user, int index)
         {
-            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            if (!_perm.IsModeratorOrAdmin(UserCtx.UserId))
             {
-                await _responder.ReplyAsync("You do not have permission to use this command.");
+                await Responder.ReplyAsync("You do not have permission to use this command.");
                 return;
             }
 
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
-                await _responder.ReplyAsync("Could not resolve user.");
+                await Responder.ReplyAsync("Could not resolve user.");
                 return;
             }
 
             bool removed = _mod.RemoveWarning(userId.Value, index);
             if (!removed)
             {
-                await _responder.ReplyAsync("Invalid warning index.");
+                await Responder.ReplyAsync("Invalid warning index.");
                 return;
             }
 
-            await _responder.ReplyAsync($"Removed warning {index} from <@{userId}>.");
+            await Responder.ReplyAsync($"Removed warning {index} from <@{userId}>.");
 
             if (!_mod.IsBanned(userId.Value))
             {
-                await _responder.ReplyAsync($"Unbanned <@{userId}>.");
+                await Responder.ReplyAsync($"Unbanned <@{userId}>.");
             }
         }
 
         [Command("removewarn")]
         public async Task RemoveWarnUsageAsync(string user)
         {
-            await _responder.ReplyAsync("Usage: !removewarn <user> <index>");
+            await Responder.ReplyAsync("Usage: !removewarn <user> <index>");
         }
 
         [Command("ban")]
         public async Task BanAsync(string user, [CommandParameter(Remainder = true)] string reason)
         {
-            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            if (!_perm.IsModeratorOrAdmin(UserCtx.UserId))
             {
-                await _responder.ReplyAsync("You do not have permission to use this command.");
+                await Responder.ReplyAsync("You do not have permission to use this command.");
                 return;
             }
 
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
-                await _responder.ReplyAsync("Could not resolve user.");
+                await Responder.ReplyAsync("Could not resolve user.");
                 return;
             }
 
-            _mod.AddBan(userId.Value, _user.UserId, reason);
-            await _responder.ReplyAsync($"Banned <@{userId}>: {reason}");
+            _mod.AddBan(userId.Value, UserCtx.UserId, reason);
+            await Responder.ReplyAsync($"Banned <@{userId}>: {reason}");
         }
 
         [Command("unban")]
         public async Task UnbanAsync(string user)
         {
-            if (!_perm.IsModeratorOrAdmin(_user.UserId))
+            if (!_perm.IsModeratorOrAdmin(UserCtx.UserId))
             {
-                await _responder.ReplyAsync("You do not have permission to use this command.");
+                await Responder.ReplyAsync("You do not have permission to use this command.");
                 return;
             }
 
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
-                await _responder.ReplyAsync("Could not resolve user.");
+                await Responder.ReplyAsync("Could not resolve user.");
                 return;
             }
 
             bool removed = _mod.RemoveBan(userId.Value);
             if (!removed)
             {
-                await _responder.ReplyAsync("User is not banned.");
+                await Responder.ReplyAsync("User is not banned.");
                 return;
             }
 
-            await _responder.ReplyAsync($"Unbanned <@{userId}>.");
+            await Responder.ReplyAsync($"Unbanned <@{userId}>.");
         }
 
         [Command("warns")]
@@ -151,7 +157,7 @@ namespace LegaciesBot.Discord
             var userId = _nick.ResolvePlayerId(user);
             if (userId == null)
             {
-                await _responder.ReplyAsync("Could not resolve user.");
+                await Responder.ReplyAsync("Could not resolve user.");
                 return;
             }
 
@@ -159,20 +165,20 @@ namespace LegaciesBot.Discord
             var warnings = _mod.GetActiveWarnings(userId.Value);
 
             if (banned)
-                await _responder.ReplyAsync($"<@{userId}> is currently **banned**.");
+                await Responder.ReplyAsync($"<@{userId}> is currently **banned**.");
             else
-                await _responder.ReplyAsync($"<@{userId}> is **not banned**.");
+                await Responder.ReplyAsync($"<@{userId}> is **not banned**.");
 
             if (warnings.Count == 0)
             {
-                await _responder.ReplyAsync("No active warnings.");
+                await Responder.ReplyAsync("No active warnings.");
                 return;
             }
 
             string list = string.Join("\n", warnings.Select((w, i) =>
                 $"{i}: {w.Reason} (by <@{w.ModeratorId}>)"));
 
-            await _responder.ReplyAsync($"Warnings for <@{userId}>:\n{list}");
+            await Responder.ReplyAsync($"Warnings for <@{userId}>:\n{list}");
         }
     }
 }
