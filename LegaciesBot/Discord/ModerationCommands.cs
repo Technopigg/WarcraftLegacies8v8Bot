@@ -36,7 +36,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("warn")]
-        public async Task WarnAsync(string user, string reason)
+        public async Task WarnAsync(string user, [CommandParameter(Remainder = true)] string reason)
         {
             if (!_perm.IsModeratorOrAdmin(_user.UserId))
             {
@@ -100,7 +100,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("ban")]
-        public async Task BanAsync(string user, string reason)
+        public async Task BanAsync(string user, [CommandParameter(Remainder = true)] string reason)
         {
             if (!_perm.IsModeratorOrAdmin(_user.UserId))
             {
