@@ -92,31 +92,58 @@ namespace LegaciesBot.Services
             return false;
         }
 
+        // Team membership can come from two places: picks made during an actual
+        // captain draft (TeamAPicks/TeamBPicks), or the auto-balanced teams when
+        // captains skip the draft and just assign factions (lobby.TeamA/TeamB).
         private bool IsOnCaptainsTeam(Lobby lobby, ulong captainId, ulong playerId)
         {
+            if (lobby.IsCaptainDraft)
+            {
+                if (captainId == lobby.CaptainA)
+                    return lobby.TeamAPicks.Contains(playerId);
+
+                if (captainId == lobby.CaptainB)
+                    return lobby.TeamBPicks.Contains(playerId);
+
+                return false;
+            }
+
             if (captainId == lobby.CaptainA)
-                return lobby.TeamAPicks.Contains(playerId);
+                return lobby.TeamA?.Players.Any(p => p.DiscordId == playerId) == true;
 
             if (captainId == lobby.CaptainB)
-                return lobby.TeamBPicks.Contains(playerId);
+                return lobby.TeamB?.Players.Any(p => p.DiscordId == playerId) == true;
 
             return false;
         }
 
         private IEnumerable<ulong> GetTeamPlayers(Lobby lobby, ulong captainId)
         {
+            if (lobby.IsCaptainDraft)
+            {
+                if (captainId == lobby.CaptainA)
+                    return lobby.TeamAPicks;
+
+                if (captainId == lobby.CaptainB)
+                    return lobby.TeamBPicks;
+
+                return Enumerable.Empty<ulong>();
+            }
+
             if (captainId == lobby.CaptainA)
-                return lobby.TeamAPicks;
+                return lobby.TeamA?.Players.Select(p => p.DiscordId) ?? Enumerable.Empty<ulong>();
 
             if (captainId == lobby.CaptainB)
-                return lobby.TeamBPicks;
+                return lobby.TeamB?.Players.Select(p => p.DiscordId) ?? Enumerable.Empty<ulong>();
 
             return Enumerable.Empty<ulong>();
         }
 
         public bool TryAssignSingle(Lobby lobby, ulong captainId, string playerInput, string factionInput)
         {
-            if (!lobby.IsCaptainDraft)
+            // Just need captains to exist here - doesn't matter if this lobby ran
+            // an actual captain draft or not.
+            if (lobby.CaptainA == null || lobby.CaptainB == null)
                 return false;
 
             if (!IsCaptain(lobby, captainId))
@@ -171,9 +198,9 @@ namespace LegaciesBot.Services
         {
             message = "";
 
-            if (!lobby.IsCaptainDraft)
+            if (lobby.CaptainA == null || lobby.CaptainB == null)
             {
-                message = "This is not a captain draft.";
+                message = "No captains assigned for this lobby.";
                 return false;
             }
 

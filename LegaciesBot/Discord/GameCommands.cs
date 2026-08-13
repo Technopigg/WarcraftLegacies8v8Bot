@@ -109,7 +109,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("kill")]
-        public async Task KillGame(params int[] args)
+        public async Task KillGame(int? gameId = null)
         {
             var ctx = this.Context;
             ulong userId = ctx.Message.Author.Id;
@@ -129,7 +129,7 @@ namespace LegaciesBot.Discord
 
             Game game;
 
-            if (args.Length == 0)
+            if (gameId == null)
             {
                 if (games.Count > 1)
                 {
@@ -141,8 +141,7 @@ namespace LegaciesBot.Discord
             }
             else
             {
-                int gameId = args[0];
-                game = games.FirstOrDefault(g => g.Id == gameId);
+                game = games.FirstOrDefault(g => g.Id == gameId.Value);
                 if (game == null)
                 {
                     await ctx.Message.ReplyAsync("No ongoing game found with that ID.");
@@ -202,9 +201,8 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            var mentions = ctx.Message.MentionedUsers;
-            ulong? outId = mentions.Count >= 1 ? mentions[0].Id : _nicknames.ResolvePlayerId(outArg);
-            ulong? inId  = mentions.Count >= 2 ? mentions[1].Id : _nicknames.ResolvePlayerId(inArg);
+            ulong? outId = _nicknames.ResolvePlayerId(outArg);
+            ulong? inId  = _nicknames.ResolvePlayerId(inArg);
 
             if (!outId.HasValue)
             {
@@ -310,9 +308,10 @@ namespace LegaciesBot.Discord
 
             try
             {
+                string previousName = targetPlayer.DisplayName();
                 _playerRegistry.SetNickname(targetPlayer.DiscordId, adminNickname);
                 await ctx.Message.ReplyAsync(
-                    $"Nickname for **{targetPlayer.DisplayName()}** has been changed to **{adminNickname}**.");
+                    $"Nickname for **{previousName}** has been changed to **{adminNickname}**.");
             }
             catch (InvalidOperationException)
             {

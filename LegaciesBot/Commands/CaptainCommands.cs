@@ -189,14 +189,15 @@ namespace LegaciesBot.Commands
 
         private async Task FinalizeDraft(Lobby lobby)
         {
-            var teamAPlayers = lobby.TeamAPicks.Select(id => _playerRegistry.GetPlayer(id)).Where(p => p != null).ToList();
-            var teamBPlayers = lobby.TeamBPicks.Select(id => _playerRegistry.GetPlayer(id)).Where(p => p != null).ToList();
+            var (teamA, teamB) = GlobalServices.GameService.RunDraftEngine(lobby);
+            bool factionsAssigned = lobby.DraftMode == DraftMode.CaptainDraft_AutoFaction;
+            GlobalServices.GameService.FinalizeTeams(lobby, teamA, teamB, factionsAssigned);
 
-            foreach (var p in teamAPlayers)
-                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, DiscordConfig.Team1RoleId);
+            foreach (var p in teamA.Players)
+                await _client.AddRoleToMemberAsync(GuildId, p.DiscordId, DiscordConfig.Team1RoleId);
 
-            foreach (var p in teamBPlayers)
-                await _client.AddRoleToMemberAsync(GuildId, p!.DiscordId, DiscordConfig.Team2RoleId);
+            foreach (var p in teamB.Players)
+                await _client.AddRoleToMemberAsync(GuildId, p.DiscordId, DiscordConfig.Team2RoleId);
 
             if (lobby.CaptainRoleId.HasValue)
             {
@@ -209,10 +210,14 @@ namespace LegaciesBot.Commands
 
             lobby.FactionAssignmentStarted = true;
 
-            var teamANames = teamAPlayers.Select(p => $"• {p!.DisplayName()}");
-            var teamBNames = teamBPlayers.Select(p => $"• {p!.DisplayName()}");
+            var teamANames = teamA.Players.Select(p => factionsAssigned ? $"• {p.DisplayName()} [{p.AssignedFaction}]" : $"• {p.DisplayName()}");
+            var teamBNames = teamB.Players.Select(p => factionsAssigned ? $"• {p.DisplayName()} [{p.AssignedFaction}]" : $"• {p.DisplayName()}");
 
-            string desc = $"**Team A**\n{string.Join("\n", teamANames)}\n\n**Team B**\n{string.Join("\n", teamBNames)}\n\nProceed to faction assignment (`!assignf` / `!lockfactions`).";
+            string tail = factionsAssigned
+                ? "\n\nFactions have been auto-assigned. The game is starting."
+                : "\n\nProceed to faction assignment (`!assignf` / `!lockfactions`).";
+
+            string desc = $"**Team A**\n{string.Join("\n", teamANames)}\n\n**Team B**\n{string.Join("\n", teamBNames)}{tail}";
             await SendDraftEmbed(EmbedFactory.Success($"Draft Complete — Lobby #{lobby.GameNumber}", desc));
         }
 

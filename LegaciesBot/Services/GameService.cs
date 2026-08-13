@@ -15,7 +15,6 @@ namespace LegaciesBot.Services
         // rating, and a match scored here as well would count twice. The service
         // and its tests stay for lobby balancing, which is a separate number.
         private readonly IEloService _eloService;
-        private readonly IFactionAssignmentService _factionAssignment;
         private readonly IFactionRegistry _factionRegistry;
         private readonly IDefaultPreferences _defaultPreferences;
 
@@ -39,7 +38,6 @@ namespace LegaciesBot.Services
             _client = client;
             _matchHistoryService = matchHistoryService;
             _eloService = eloService;
-            _factionAssignment = factionAssignment;
             _factionRegistry = factionRegistry;
             _defaultPreferences = defaultPreferences;
 
@@ -82,30 +80,51 @@ namespace LegaciesBot.Services
                     player.FactionPreferences = _defaultPreferences.Factions.ToList();
             }
 
+            // Factions get assigned inside the draft strategy itself for the auto-faction
+            // modes, and left blank on purpose for the manual ones. Don't assign them again
+            // here - that used to happen and silently reshuffled everyone's faction right
+            // after the "draft complete" message had already shown the real one.
             var (teamA, teamB) = _draftEngine.RunDraft(lobby);
+            bool factionsAssigned = lobby.DraftMode != DraftMode.AutoDraft_ManualFaction;
 
-            lobby.TeamA = teamA;
-            lobby.TeamB = teamB;
             lobby.DraftStarted = true;
             lobby.IsLocked = true;
 
             var channel = await _client.GetTextChannelAsync(channelId);
             if (channel != null)
             {
-                var aLines = teamA.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]");
-                var bLines = teamB.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]");
+                var aLines = teamA.Players.Select(p => factionsAssigned ? $"• {p.DisplayName()} [{p.AssignedFaction}]" : $"• {p.DisplayName()}");
+                var bLines = teamB.Players.Select(p => factionsAssigned ? $"• {p.DisplayName()} [{p.AssignedFaction}]" : $"• {p.DisplayName()}");
                 string desc = $"**Team A**\n{string.Join("\n", aLines)}\n\n**Team B**\n{string.Join("\n", bLines)}";
+                if (!factionsAssigned)
+                    desc += "\n\nAssign factions with `!assignf`, then `!lockfactions`.";
                 var embed = EmbedFactory.Success($"Draft Complete — Game #{game.Id}", desc);
                 await channel.SendMessageAsync(new MessageProperties().WithEmbeds([embed]));
             }
 
-            _factionAssignment.AssignFactionsForGame(teamA, teamB, null, null);
+            FinalizeTeams(lobby, teamA, teamB, factionsAssigned);
+        }
 
+        // Used by both the auto-draft and captain-draft paths. Only marks the game
+        // active if factions are already assigned - otherwise it just saves the
+        // teams and waits for !assignf / !lockfactions to start it later.
+        public void FinalizeTeams(Lobby lobby, Team teamA, Team teamB, bool factionsAssigned)
+        {
+            var game = CreatePendingGameIfMissing(lobby);
+
+            lobby.TeamA = teamA;
+            lobby.TeamB = teamB;
             game.TeamA = teamA;
             game.TeamB = teamB;
-            game.StartedAt = DateTime.UtcNow;
-            game.IsActive = true;
+
+            if (factionsAssigned)
+            {
+                game.StartedAt = DateTime.UtcNow;
+                game.IsActive = true;
+            }
         }
+
+        public (Team teamA, Team teamB) RunDraftEngine(Lobby lobby) => _draftEngine.RunDraft(lobby);
 
         public async Task StartCaptainDraft(Lobby lobby, ulong channelId)
         {
@@ -266,9 +285,16 @@ namespace LegaciesBot.Services
             var outId = outPlayer.DiscordId;
 
             // Determine which team the outgoing player belongs to (null if still undrafted).
+            // game.TeamA/TeamB don't get filled in until the game actually goes active, so
+            // check the lobby's teams too. Otherwise a sub done before that point only updates
+            // the lobby list and gets silently wiped out later when the game copies the
+            // (unchanged) teams over from the lobby.
+            Team? teamA = game.TeamA ?? game.Lobby.TeamA;
+            Team? teamB = game.TeamB ?? game.Lobby.TeamB;
+
             Team? team =
-                game.TeamA?.Players.Any(p => p.DiscordId == outId) == true ? game.TeamA :
-                game.TeamB?.Players.Any(p => p.DiscordId == outId) == true ? game.TeamB :
+                teamA?.Players.Any(p => p.DiscordId == outId) == true ? teamA :
+                teamB?.Players.Any(p => p.DiscordId == outId) == true ? teamB :
                 null;
 
             inPlayer.AssignedFaction = outPlayer.AssignedFaction;
