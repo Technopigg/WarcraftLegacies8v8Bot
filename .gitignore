@@ -21,6 +21,7 @@ TestResults/
 
 # Internal planning docs (Claude-assisted analysis, not part of upstream repo)
 /agent-docs/
+/CLAUDE.md
 
 # Deploy environment (real secrets live on the host only)
 .env
