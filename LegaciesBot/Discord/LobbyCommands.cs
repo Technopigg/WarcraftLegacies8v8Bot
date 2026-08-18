@@ -88,13 +88,13 @@ public async Task JoinLobby()
     {
         await ctx.Message.ReplyAsync(
             $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
-            $"Type `!prefs <list>` to update them."
+            $"To change them: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
         );
     }
     else
     {
         await ctx.Message.ReplyAsync(
-            $"Welcome {display}! Submit your faction preferences with `!prefs <list>`."
+            $"Welcome {display}! Set your faction preferences: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
         );
     }
 
@@ -220,7 +220,7 @@ public async Task JoinLobby()
 
             var sub = args[0].ToLowerInvariant();
 
-            if (sub == "show")
+            if (sub == "show" || sub == "list" || sub == "help")
             {
                 var reg = _playerRegistry.GetPlayer(callerId);
                 string display = reg?.DisplayName() ?? ctx.Message.Author.Username;
@@ -290,72 +290,94 @@ public async Task JoinLobby()
         {
             if (args.Length == 0)
             {
-                await Context.Message.ReplyAsync("Usage: `!prefs add <Faction>`");
+                await Context.Message.ReplyAsync("Usage: `!prefs add Fel Horde` (one or more factions).");
                 return;
             }
 
-            string factionName = args[0];
-            var validNames = FactionRegistry.All
-                .Select(f => f.Name.ToLowerInvariant())
-                .ToHashSet();
-
-            if (!validNames.Contains(factionName.ToLowerInvariant()))
+            var result = FactionParser.Parse(string.Join(' ', args));
+            if (result.Accepted.Count == 0)
             {
-                await Context.Message.ReplyAsync(
-                    $"`{factionName}` is not a valid faction.\nValid factions are:\n{string.Join(", ", FactionRegistry.All.Select(x => x.Name))}"
-                );
+                await Context.Message.ReplyAsync(FactionUnknownMessage(result.Unknown));
                 return;
             }
 
             var prefs = _playerData.GetPreferences(userId);
-
-            if (!prefs.Contains(factionName, StringComparer.OrdinalIgnoreCase))
+            var added = new List<string>();
+            foreach (var faction in result.Accepted)
             {
-                prefs.Add(factionName);
-                _playerData.SetPreferences(userId, prefs);
-
-                await Context.Message.ReplyAsync($"Added `{factionName}` to your preferences.");
+                if (!prefs.Contains(faction, StringComparer.OrdinalIgnoreCase))
+                {
+                    prefs.Add(faction);
+                    added.Add(faction);
+                }
             }
+
+            _playerData.SetPreferences(userId, prefs);
+
+            var reply = added.Count > 0
+                ? $"Added: {string.Join(", ", added)}. Your preferences are now: {string.Join(", ", prefs)}"
+                : $"Those are already in your preferences: {string.Join(", ", result.Accepted)}";
+            if (result.Unknown.Count > 0)
+                reply += $"\nIgnored (not a faction): {string.Join(", ", result.Unknown)}. Type `!bothelp` for valid names.";
+            await Context.Message.ReplyAsync(reply);
         }
 
         private async Task RemovePreference(ulong userId, string[] args)
         {
             if (args.Length == 0)
             {
-                await Context.Message.ReplyAsync("Usage: `!prefs remove <Faction>`");
+                await Context.Message.ReplyAsync("Usage: `!prefs remove Fel Horde` (one or more factions).");
+                return;
+            }
+
+            var result = FactionParser.Parse(string.Join(' ', args));
+            if (result.Accepted.Count == 0)
+            {
+                await Context.Message.ReplyAsync(FactionUnknownMessage(result.Unknown));
                 return;
             }
 
             var prefs = _playerData.GetPreferences(userId);
+            var removed = result.Accepted
+                .Where(faction => prefs.RemoveAll(p => p.Equals(faction, StringComparison.OrdinalIgnoreCase)) > 0)
+                .ToList();
 
-            if (prefs.RemoveAll(p => p.Equals(args[0], StringComparison.OrdinalIgnoreCase)) > 0)
-            {
-                _playerData.SetPreferences(userId, prefs);
-                await Context.Message.ReplyAsync($"Removed `{args[0]}` from your preferences.");
-            }
+            _playerData.SetPreferences(userId, prefs);
+
+            var reply = removed.Count > 0
+                ? $"Removed: {string.Join(", ", removed)}. Your preferences are now: {(prefs.Count > 0 ? string.Join(", ", prefs) : "none")}"
+                : "None of those were in your preferences.";
+            await Context.Message.ReplyAsync(reply);
         }
 
         private async Task SetPreferencesList(ulong userId, string[] args)
         {
-            var validNames = FactionRegistry.All
-                .ToDictionary(f => f.Name.ToLowerInvariant(), f => f.Name);
+            var result = FactionParser.Parse(string.Join(' ', args));
 
-            var newPrefs = new List<string>();
-
-            foreach (var arg in args)
+            if (result.Accepted.Count == 0)
             {
-                if (validNames.TryGetValue(arg.ToLowerInvariant(), out var correctName))
-                    newPrefs.Add(correctName);
+                await Context.Message.ReplyAsync(FactionUnknownMessage(result.Unknown));
+                return;
             }
 
-            if (newPrefs.Count > 0)
-            {
-                _playerData.SetPreferences(userId, newPrefs);
-                await Context.Message.ReplyAsync($"Preferences updated to: {string.Join(", ", newPrefs)}");
-            }
+            _playerData.SetPreferences(userId, result.Accepted.ToList());
+
+            var reply = $"Preferences updated to: {string.Join(", ", result.Accepted)}";
+            if (result.Unknown.Count > 0)
+                reply += $"\nIgnored (not a faction): {string.Join(", ", result.Unknown)}. Type `!bothelp` for valid names.";
+            await Context.Message.ReplyAsync(reply);
         }
 
-        [Command("help")]
+        private static string FactionUnknownMessage(IReadOnlyList<string> unknown)
+        {
+            var head = unknown.Count > 0
+                ? $"Couldn't match any faction in: {string.Join(", ", unknown)}."
+                : "Couldn't find any faction there.";
+            return head +
+                "\nExample: `!prefs Scourge Fel Horde Dalaran`. Type `!bothelp` for the full list.";
+        }
+
+        [Command("bothelp")]
         public async Task Help()
         {
             var ctx = this.Context;
