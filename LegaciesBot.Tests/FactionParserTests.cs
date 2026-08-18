@@ -87,6 +87,46 @@ public class FactionParserTests
         Assert.Equal(new[] { "Dalaran", "Scourge" }, result.Accepted);
     }
 
+    // Adversarial cases proven in the live test — locked here so they cannot regress.
+    [Fact]
+    public void Parse_StripsEmojiAndPunctuationAroundAName()
+    {
+        var result = FactionParser.Parse("🔥illidan🔥");
+        Assert.Equal(new[] { "Illidari" }, result.Accepted);
+    }
+
+    [Fact]
+    public void Parse_ReportsEveryUnknownToken()
+    {
+        var result = FactionParser.Parse("fish chips banana");
+        Assert.Empty(result.Accepted);
+        Assert.Equal(new[] { "fish", "chips", "banana" }, result.Unknown);
+    }
+
+    [Fact]
+    public void Parse_NumbersAndSymbolsAreNeverFactions()
+    {
+        var result = FactionParser.Parse("12345 !@#$%");
+        Assert.Empty(result.Accepted);
+    }
+
+    [Fact]
+    public void Parse_HandlesFiveMultiWordAndApostropheFactionsAtOnce()
+    {
+        var result = FactionParser.Parse("kul'tiras an'qiraj black empire the exodar fel horde");
+        Assert.Equal(
+            new[] { "Kul'tiras", "An'qiraj", "Black Empire", "The Exodar", "Fel Horde" },
+            result.Accepted);
+        Assert.Empty(result.Unknown);
+    }
+
+    [Fact]
+    public void Parse_DeduplicatesCaseInsensitively()
+    {
+        var result = FactionParser.Parse("Scourge scourge SCOURGE");
+        Assert.Equal(new[] { "Scourge" }, result.Accepted);
+    }
+
     [Fact]
     public void Parse_EmptyInputYieldsNothing()
     {
