@@ -171,26 +171,40 @@ namespace LegaciesBot.Commands
         }
 
         [Command("link")]
-        public async Task LinkPlayer(string userInput, [CommandParameter(Remainder = true)] string? battletag = null)
+        public async Task LinkPlayer(string userInput, [CommandParameter(Remainder = true)] string? battletagArg = null)
         {
             var ctx = this.Context;
+            var mentionedUserId = ResolveUserId(userInput);
 
-            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+            ulong targetUserId;
+            string? battletag;
+
+            if (mentionedUserId != null)
+            {
+                if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+                {
+                    await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Error("Forbidden", "Only admins and moderators can link other players.")]));
+                    return;
+                }
+
+                targetUserId = mentionedUserId.Value;
+                battletag = battletagArg;
+            }
+            else
+            {
+                targetUserId = ctx.User.Id;
+                battletag = userInput;
+            }
+
+            if (string.IsNullOrWhiteSpace(battletag))
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Error("Forbidden", "Only admins and moderators can link players.")]));
+                    EmbedFactory.Warning("Usage", "`!link Name#1234` to link yourself, or `!link @user Name#1234` (mod/admin) to link someone else.")]));
                 return;
             }
 
-            var userId = ResolveUserId(userInput);
-            if (userId == null || string.IsNullOrWhiteSpace(battletag))
-            {
-                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Warning("Usage", "`!link @user Name#1234`")]));
-                return;
-            }
-
-            var result = await GlobalServices.SiteApiService.LinkDiscordAsync(userId.Value, battletag.Trim());
+            var result = await GlobalServices.SiteApiService.LinkDiscordAsync(targetUserId, battletag.Trim());
 
             if (result.IsUnavailable)
             {
@@ -208,7 +222,7 @@ namespace LegaciesBot.Commands
 
             var link = result.Value!;
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                EmbedFactory.Success("Linked", $"Linked <@{userId}> to **{link.Battletag}** ({link.DisplayName}).")]));
+                EmbedFactory.Success("Linked", $"Linked <@{targetUserId}> to **{link.Battletag}** ({link.DisplayName}).")]));
         }
 
         [Command("unlink")]

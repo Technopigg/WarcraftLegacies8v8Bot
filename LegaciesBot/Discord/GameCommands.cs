@@ -48,6 +48,27 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName(name)}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your ranked rating.")]));
 
+            await SuggestSiteMatch(userId, name);
+        }
+
+        private async Task SuggestSiteMatch(ulong userId, string name)
+        {
+            var alreadyLinked = await GlobalServices.SiteApiService.GetPlayerByDiscordAsync(userId);
+            if (alreadyLinked.IsOk)
+                return;
+
+            var search = await GlobalServices.SiteApiService.SearchPlayersAsync(name);
+            if (!search.IsOk || search.Value == null)
+                return;
+
+            var match = BattletagMatcher.FindStrongMatch(name, search.Value);
+            if (match == null)
+                return;
+
+            await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Info("Is this you?",
+                    $"Found a close match on the site: **{match.Battletag}** ({match.DisplayName}).\n" +
+                    $"If that's you, run `!link {match.Battletag}` to link your rating.")]));
         }
         [Command("recent")]
         public async Task RecentMatches()
