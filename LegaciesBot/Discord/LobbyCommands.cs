@@ -75,6 +75,7 @@ public async Task JoinLobby()
     }
 
     var player = _lobbyService.JoinLobby(discordId, username);
+    _lobbyService.CurrentLobby.LastActiveChannelId = ctx.Message.ChannelId;
 
     var savedPrefs = _playerData.GetPreferences(player.DiscordId);
     if (savedPrefs.Count > 0)
@@ -84,17 +85,21 @@ public async Task JoinLobby()
     string name = player.DisplayName(username);
     string display = string.IsNullOrEmpty(rating) ? name : $"{name} ({rating})";
 
+    int lobbyCount = _lobbyService.CurrentLobby.Players.Count;
+    string lobbyLine = $"\nLobby: {lobbyCount}/16.";
+
     if (savedPrefs.Count > 0)
     {
         await ctx.Message.ReplyAsync(
-            $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.\n" +
+            $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.{lobbyLine}\n" +
             $"To change them: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
         );
     }
     else
     {
         await ctx.Message.ReplyAsync(
-            $"Welcome {display}! Set your faction preferences: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
+            $"Welcome {display}! Lobby: {lobbyCount}/16.\n" +
+            $"Set your faction preferences: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
         );
     }
 

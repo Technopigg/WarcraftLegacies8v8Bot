@@ -8,6 +8,10 @@ namespace LegaciesBot.Core
         public bool DraftStarted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public Dictionary<ulong, DateTime> AfkPingedAt { get; set; } = new();
+        // Players already sent the "still here?" reminder, so it fires once per idle cycle.
+        public HashSet<ulong> AfkReminded { get; set; } = new();
+        // Last channel a lobby command was used in, so AFK reminders/removals post somewhere.
+        public ulong LastActiveChannelId { get; set; }
         public bool IsFull => Players.Count >= 16;
 
         public Team? TeamA { get; set; }

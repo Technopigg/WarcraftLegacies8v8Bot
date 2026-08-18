@@ -11,6 +11,6 @@ namespace LegaciesBot.Services
         List<Player> GetLobbyMembers();
         bool IsInLobby(ulong discordId);
         void UpdatePreferences(ulong discordId, List<string> prefs);
-        void CheckAfk();
+        IReadOnlyList<LobbyAfkNotice> CheckAfk();
     }
 }
