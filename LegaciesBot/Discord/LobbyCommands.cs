@@ -235,6 +235,15 @@ public async Task JoinLobby()
                 return;
             }
 
+            if (sub == "all")
+            {
+                var everything = FactionParser.CanonicalNames.ToList();
+                _playerData.SetPreferences(callerId, everything);
+                await Context.Message.ReplyAsync(
+                    $"You'll play anything. Preferences set to all {everything.Count} factions: {string.Join(", ", everything)}");
+                return;
+            }
+
             if (sub == "add")
             {
                 await AddPreference(callerId, args.Skip(1).ToArray());

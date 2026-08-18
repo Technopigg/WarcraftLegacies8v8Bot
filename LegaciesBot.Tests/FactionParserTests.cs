@@ -39,6 +39,24 @@ public class FactionParserTests
         Assert.Equal(new[] { expected }, result.Accepted);
     }
 
+    // Issue #13: short prefixes like "!pref Quel dal storm".
+    [Fact]
+    public void Parse_ResolvesUniquePrefixes()
+    {
+        var result = FactionParser.Parse("quel dal storm");
+        Assert.Equal(new[] { "Quel'thalas", "Dalaran", "Stormwind" }, result.Accepted);
+        Assert.Empty(result.Unknown);
+    }
+
+    [Fact]
+    public void Parse_DoesNotGuessTooShortOrAmbiguous()
+    {
+        // "s" is a prefix of many factions and is too short: it must not be accepted.
+        var result = FactionParser.Parse("s");
+        Assert.Empty(result.Accepted);
+        Assert.Equal(new[] { "s" }, result.Unknown);
+    }
+
     [Fact]
     public void Parse_ForgivesOneCharTypo()
     {

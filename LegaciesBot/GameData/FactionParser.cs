@@ -97,9 +97,15 @@ public static class FactionParser
             if (matched)
                 continue;
 
-            // One-token typo tolerance (iroforge -> ironforge), tight so it can't guess wildly.
+            // Unique prefix (issue #13: "quel dal storm" -> Quel'thalas, Dalaran, Stormwind),
+            // then one-char typo tolerance (iroforge -> ironforge). Both tight so they can't
+            // guess wildly.
             var single = Normalize(tokens[i]);
-            if (single.Length >= 3 && TryFuzzy(single, out var fuzzy))
+            if (single.Length >= 3 && TryPrefix(single, out var pref))
+            {
+                Add(accepted, seen, pref);
+            }
+            else if (single.Length >= 3 && TryFuzzy(single, out var fuzzy))
             {
                 Add(accepted, seen, fuzzy);
             }
@@ -120,6 +126,21 @@ public static class FactionParser
     {
         if (seen.Add(canonical))
             accepted.Add(canonical);
+    }
+
+    private static bool TryPrefix(string token, out string canonical)
+    {
+        canonical = string.Empty;
+        var matches = 0;
+        foreach (var faction in FactionRegistry.All)
+        {
+            if (Normalize(faction.Name).StartsWith(token, StringComparison.Ordinal))
+            {
+                canonical = faction.Name;
+                matches++;
+            }
+        }
+        return matches == 1;
     }
 
     private static bool TryFuzzy(string token, out string canonical)
