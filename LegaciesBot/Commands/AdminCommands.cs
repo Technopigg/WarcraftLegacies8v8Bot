@@ -171,26 +171,47 @@ namespace LegaciesBot.Commands
         }
 
         [Command("link")]
-        public async Task LinkPlayer(string userInput, [CommandParameter(Remainder = true)] string? battletag = null)
+        public async Task LinkPlayer(string userInput, [CommandParameter(Remainder = true)] string? battletagArg = null)
         {
             var ctx = this.Context;
+            var mentionedId = ResolveUserId(userInput);
 
-            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+            ulong targetUserId;
+            string? battletag;
+            bool requireUnlinked;
+
+            if (mentionedId != null)
+            {
+                // `!link @user Name#1234` — linking someone else is mod/admin only, and may
+                // override an existing link (requireUnlinked = false).
+                if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.User.Id))
+                {
+                    await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Error("Forbidden", "Only admins and moderators can link other players.")]));
+                    return;
+                }
+                targetUserId = mentionedId.Value;
+                battletag = battletagArg;
+                requireUnlinked = false;
+            }
+            else
+            {
+                // `!link Name#1234` — self-service: the input is the battletag, and the site
+                // guard (requireUnlinked) refuses to take over a profile someone else already holds.
+                targetUserId = ctx.User.Id;
+                battletag = string.IsNullOrWhiteSpace(battletagArg) ? userInput : $"{userInput} {battletagArg}";
+                requireUnlinked = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(battletag))
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Error("Forbidden", "Only admins and moderators can link players.")]));
+                    EmbedFactory.Warning("Usage",
+                        "`!link Name#1234` to link yourself, or `!link @user Name#1234` (mod/admin) to link someone else.")]));
                 return;
             }
 
-            var userId = ResolveUserId(userInput);
-            if (userId == null || string.IsNullOrWhiteSpace(battletag))
-            {
-                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Warning("Usage", "`!link @user Name#1234`")]));
-                return;
-            }
-
-            var result = await GlobalServices.SiteApiService.LinkDiscordAsync(userId.Value, battletag.Trim());
+            var result = await GlobalServices.SiteApiService.LinkDiscordAsync(targetUserId, battletag.Trim(), requireUnlinked);
 
             if (result.IsUnavailable)
             {
@@ -206,9 +227,17 @@ namespace LegaciesBot.Commands
                 return;
             }
 
+            if (result.IsConflict)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Warning("Already linked",
+                        $"**{battletag.Trim()}** is already linked to another Discord account. If that's a mistake, ask a mod to fix it with `!link @you {battletag.Trim()}`.")]));
+                return;
+            }
+
             var link = result.Value!;
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                EmbedFactory.Success("Linked", $"Linked <@{userId}> to **{link.Battletag}** ({link.DisplayName}).")]));
+                EmbedFactory.Success("Linked", $"Linked <@{targetUserId}> to **{link.Battletag}** ({link.DisplayName}).")]));
         }
 
         [Command("unlink")]
