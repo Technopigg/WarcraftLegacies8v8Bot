@@ -20,6 +20,33 @@ namespace LegaciesBot.Discord
         {
             var ctx = this.Context;
 
+            // A @mention or a raw Discord id names a *linked profile*, not a battletag —
+            // route it to the by-discord lookup instead of the name search (which always
+            // returned "Not found", even right after a mod linked the user).
+            var mentionedId = ResolveMentionedDiscordId(ctx, query);
+            if (mentionedId != null)
+            {
+                var byDiscord = await _site.GetPlayerByDiscordAsync(mentionedId.Value);
+                if (byDiscord.IsUnavailable)
+                {
+                    await ReplySiteUnavailable();
+                    return;
+                }
+                if (byDiscord.IsNotFound)
+                {
+                    await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Warning("Not linked",
+                            $"<@{mentionedId}> is not linked to a site profile yet.\n" +
+                            "A mod can link them with `!link @user Name#1234`, or search by name with `!stats <name>`.")]));
+                    return;
+                }
+                var linked = byDiscord.Value!;
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    BuildStatsEmbed(linked.DisplayName, linked.Rating, linked.Sigma, linked.MatchesCount,
+                        linked.WinsCount, linked.LossesCount, linked.Winrate, linked.ProfileUrl)]));
+                return;
+            }
+
             // Bare `!stats` — "about me" via the caller's linked Discord id.
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -163,6 +190,20 @@ namespace LegaciesBot.Discord
 
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Info("Compare", desc)]));
+        }
+
+        // A @mention (parsed by Discord into MentionedUsers) or a bare 17-20 digit snowflake
+        // both identify a Discord user, i.e. a linked profile. Anything else is a name.
+        private static ulong? ResolveMentionedDiscordId(CommandContext ctx, string? query)
+        {
+            if (ctx.Message.MentionedUsers.Count > 0)
+                return ctx.Message.MentionedUsers[0].Id;
+
+            var trimmed = query?.Trim();
+            if (trimmed is { Length: >= 17 and <= 20 } && trimmed.All(char.IsDigit) && ulong.TryParse(trimmed, out var id))
+                return id;
+
+            return null;
         }
 
         private enum Resolution { Ok, None, Many, Unavailable }

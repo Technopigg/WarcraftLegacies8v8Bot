@@ -65,6 +65,7 @@ namespace LegaciesBot.Services
             }
 
             lobby.AfkPingedAt[player.DiscordId] = DateTime.UtcNow.Add(AfkReminderDelay);
+            lobby.AfkReminded.Remove(player.DiscordId);
 
             if (lobby.Players.Count == 16)
             {
@@ -122,29 +123,44 @@ namespace LegaciesBot.Services
                 player.FactionPreferences = prefs;
         }
 
-        public void CheckAfk()
+        public IReadOnlyList<LobbyAfkNotice> CheckAfk()
         {
             var lobby = CurrentLobby;
+            var notices = new List<LobbyAfkNotice>();
 
             if (lobby.IsLocked)
-                return;
+                return notices;
 
             var now = DateTime.UtcNow;
 
             foreach (var player in lobby.Players.ToList())
             {
-                if (lobby.AfkPingedAt.TryGetValue(player.DiscordId, out var pingTime))
-                {
-                    if (now > pingTime + AfkKickDelay)
-                    {
-                        lobby.Players.Remove(player);
-                        lobby.AfkPingedAt.Remove(player.DiscordId);
+                if (!lobby.AfkPingedAt.TryGetValue(player.DiscordId, out var pingTime))
+                    continue;
 
-                        if (lobby.CaptainA == player.DiscordId) lobby.CaptainA = null;
-                        if (lobby.CaptainB == player.DiscordId) lobby.CaptainB = null;
-                    }
+                if (now > pingTime + AfkKickDelay)
+                {
+                    lobby.Players.Remove(player);
+                    lobby.AfkPingedAt.Remove(player.DiscordId);
+                    lobby.AfkReminded.Remove(player.DiscordId);
+
+                    if (lobby.CaptainA == player.DiscordId) lobby.CaptainA = null;
+                    if (lobby.CaptainB == player.DiscordId) lobby.CaptainB = null;
+
+                    notices.Add(new LobbyAfkNotice(
+                        LobbyAfkKind.Removed, player.DiscordId, player.DisplayName(),
+                        lobby.LastActiveChannelId, lobby.Players.Count));
+                }
+                else if (now >= pingTime && lobby.AfkReminded.Add(player.DiscordId))
+                {
+                    // First time we pass the reminder mark: warn once before the kick delay.
+                    notices.Add(new LobbyAfkNotice(
+                        LobbyAfkKind.Reminder, player.DiscordId, player.DisplayName(),
+                        lobby.LastActiveChannelId, lobby.Players.Count));
                 }
             }
+
+            return notices;
         }
     }
 }

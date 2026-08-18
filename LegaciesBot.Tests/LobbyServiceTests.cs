@@ -148,11 +148,49 @@ public class LobbyServiceTests
 
         service.JoinLobby(1);
         lobby.CaptainA = 1;
-        
+
         lobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromHours(1);
         service.CheckAfk();
 
         Assert.Empty(lobby.Players);
         Assert.Null(lobby.CaptainA);
+    }
+
+    [Fact]
+    public void CheckAfk_WarnsOnceBeforeKicking()
+    {
+        var service = CreateService();
+        var lobby = service.CurrentLobby;
+        service.JoinLobby(1);
+        lobby.LastActiveChannelId = 42;
+
+        // Past the reminder mark but not the kick delay: one Reminder, player stays.
+        lobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromSeconds(1);
+
+        var first = service.CheckAfk();
+        Assert.Single(first);
+        Assert.Equal(LobbyAfkKind.Reminder, first[0].Kind);
+        Assert.Equal(42UL, first[0].ChannelId);
+        Assert.Single(lobby.Players);
+
+        // Immediately checking again does not re-warn.
+        Assert.Empty(service.CheckAfk());
+    }
+
+    [Fact]
+    public void CheckAfk_EmitsRemovedNotice()
+    {
+        var service = CreateService();
+        var lobby = service.CurrentLobby;
+        service.JoinLobby(1);
+        lobby.LastActiveChannelId = 7;
+        lobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromHours(1);
+
+        var notices = service.CheckAfk();
+
+        Assert.Single(notices);
+        Assert.Equal(LobbyAfkKind.Removed, notices[0].Kind);
+        Assert.Equal(0, notices[0].LobbyCount);
+        Assert.Empty(lobby.Players);
     }
 }

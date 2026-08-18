@@ -237,7 +237,25 @@ _ = Task.Run(async () =>
 {
     while (true)
     {
-        lobbyService.CheckAfk();
+        try
+        {
+            foreach (var notice in lobbyService.CheckAfk())
+            {
+                if (notice.ChannelId == 0)
+                    continue;
+
+                string text = notice.Kind == LobbyAfkKind.Reminder
+                    ? $"⏰ <@{notice.DiscordId}>, still in the lobby? You'll be dropped for inactivity soon. Type `!j` to stay."
+                    : $"<@{notice.DiscordId}> was dropped from the lobby for inactivity. Lobby: {notice.LobbyCount}/16.";
+
+                await client.Rest.SendMessageAsync(notice.ChannelId, text);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WARN] AFK notify failed: {ex.Message}");
+        }
+
         await Task.Delay(TimeSpan.FromMinutes(1));
     }
 });
