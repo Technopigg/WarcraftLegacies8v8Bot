@@ -48,6 +48,51 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName(name)}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your ranked rating.")]));
 
+            await SuggestSiteMatch(userId, name);
+        }
+
+        private async Task SuggestSiteMatch(ulong userId, string name)
+        {
+            var alreadyLinked = await GlobalServices.SiteApiService.GetPlayerByDiscordAsync(userId);
+            if (alreadyLinked.IsOk)
+                return;
+
+            var search = await GlobalServices.SiteApiService.SearchPlayersAsync(name);
+            if (!search.IsOk || search.Value == null)
+                return;
+
+            var match = BattletagMatcher.Evaluate(name, search.Value);
+
+            switch (match)
+            {
+                case BattletagMatch.Exact exact:
+                {
+                    var link = await GlobalServices.SiteApiService.LinkDiscordAsync(userId, exact.Player.Battletag);
+                    if (link.IsOk)
+                    {
+                        await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                            EmbedFactory.Success("Linked",
+                                $"Linked you to **{exact.Player.Battletag}** ({exact.Player.DisplayName}).\nNot you? Run `!unlink`.")]));
+                    }
+                    break;
+                }
+
+                case BattletagMatch.Suggested suggested:
+                    await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Info("Is this you?",
+                            $"Found a close match on the site: **{suggested.Player.Battletag}** ({suggested.Player.DisplayName}).\n" +
+                            $"If that's you, run `!link {suggested.Player.Battletag}` to link your rating.")]));
+                    break;
+
+                case BattletagMatch.Ambiguous ambiguous:
+                {
+                    var options = string.Join("\n", ambiguous.Candidates.Select(c => $"**{c.Battletag}** ({c.DisplayName})"));
+                    await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                        EmbedFactory.Info("Found multiple accounts — which is yours?",
+                            $"{options}\nRun `!link Name#1234` with the right one.")]));
+                    break;
+                }
+            }
         }
         [Command("recent")]
         public async Task RecentMatches()
