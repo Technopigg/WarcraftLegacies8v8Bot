@@ -48,6 +48,39 @@ namespace LegaciesBot.Discord
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                 EmbedFactory.Success("Registered", $"Welcome, **{player.DisplayName(name)}**!\nPlay games and upload replays to [warcraftlegacies.com](https://warcraftlegacies.com) to build your ranked rating.")]));
 
+            await SuggestSiteLinkAsync(userId, name);
+        }
+
+        // On first registration, offer a site profile that looks like this player — but never
+        // link automatically (a Discord name is not proof of owning a battletag). The player
+        // confirms with `!link Name#1234`, and the site only lets them claim an unclaimed profile.
+        private async Task SuggestSiteLinkAsync(ulong userId, string name)
+        {
+            var site = GlobalServices.SiteApiService;
+
+            var already = await site.GetPlayerByDiscordAsync(userId);
+            if (already.IsOk)
+                return; // already linked, nothing to suggest
+
+            var search = await site.SearchPlayersAsync(name);
+            if (!search.IsOk || search.Value is null || search.Value.Count == 0)
+                return;
+
+            var candidates = search.Value;
+            if (candidates.Count == 1)
+            {
+                var c = candidates[0];
+                await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("Is this you?",
+                        $"Found a matching profile on the site: **{c.Battletag}** ({c.DisplayName}).\n" +
+                        $"If that's you, run `!link {c.Battletag}` to link it. If not, ignore this.")]));
+                return;
+            }
+
+            var list = string.Join(", ", candidates.Take(5).Select(c => $"**{c.Battletag}**"));
+            await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Info("Which one is you?",
+                    $"Found several profiles that might be you: {list}.\nIf one is yours, run `!link Name#1234` with it.")]));
         }
         [Command("recent")]
         public async Task RecentMatches()

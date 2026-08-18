@@ -47,17 +47,20 @@ namespace LegaciesBot.Services
     /// site meant) from the site being unreachable or erroring, so callers never
     /// tell a user "not found" when the truth is "we could not reach the site".
     /// </summary>
-    public enum SiteCallStatus { Ok, NotFound, Unavailable }
+    public enum SiteCallStatus { Ok, NotFound, Unavailable, Conflict }
 
     public record SiteResult<T>(SiteCallStatus Status, T? Value)
     {
         public bool IsOk => Status == SiteCallStatus.Ok;
         public bool IsNotFound => Status == SiteCallStatus.NotFound;
         public bool IsUnavailable => Status == SiteCallStatus.Unavailable;
+        // The site refused because the target profile is already linked to someone else.
+        public bool IsConflict => Status == SiteCallStatus.Conflict;
 
         public static SiteResult<T> Ok(T value) => new(SiteCallStatus.Ok, value);
         public static SiteResult<T> NotFound() => new(SiteCallStatus.NotFound, default);
         public static SiteResult<T> Unavailable() => new(SiteCallStatus.Unavailable, default);
+        public static SiteResult<T> Conflict() => new(SiteCallStatus.Conflict, default);
     }
 
     public record LeaderboardEntry(
@@ -234,11 +237,11 @@ namespace LegaciesBot.Services
         /// <summary>
         /// Link a Discord user to a site battletag. NotFound = battletag_not_found.
         /// </summary>
-        public async Task<SiteResult<LinkResult>> LinkDiscordAsync(ulong discordUserId, string battletag)
+        public async Task<SiteResult<LinkResult>> LinkDiscordAsync(ulong discordUserId, string battletag, bool requireUnlinked = false)
         {
             using var req = new HttpRequestMessage(HttpMethod.Put, $"{baseUrl}/api/bot/players/link");
             AddAuth(req);
-            req.Content = JsonBody(new { discord_user_id = discordUserId, battletag });
+            req.Content = JsonBody(new { discord_user_id = discordUserId, battletag, require_unlinked = requireUnlinked });
 
             try
             {
@@ -246,6 +249,10 @@ namespace LegaciesBot.Services
 
                 if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
                     return SiteResult<LinkResult>.NotFound();
+
+                // Self-service claim of a profile already linked to someone else (site guard).
+                if (resp.StatusCode == System.Net.HttpStatusCode.Conflict)
+                    return SiteResult<LinkResult>.Conflict();
 
                 if (!resp.IsSuccessStatusCode)
                 {
