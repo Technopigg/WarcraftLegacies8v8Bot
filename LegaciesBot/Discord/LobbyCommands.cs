@@ -57,6 +57,9 @@ public async Task JoinLobby()
     var ctx = this.Context;
     var discordId = ctx.Message.Author.Id;
     var username = ctx.Message.Author.Username;
+    // !j registers you on the fly; remember whether this is your first time so we only
+    // offer the site-profile link once, not on every join.
+    bool wasRegistered = _playerRegistry.IsRegistered(discordId);
 
     if (_moderation.IsBanned(discordId))
     {
@@ -101,6 +104,13 @@ public async Task JoinLobby()
             $"Welcome {display}! Lobby: {lobbyCount}/16.\n" +
             $"Set your faction preferences: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
         );
+    }
+
+    if (!wasRegistered)
+    {
+        var suggestion = await LinkSuggestion.BuildAsync(_site, discordId, name);
+        if (suggestion is not null)
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([suggestion]));
     }
 
     var lobby = _lobbyService.CurrentLobby;
