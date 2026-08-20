@@ -12,11 +12,14 @@ namespace LegaciesBot.Discord
     {
         // Player-facing commands only. Deliberately excludes mod/admin/debug commands so a
         // random user never gets nudged toward `!ban`, `!kill`, `!debugfill`, etc.
+        // Every entry must be a real, implemented command — otherwise we'd nudge a user
+        // toward a dead end. (`!score`/`!scores` appear in the help text but aren't wired up,
+        // so they are deliberately absent here.)
         private static readonly string[] Known =
         {
             "join", "leave", "lobby", "prefs", "top", "leaderboard", "stats", "compare",
             "recent", "register", "nickname", "captain", "captains", "uncaptain", "draft",
-            "mode", "games", "score", "scores", "season", "bothelp", "link", "unlink",
+            "pass", "mode", "games", "season", "bothelp", "link", "unlink",
         };
 
         public static string? Suggest(string? token)
