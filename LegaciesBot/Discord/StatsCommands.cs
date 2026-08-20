@@ -110,9 +110,15 @@ namespace LegaciesBot.Discord
 
         [Command("leaderboard")]
         [Command("top")]
-        public async Task Leaderboard(int count = 10)
+        public async Task Leaderboard([CommandParameter(Remainder = true)] string? arg = null)
         {
             var ctx = this.Context;
+
+            // Accept text so a non-numeric arg ("all", "lifetime", "eu", a typo) falls back to
+            // the default top 10 instead of the command silently failing to bind an int.
+            int count = 10;
+            if (!string.IsNullOrWhiteSpace(arg) && int.TryParse(arg.Trim(), out var parsed))
+                count = parsed;
 
             if (count <= 0) count = 10;
             if (count > 25) count = 25;

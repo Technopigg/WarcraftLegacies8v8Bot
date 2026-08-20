@@ -65,8 +65,7 @@ STATS COMMANDS
 !stats lifetime — your lifetime stats
 !stats <user> lifetime — lifetime stats for a player
 !leaderboard / !top — season leaderboard (top 10)
-!leaderboard <count> / !top <count> — season leaderboard (custom size)
-!leaderboard lifetime — lifetime leaderboard
+!leaderboard <count> / !top <count> — season leaderboard (custom size, max 25)
 !compare <user1> <user2> — season comparison
 !compare <user1> <user2> lifetime — lifetime comparison
 
