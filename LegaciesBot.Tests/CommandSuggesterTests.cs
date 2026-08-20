@@ -10,6 +10,7 @@ public class CommandSuggesterTests
     [InlineData("joim", "join")]              // substitution
     [InlineData("loby", "lobby")]
     [InlineData("registr", "register")]
+    [InlineData("factons", "factions")]
     public void Suggests_closest_command_for_obvious_typos(string typo, string expected)
     {
         Assert.Equal(expected, CommandSuggester.Suggest(typo));

@@ -17,9 +17,9 @@ namespace LegaciesBot.Discord
         // so they are deliberately absent here.)
         private static readonly string[] Known =
         {
-            "join", "leave", "lobby", "prefs", "top", "leaderboard", "stats", "compare",
-            "recent", "register", "nickname", "captain", "captains", "uncaptain", "draft",
-            "pass", "mode", "games", "season", "bothelp", "link", "unlink",
+            "join", "leave", "lobby", "prefs", "factions", "top", "leaderboard", "stats",
+            "compare", "recent", "register", "nickname", "captain", "captains", "uncaptain",
+            "draft", "pass", "mode", "games", "season", "bothelp", "link", "unlink",
         };
 
         public static string? Suggest(string? token)

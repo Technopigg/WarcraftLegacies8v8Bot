@@ -98,15 +98,15 @@ public async Task JoinLobby()
     if (savedPrefs.Count > 0)
     {
         await ctx.Message.ReplyAsync(
-            $"Welcome {display}! Your saved preferences are: {string.Join(", ", savedPrefs)}.{lobbyLine}\n" +
-            $"To change them: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
+            $"Welcome {display}! Your prefs: {string.Join(", ", savedPrefs)}.{lobbyLine}\n" +
+            "Change them with `!prefs Scourge Dalaran ...`; `!factions` lists them all."
         );
     }
     else
     {
         await ctx.Message.ReplyAsync(
             $"Welcome {display}! Lobby: {lobbyCount}/16.\n" +
-            $"Set your faction preferences: `!prefs Scourge Fel Horde Dalaran` (order = priority). `!bothelp` for the full list."
+            "Set your factions: `!prefs Scourge Dalaran ...` (first = top priority). `!factions` lists them all."
         );
     }
 
@@ -286,7 +286,7 @@ public async Task JoinLobby()
             {
                 await Context.Message.ReplyAsync(
                     userId == Context.Message.Author.Id
-                        ? "You have no faction preferences set."
+                        ? "You have no faction preferences set. Set some with `!prefs Scourge Dalaran ...` (`!factions` for the list)."
                         : $"{displayName} has no faction preferences set."
                 );
             }
@@ -314,11 +314,42 @@ public async Task JoinLobby()
             await Context.Message.ReplyAsync("Your faction preferences have been cleared.");
         }
 
+        [Command("factions")]
+        [Command("faction")]
+        public async Task Factions()
+        {
+            await Context.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Info("🛡️ Playable factions", BuildFactionList())]));
+        }
+
+        // Grouped so players see the roster at a glance. Names come straight from
+        // FactionRegistry, i.e. exactly what !prefs accepts. Pure + static so it's unit-tested.
+        public static string BuildFactionList()
+        {
+            var groups = new[]
+            {
+                (Group: TeamGroup.NorthAlliance, Label: "North Alliance"),
+                (Group: TeamGroup.SouthAlliance, Label: "South Alliance"),
+                (Group: TeamGroup.BurningLegion, Label: "Burning Legion"),
+                (Group: TeamGroup.FelHorde,      Label: "Fel Horde"),
+                (Group: TeamGroup.Kalimdor,      Label: "Kalimdor"),
+                (Group: TeamGroup.OldGods,       Label: "Old Gods"),
+            };
+
+            var lines = groups
+                .Select(g => (g.Label, Names: FactionRegistry.All.Where(f => f.Group == g.Group).Select(f => f.Name).ToList()))
+                .Where(g => g.Names.Count > 0)
+                .Select(g => $"**{g.Label}:** {string.Join(", ", g.Names)}");
+
+            return string.Join("\n", lines)
+                + "\n\nUse any of these in `!prefs` (first = top priority), e.g. `!prefs Scourge Dalaran Stormwind`.";
+        }
+
         private async Task AddPreference(ulong userId, string[] args)
         {
             if (args.Length == 0)
             {
-                await Context.Message.ReplyAsync("Usage: `!prefs add Fel Horde` (one or more factions).");
+                await Context.Message.ReplyAsync("Usage: `!prefs add Fel Horde` (one or more factions). `!factions` lists them.");
                 return;
             }
 
@@ -346,7 +377,7 @@ public async Task JoinLobby()
                 ? $"Added: {string.Join(", ", added)}. Your preferences are now: {string.Join(", ", prefs)}"
                 : $"Those are already in your preferences: {string.Join(", ", result.Accepted)}";
             if (result.Unknown.Count > 0)
-                reply += $"\nIgnored (not a faction): {string.Join(", ", result.Unknown)}. Type `!bothelp` for valid names.";
+                reply += $"\nIgnored (not a faction): {string.Join(", ", result.Unknown)}. `!factions` lists valid names.";
             await Context.Message.ReplyAsync(reply);
         }
 
@@ -392,7 +423,7 @@ public async Task JoinLobby()
 
             var reply = $"Preferences updated to: {string.Join(", ", result.Accepted)}";
             if (result.Unknown.Count > 0)
-                reply += $"\nIgnored (not a faction): {string.Join(", ", result.Unknown)}. Type `!bothelp` for valid names.";
+                reply += $"\nIgnored (not a faction): {string.Join(", ", result.Unknown)}. `!factions` lists valid names.";
             await Context.Message.ReplyAsync(reply);
         }
 
@@ -402,7 +433,7 @@ public async Task JoinLobby()
                 ? $"Couldn't match any faction in: {string.Join(", ", unknown)}."
                 : "Couldn't find any faction there.";
             return head +
-                "\nExample: `!prefs Scourge Fel Horde Dalaran`. Type `!bothelp` for the full list.";
+                "\nExample: `!prefs Scourge Dalaran Stormwind`. `!factions` lists every faction.";
         }
 
         [Command("bothelp")]

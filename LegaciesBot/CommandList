@@ -22,6 +22,7 @@ CAPTAIN DRAFT COMMANDS
 
 PREFERENCE COMMANDS
 
+!factions — list every playable faction (use these names in !prefs)
 !prefs — show your faction preferences
 !prefs show — show your faction preferences
 !prefs @user — show another player's faction preferences
