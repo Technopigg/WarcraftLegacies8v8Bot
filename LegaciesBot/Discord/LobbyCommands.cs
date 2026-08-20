@@ -427,16 +427,21 @@ public async Task JoinLobby()
                 return;
             }
 
-            int index = 0;
-
-            while (index < text.Length)
+            // Discord caps a message at 2000 chars. Split on line boundaries so a section
+            // header or command never gets cut mid-word across two messages.
+            var chunk = new System.Text.StringBuilder();
+            foreach (var line in text.Split('\n'))
             {
-                int length = Math.Min(2000, text.Length - index);
-                string chunk = text.Substring(index, length);
-
-                await ctx.Message.ReplyAsync(chunk);
-                index += length;
+                if (chunk.Length + line.Length + 1 > 1900 && chunk.Length > 0)
+                {
+                    await ctx.Message.ReplyAsync(chunk.ToString());
+                    chunk.Clear();
+                }
+                chunk.Append(line).Append('\n');
             }
+
+            if (chunk.Length > 0)
+                await ctx.Message.ReplyAsync(chunk.ToString());
         }
     }
 }
