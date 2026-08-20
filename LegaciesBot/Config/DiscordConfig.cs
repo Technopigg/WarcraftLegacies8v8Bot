@@ -33,6 +33,13 @@ namespace LegaciesBot.Config
             GetUlongEnv("WL_DISCORD_REPLAY_CHANNEL_ID", 0);
 
         /// <summary>
+        /// Channel where the bot keeps a single always-current "Live Lobby" board message,
+        /// so players see the lobby without spamming <c>!lobby</c>. 0 means the board is off.
+        /// </summary>
+        public static ulong LobbyBoardChannelId { get; } =
+            GetUlongEnv("WL_DISCORD_LOBBY_BOARD_CHANNEL_ID", 0);
+
+        /// <summary>
         /// Base URL of the warcraftlegacies.com site used for replay upload and bot API.
         /// </summary>
         public static string SiteBaseUrl { get; } =

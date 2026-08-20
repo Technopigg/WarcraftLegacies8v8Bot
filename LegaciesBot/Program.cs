@@ -250,6 +250,27 @@ async Task ValidateRoleConfigAsync()
     }
 };
 
+// Keeps a single always-current "Live Lobby" board message in a dedicated channel (off unless
+// WL_DISCORD_LOBBY_BOARD_CHANNEL_ID is set). Polls every few seconds and edits only on change.
+var lobbyBoard = new LobbyBoardService(client.Rest, DiscordConfig.LobbyBoardChannelId, () => lobbyService.CurrentLobby);
+
+_ = Task.Run(async () =>
+{
+    while (true)
+    {
+        try
+        {
+            await lobbyBoard.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WARN] lobby board refresh failed: {ex.Message}");
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(3));
+    }
+});
+
 _ = Task.Run(async () =>
 {
     while (true)
