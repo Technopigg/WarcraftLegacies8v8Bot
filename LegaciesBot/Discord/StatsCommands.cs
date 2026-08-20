@@ -109,6 +109,7 @@ namespace LegaciesBot.Discord
         }
 
         [Command("leaderboard")]
+        [Command("top")]
         public async Task Leaderboard(int count = 10)
         {
             var ctx = this.Context;
