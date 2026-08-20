@@ -119,7 +119,24 @@ client.MessageCreate += async message =>
         return;
 
     var ctx = new CommandContext(message, client);
-    await commandService.ExecuteAsync(1, ctx, services);
+    var result = await commandService.ExecuteAsync(1, ctx, services);
+
+    // If the router didn't recognise the command, offer the closest real one for an obvious
+    // typo (e.g. `!leaderbord` -> `!leaderboard`). Gated on NotFound so a valid command is
+    // never intercepted; CommandSuggester stays quiet for anything that isn't a near-miss of
+    // our own player commands, so other bots' `!` commands don't get a reply.
+    if (result?.GetType().Name == "NotFoundResult")
+    {
+        var rest = message.Content.Substring(1).TrimStart();
+        int sp = rest.IndexOfAny(new[] { ' ', '\n', '\t' });
+        var word = sp < 0 ? rest : rest.Substring(0, sp);
+
+        var suggestion = CommandSuggester.Suggest(word);
+        if (suggestion != null)
+            await client.Rest.SendMessageAsync(message.ChannelId,
+                new MessageProperties().WithContent(
+                    $"Unknown command `!{word}`. Did you mean `!{suggestion}`? Type `!bothelp` for the full list."));
+    }
 };
 
 client.MessageCreate += async message =>
