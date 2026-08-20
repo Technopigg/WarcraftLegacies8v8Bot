@@ -104,6 +104,23 @@ namespace LegaciesBot.Services
             return true;
         }
 
+        // The AFK reminder tells idle players to "Type !j to stay". But an already-joined !j
+        // used to early-return without touching the timer, so they were kicked anyway. This
+        // re-arms the reminder/kick clock exactly like a fresh join does (see JoinLobby).
+        public bool KeepAlive(ulong discordId)
+        {
+            var lobby = CurrentLobby;
+            var player = lobby.Players.FirstOrDefault(p => p.DiscordId == discordId);
+            if (player == null)
+                return false;
+
+            player.IsActive = true;
+            player.JoinedAt = DateTime.UtcNow;
+            lobby.AfkPingedAt[discordId] = DateTime.UtcNow.Add(AfkReminderDelay);
+            lobby.AfkReminded.Remove(discordId);
+            return true;
+        }
+
         public List<Player> GetLobbyMembers()
         {
             return CurrentLobby.Players.ToList();

@@ -1,5 +1,6 @@
 GENERAL / PLAYER COMMANDS
 
+!bothelp / !h — show this command list
 !register / !reg — register yourself and get a starting Elo
 !recent — show the last 5 recorded matches
 !nickname <nickname> — set your own display nickname
@@ -7,7 +8,7 @@ GENERAL / PLAYER COMMANDS
 
 LOBBY COMMANDS
 
-!join / !j — join the lobby
+!join / !j — join the lobby (already in? !j refreshes your spot so you aren't dropped for inactivity)
 !leave / !l — leave the lobby
 !lobby — show current lobby members
 
@@ -63,8 +64,8 @@ STATS COMMANDS
 !stats <user> — season stats for a player
 !stats lifetime — your lifetime stats
 !stats <user> lifetime — lifetime stats for a player
-!leaderboard — season leaderboard (top 10)
-!leaderboard <count> — season leaderboard (custom size, max 50)
+!leaderboard / !top — season leaderboard (top 10)
+!leaderboard <count> / !top <count> — season leaderboard (custom size)
 !leaderboard lifetime — lifetime leaderboard
 !compare <user1> <user2> — season comparison
 !compare <user1> <user2> lifetime — lifetime comparison

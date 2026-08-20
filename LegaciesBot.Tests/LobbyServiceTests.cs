@@ -178,6 +178,37 @@ public class LobbyServiceTests
     }
 
     [Fact]
+    public void KeepAlive_ReArmsAfkTimer_AndRescuesFromKick()
+    {
+        var service = CreateService();
+        var lobby = service.CurrentLobby;
+        service.JoinLobby(1);
+
+        // Player is already past the reminder mark and was warned once: without a rescue
+        // the next CheckAfk would kick them (this is the "Type !j to stay" scenario).
+        lobby.AfkPingedAt[1] = DateTime.UtcNow - TimeSpan.FromHours(1);
+        lobby.AfkReminded.Add(1);
+
+        bool ok = service.KeepAlive(1);
+
+        Assert.True(ok);
+        Assert.True(lobby.AfkPingedAt[1] > DateTime.UtcNow, "timer must be pushed into the future");
+        Assert.DoesNotContain(1UL, lobby.AfkReminded);
+
+        // The kick no longer fires, and the player stays in the lobby.
+        Assert.Empty(service.CheckAfk());
+        Assert.Single(lobby.Players);
+    }
+
+    [Fact]
+    public void KeepAlive_Fails_WhenNotInLobby()
+    {
+        var service = CreateService();
+
+        Assert.False(service.KeepAlive(999));
+    }
+
+    [Fact]
     public void CheckAfk_EmitsRemovedNotice()
     {
         var service = CreateService();

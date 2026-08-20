@@ -72,8 +72,12 @@ public async Task JoinLobby()
 
     if (existing != null)
     {
+        // Re-arm the inactivity timer: the AFK warning tells people to "Type !j to stay",
+        // so an already-joined !j must actually keep them in, not silently do nothing.
+        _lobbyService.KeepAlive(discordId);
+        _lobbyService.CurrentLobby.LastActiveChannelId = ctx.Message.ChannelId;
         await ctx.Message.ReplyAsync(
-            $"{existing.DisplayName(username)}, you are already in the lobby.");
+            $"{existing.DisplayName(username)}, you're already in the lobby. Your spot is refreshed, you won't be dropped for inactivity.");
         return;
     }
 
@@ -402,6 +406,7 @@ public async Task JoinLobby()
         }
 
         [Command("bothelp")]
+        [Command("h")]
         public async Task Help()
         {
             var ctx = this.Context;
