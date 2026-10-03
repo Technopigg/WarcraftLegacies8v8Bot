@@ -11,7 +11,7 @@ namespace LegaciesBot.Discord
     public class InfoCommands : CommandModule<CommandContext>
     {
         // Bump this when shipping something players should notice.
-        public const string Version = "WarcraftLegaciesBot 5.1 (Season 5: 7v7, Horde vs Night Elves, !forcejoin)";
+        public const string Version = "WarcraftLegaciesBot 5.1 (Season 5: 7v7)";
 
         [Command("version")]
         [Command("v")]
