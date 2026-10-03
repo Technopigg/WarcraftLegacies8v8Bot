@@ -50,15 +50,12 @@ DRAFT MODE COMMANDS
 
 (Mode changes require a captain or admin/mod.)
 
-GAME & SCORE COMMANDS
+GAME COMMANDS
+
+Results are recorded by uploading the replay to warcraftlegacies.com, not by a command.
 
 !games / !g — list ongoing games
-!score 1 — vote for Team A win
-!score 0 — vote for Team B win
-!scores — show score voting summary for your game
-!forcescore <scoreA> <scoreB> — (mod or captain) force-set the result of your game
-!forcescore <gameId> <scoreA> <scoreB> — same, when multiple games are ongoing
-!kill — (mod/admin) terminate the ongoing game with no Elo changes
+!kill — (mod/admin) end the ongoing game and clear the lobby (no result recorded)
 !kill <gameId> — same, when multiple games are ongoing
 
 STATS COMMANDS
