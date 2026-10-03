@@ -66,13 +66,24 @@ namespace LegaciesBot.Services
 
         private string? ResolveFaction(string input)
         {
+            input = input.Trim();
             if (FactionShortcodes.TryGetValue(input.ToLower(), out var full))
                 return full;
 
             var faction = _registry.All.FirstOrDefault(f =>
                 f.Name.Equals(input, StringComparison.OrdinalIgnoreCase));
+            if (faction != null)
+                return faction.Name;
 
-            return faction?.Name;
+            // Same forgiving matching as !prefs: phone apostrophes (Kul’tiras), missing
+            // apostrophes (kultiras), aliases (illidan) and one-letter typos. Must resolve
+            // to exactly one faction, so "!assignf bob scourge legion" is still rejected.
+            var parsed = GameData.FactionParser.Parse(input);
+            if (parsed.Accepted.Count == 1 && parsed.Unknown.Count == 0
+                && _registry.All.Any(f => f.Name == parsed.Accepted[0]))
+                return parsed.Accepted[0];
+
+            return null;
         }
 
         private bool IsCaptain(Lobby lobby, ulong id)

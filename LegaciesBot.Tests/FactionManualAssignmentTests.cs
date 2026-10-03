@@ -68,6 +68,56 @@ public class FactionManualAssignmentTests
         Assert.Equal("Stormwind", lobby.ManualFactionAssignments[3]);
     }
 
+    // Reported: Kul'tiras / Illidari "couldn't be set". !assignf only took exact names
+    // or shortcodes, so phone apostrophes, missing apostrophes, aliases and typos failed.
+    [Theory]
+    [InlineData("Kul’tiras", "Kul'tiras")]
+    [InlineData("kultiras", "Kul'tiras")]
+    [InlineData("kul tiras", "Kul'tiras")]
+    [InlineData("illidan", "Illidari")]
+    [InlineData("ilidari", "Illidari")]
+    [InlineData("Fel Horde", "Fel Horde")]
+    [InlineData("orcish horde", "Orcish Horde")]
+    [InlineData("Tauren Tribes", "Tauren Tribes")]
+    public void TryAssignSingle_AcceptsSameSpellingsAsPrefs(string typed, string expected)
+    {
+        var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
+        var service = CreateService(registry);
+
+        Assert.True(service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "3", typed));
+        Assert.Equal(expected, lobby.ManualFactionAssignments[3]);
+    }
+
+    [Theory]
+    [InlineData("scourge legion")]
+    [InlineData("The Exodar")]
+    [InlineData("Skywall")]
+    [InlineData("notafaction")]
+    public void TryAssignSingle_RejectsAmbiguousOrRemovedFactions(string typed)
+    {
+        var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
+        var service = CreateService(registry);
+
+        Assert.False(service.TryAssignSingle(lobby, lobby.CaptainA!.Value, "3", typed));
+    }
+
+    [Fact]
+    public void AssignBulk_AcceptsMultiWordAndPhoneApostrophes()
+    {
+        var registry = new PlayerRegistryService(null);
+        var lobby = CreateLobbyWithCaptains(registry);
+        var service = CreateService(registry);
+
+        var errors = service.AssignBulk(lobby, lobby.CaptainA!.Value, "3 Kul’tiras\n4 Fel Horde\n5 illidan");
+
+        Assert.Empty(errors);
+        Assert.Equal("Kul'tiras", lobby.ManualFactionAssignments[3]);
+        Assert.Equal("Fel Horde", lobby.ManualFactionAssignments[4]);
+        Assert.Equal("Illidari", lobby.ManualFactionAssignments[5]);
+    }
+
     [Fact]
     public void TryAssignSingle_Fails_WhenCaptainAssignsToWrongTeam()
     {

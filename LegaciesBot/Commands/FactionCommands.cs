@@ -15,7 +15,9 @@ namespace LegaciesBot.Commands
         }
 
         [Command("assignf")]
-        public async Task AssignFaction(string player, string faction)
+        // Remainder so two-word factions (Fel Horde, Orcish Horde, Tauren Tribes) arrive whole
+        // instead of NetCord rejecting the command for having too many arguments.
+        public async Task AssignFaction(string player, [CommandParameter(Remainder = true)] string faction)
         {
             var lobby = _lobby.CurrentLobby;
             var captainId = Context.User.Id;
