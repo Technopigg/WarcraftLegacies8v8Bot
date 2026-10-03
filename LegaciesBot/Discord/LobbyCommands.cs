@@ -184,8 +184,9 @@ public async Task JoinLobby()
                 player.FactionPreferences = savedPrefs.ToList();
 
             int lobbyCount = _lobbyService.CurrentLobby.Players.Count;
+            string addedBy = _playerRegistry.GetPlayer(ctx.Message.Author.Id)?.DisplayName() ?? ctx.Message.Author.Username;
             await ctx.Message.ReplyAsync(
-                $"<@{targetId}> was added to the lobby by {ctx.Message.Author.Username}. Lobby: {lobbyCount}/{MatchFormat.LobbySize}.");
+                $"<@{targetId}> was added to the lobby by {addedBy}. Lobby: {lobbyCount}/{MatchFormat.LobbySize}.");
 
             await StartDraftIfFull();
         }
