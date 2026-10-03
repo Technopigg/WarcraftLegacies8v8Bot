@@ -22,9 +22,9 @@ namespace LegaciesBot.Commands
             var lobby = _lobby.CurrentLobby;
             var captainId = Context.User.Id;
 
-            if (!_manual.TryAssignSingle(lobby, captainId, player, faction))
+            if (!_manual.TryAssignSingle(lobby, captainId, player, faction, out var reason))
             {
-                await Context.Message.ReplyAsync("Invalid faction assignment.");
+                await Context.Message.ReplyAsync($"Can't assign that: {reason}");
                 return;
             }
 

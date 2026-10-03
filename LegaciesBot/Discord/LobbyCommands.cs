@@ -403,14 +403,11 @@ private async Task StartDraftIfFull()
         public static string BuildFactionList()
         {
             var groups = new[]
-            {
-                (Group: TeamGroup.NorthAlliance, Label: "North Alliance"),
-                (Group: TeamGroup.SouthAlliance, Label: "South Alliance"),
-                (Group: TeamGroup.BurningLegion, Label: "Burning Legion"),
-                (Group: TeamGroup.FelHorde,      Label: "Fel Horde"),
-                (Group: TeamGroup.Horde,         Label: "The Horde"),
-                (Group: TeamGroup.NightElves,    Label: "The Night Elves"),
-            };
+                {
+                    TeamGroup.NorthAlliance, TeamGroup.SouthAlliance, TeamGroup.BurningLegion,
+                    TeamGroup.FelHorde, TeamGroup.Horde, TeamGroup.NightElves,
+                }
+                .Select(g => (Group: g, Label: TeamGroupService.Label(g)));
 
             var lines = groups
                 .Select(g => (g.Label, Names: FactionRegistry.All.Where(f => f.Group == g.Group).Select(f => f.Name).ToList()))

@@ -110,12 +110,12 @@ public class FactionManualAssignmentTests
         var lobby = CreateLobbyWithCaptains(registry);
         var service = CreateService(registry);
 
-        var errors = service.AssignBulk(lobby, lobby.CaptainA!.Value, "3 Kul’tiras\n4 Fel Horde\n5 illidan");
+        var errors = service.AssignBulk(lobby, lobby.CaptainA!.Value, "3 Kul’tiras\n4 Tauren Tribes\n5 scourg");
 
         Assert.Empty(errors);
         Assert.Equal("Kul'tiras", lobby.ManualFactionAssignments[3]);
-        Assert.Equal("Fel Horde", lobby.ManualFactionAssignments[4]);
-        Assert.Equal("Illidari", lobby.ManualFactionAssignments[5]);
+        Assert.Equal("Tauren Tribes", lobby.ManualFactionAssignments[4]);
+        Assert.Equal("Scourge", lobby.ManualFactionAssignments[5]);
     }
 
     [Fact]
@@ -152,18 +152,18 @@ public class FactionManualAssignmentTests
     
         string bulk = """
                       1 sw
-                      2 dala
+                      2 if
                       3 sc
-                      4 fel
+                      4 orc
                       """;
 
         var errors = service.AssignBulk(lobby, lobby.CaptainA!.Value, bulk);
 
         Assert.Empty(errors);
         Assert.Equal("Stormwind", lobby.ManualFactionAssignments[1]);
-        Assert.Equal("Dalaran", lobby.ManualFactionAssignments[2]);
+        Assert.Equal("Ironforge", lobby.ManualFactionAssignments[2]);
         Assert.Equal("Scourge", lobby.ManualFactionAssignments[3]);
-        Assert.Equal("Fel Horde", lobby.ManualFactionAssignments[4]);
+        Assert.Equal("Orcish Horde", lobby.ManualFactionAssignments[4]);
     }
 
     [Fact]
