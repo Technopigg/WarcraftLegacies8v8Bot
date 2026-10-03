@@ -77,7 +77,7 @@ public class DraftRoleLifecycleTests
         var gateway = new RoleTrackingGateway();
         var service = CreateGameService(gateway);
 
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
         lobby.IsCaptainDraft = true;
         lobby.DraftRoleId = 999;
         lobby.DraftStarted = true;
@@ -85,13 +85,13 @@ public class DraftRoleLifecycleTests
         var teamA = new LTeam("Team A");
         var teamB = new LTeam("Team B");
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < MatchFormat.TeamSize; i++)
         {
             teamA.Players.Add(lobby.Players[i]);
             lobby.Players[i].AssignedFaction = "A";
         }
 
-        for (int i = 8; i < 16; i++)
+        for (int i = MatchFormat.TeamSize; i < MatchFormat.LobbySize; i++)
         {
             teamB.Players.Add(lobby.Players[i]);
             lobby.Players[i].AssignedFaction = "B";
@@ -126,7 +126,7 @@ public class DraftRoleLifecycleTests
         var gateway = new RoleTrackingGateway();
         var service = CreateGameService(gateway);
 
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
         lobby.IsCaptainDraft = true;
         lobby.DraftRoleId = 999;
         lobby.DraftStarted = true;
@@ -135,10 +135,10 @@ public class DraftRoleLifecycleTests
         var teamA = new LTeam("Team A");
         var teamB = new LTeam("Team B");
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < MatchFormat.TeamSize; i++)
             teamA.Players.Add(lobby.Players[i]);
 
-        for (int i = 8; i < 16; i++)
+        for (int i = MatchFormat.TeamSize; i < MatchFormat.LobbySize; i++)
             teamB.Players.Add(lobby.Players[i]);
 
         lobby.TeamA = teamA;
@@ -169,17 +169,17 @@ public class DraftRoleLifecycleTests
         var gateway = new RoleTrackingGateway();
         var service = CreateGameService(gateway);
 
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
         lobby.DraftStarted = true;
         lobby.IsLocked = true;
 
         var teamA = new LTeam("Team A");
         var teamB = new LTeam("Team B");
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < MatchFormat.TeamSize; i++)
             teamA.Players.Add(lobby.Players[i]);
 
-        for (int i = 8; i < 16; i++)
+        for (int i = MatchFormat.TeamSize; i < MatchFormat.LobbySize; i++)
             teamB.Players.Add(lobby.Players[i]);
 
         var game = service.CreatePendingGameIfMissing(lobby);

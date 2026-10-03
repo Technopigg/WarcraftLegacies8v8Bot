@@ -47,7 +47,7 @@ public class CaptainDraftModeTests
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
 
-        for (int i = 1; i <= 16; i++)
+        for (int i = 1; i <= MatchFormat.LobbySize; i++)
         {
             var p = registry.GetOrCreate((ulong)i);
             p.Name = $"P{i}";

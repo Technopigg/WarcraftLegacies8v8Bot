@@ -26,7 +26,7 @@ public class AutoDraftAutoFactionTests
     [Fact]
     public void AutoDraftAutoFaction_CreatesBalancedTeams_AndAssignsFactions()
     {
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
         lobby.DraftMode = DraftMode.AutoDraft_AutoFaction;
 
         var rng = new Random(12345);
@@ -36,8 +36,8 @@ public class AutoDraftAutoFactionTests
 
         var (teamA, teamB) = engine.RunDraft(lobby);
 
-        Assert.Equal(8, teamA.Players.Count);
-        Assert.Equal(8, teamB.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamA.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamB.Players.Count);
 
         Assert.Empty(teamA.Players.Intersect(teamB.Players));
 
@@ -45,16 +45,16 @@ public class AutoDraftAutoFactionTests
 
         Assert.All(allPlayers, p => Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction)));
 
-        Assert.Equal(16, allPlayers.Select(p => p.AssignedFaction).Distinct().Count());
+        Assert.Equal(MatchFormat.LobbySize, allPlayers.Select(p => p.AssignedFaction).Distinct().Count());
     }
 
     [Fact]
     public void AutoDraftAutoFaction_IsDeterministic_WithSeed()
     {
-        var lobby1 = CreateLobbyWithPlayers(16);
+        var lobby1 = CreateLobbyWithPlayers(MatchFormat.LobbySize);
         lobby1.DraftMode = DraftMode.AutoDraft_AutoFaction;
 
-        var lobby2 = CreateLobbyWithPlayers(16);
+        var lobby2 = CreateLobbyWithPlayers(MatchFormat.LobbySize);
         lobby2.DraftMode = DraftMode.AutoDraft_AutoFaction;
 
         var rng1 = new Random(12345);

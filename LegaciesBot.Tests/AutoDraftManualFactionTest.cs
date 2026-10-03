@@ -27,7 +27,7 @@ public class AutoDraftManualFactionTests
     [Fact]
     public void AutoDraftManualFaction_CreatesBalancedTeams_WithoutAssigningFactions()
     {
-        var players = CreatePlayers(16);
+        var players = CreatePlayers(MatchFormat.LobbySize);
 
         var lobby = new Lobby();
         lobby.Players.AddRange(players);
@@ -40,8 +40,8 @@ public class AutoDraftManualFactionTests
 
         var (teamA, teamB) = engine.RunDraft(lobby);
 
-        Assert.Equal(8, teamA.Players.Count);
-        Assert.Equal(8, teamB.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamA.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamB.Players.Count);
 
         // No faction assignment should occur
         factionAssign.Verify(a => a.AssignFactionsForGame(

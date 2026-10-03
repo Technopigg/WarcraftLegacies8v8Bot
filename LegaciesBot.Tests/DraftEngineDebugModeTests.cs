@@ -9,7 +9,7 @@ public class DraftEngineDebugModeTests
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
 
-        for (int i = 1; i <= 16; i++)
+        for (int i = 1; i <= MatchFormat.LobbySize; i++)
         {
             var p = registry.GetOrCreate((ulong)i);
             p.Name = $"P{i}";
@@ -33,8 +33,8 @@ public class DraftEngineDebugModeTests
 
         var (teamA, teamB) = engine.RunDraft(lobby);
 
-        Assert.Equal(8, teamA.Players.Count);
-        Assert.Equal(8, teamB.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamA.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamB.Players.Count);
 
         Assert.True(teamA.Players.All(p => !string.IsNullOrWhiteSpace(p.AssignedFaction)));
         Assert.True(teamB.Players.All(p => !string.IsNullOrWhiteSpace(p.AssignedFaction)));

@@ -41,8 +41,8 @@ public class FactionAssignmentServiceTests
         var rng = new Random(12345);
         var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
-        var teamA = CreateTeam("A", CreatePlayers(8));
-        var teamB = CreateTeam("B", CreatePlayers(8));
+        var teamA = CreateTeam("A", CreatePlayers(MatchFormat.TeamSize));
+        var teamB = CreateTeam("B", CreatePlayers(MatchFormat.TeamSize));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
@@ -51,8 +51,8 @@ public class FactionAssignmentServiceTests
         var assignedA = teamA.Players.Where(p => !string.IsNullOrWhiteSpace(p.AssignedFaction)).ToList();
         var assignedB = teamB.Players.Where(p => !string.IsNullOrWhiteSpace(p.AssignedFaction)).ToList();
 
-        Assert.Equal(8, assignedA.Count);
-        Assert.Equal(8, assignedB.Count);
+        Assert.Equal(MatchFormat.TeamSize, assignedA.Count);
+        Assert.Equal(MatchFormat.TeamSize, assignedB.Count);
     }
 
     [Fact]
@@ -61,8 +61,8 @@ public class FactionAssignmentServiceTests
         var rng = new Random(12345);
         var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
-        var teamA = CreateTeam("A", CreatePlayers(8));
-        var teamB = CreateTeam("B", CreatePlayers(8));
+        var teamA = CreateTeam("A", CreatePlayers(MatchFormat.TeamSize));
+        var teamB = CreateTeam("B", CreatePlayers(MatchFormat.TeamSize));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
@@ -74,8 +74,8 @@ public class FactionAssignmentServiceTests
             .Where(n => !string.IsNullOrWhiteSpace(n))
             .ToList();
 
-        Assert.Equal(16, allNames.Count);
-        Assert.Equal(16, allNames.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(MatchFormat.LobbySize, allNames.Count);
+        Assert.Equal(MatchFormat.LobbySize, allNames.Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]
@@ -84,8 +84,8 @@ public class FactionAssignmentServiceTests
         var rng = new Random(12345);
         var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
-        var teamA = CreateTeam("A", CreatePlayers(8));
-        var teamB = CreateTeam("B", CreatePlayers(8));
+        var teamA = CreateTeam("A", CreatePlayers(MatchFormat.TeamSize));
+        var teamB = CreateTeam("B", CreatePlayers(MatchFormat.TeamSize));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 
@@ -104,8 +104,8 @@ public class FactionAssignmentServiceTests
         var rng = new Random(12345);
         var service = new RealFactionAssignmentService(new FactionRegistryStub());
 
-        var teamA = CreateTeam("A", CreatePlayers(8));
-        var teamB = CreateTeam("B", CreatePlayers(8));
+        var teamA = CreateTeam("A", CreatePlayers(MatchFormat.TeamSize));
+        var teamB = CreateTeam("B", CreatePlayers(MatchFormat.TeamSize));
 
         var (groupsA, groupsB) = TeamGroupService.GenerateValidSplit();
 

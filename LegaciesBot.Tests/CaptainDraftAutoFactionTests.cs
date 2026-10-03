@@ -12,7 +12,7 @@ public class CaptainDraftAutoFactionTests
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
 
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < MatchFormat.LobbySize; i++)
         {
             ulong id = (ulong)(i + 1);
             var p = registry.GetOrCreate(id);
@@ -21,8 +21,8 @@ public class CaptainDraftAutoFactionTests
             lobby.Players.Add(p);
         }
         
-        lobby.TeamAPicks.AddRange(Enumerable.Range(1, 8).Select(i => (ulong)i));
-        lobby.TeamBPicks.AddRange(Enumerable.Range(9, 8).Select(i => (ulong)i));
+        lobby.TeamAPicks.AddRange(Enumerable.Range(1, MatchFormat.TeamSize).Select(i => (ulong)i));
+        lobby.TeamBPicks.AddRange(Enumerable.Range(MatchFormat.TeamSize + 1, MatchFormat.TeamSize).Select(i => (ulong)i));
 
         lobby.DraftMode = DraftMode.CaptainDraft_AutoFaction;
 
@@ -48,8 +48,8 @@ public class CaptainDraftAutoFactionTests
 
         var (teamA, teamB) = engine.RunDraft(lobby);
 
-        Assert.Equal(8, teamA.Players.Count);
-        Assert.Equal(8, teamB.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamA.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, teamB.Players.Count);
 
         factionAssign.Verify(a => a.AssignFactionsForGame(
             It.IsAny<Team>(),

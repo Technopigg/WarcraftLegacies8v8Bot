@@ -40,20 +40,20 @@ public class DraftEngineRoutingTests
 
         foreach (var mode in modes)
         {
-            var lobby = CreateLobby(16);
+            var lobby = CreateLobby(MatchFormat.LobbySize);
             lobby.DraftMode = mode;
 
             if (mode == DraftMode.CaptainDraft_AutoFaction ||
                 mode == DraftMode.CaptainDraft_ManualFaction)
             {
                 lobby.TeamAPicks = lobby.Players
-                    .Take(8)
+                    .Take(MatchFormat.TeamSize)
                     .Select(p => p.DiscordId)
                     .ToList();
 
                 lobby.TeamBPicks = lobby.Players
-                    .Skip(8)
-                    .Take(8)
+                    .Skip(MatchFormat.TeamSize)
+                    .Take(MatchFormat.TeamSize)
                     .Select(p => p.DiscordId)
                     .ToList();
             }
@@ -63,8 +63,8 @@ public class DraftEngineRoutingTests
             Assert.NotNull(teamA);
             Assert.NotNull(teamB);
 
-            Assert.Equal(8, teamA.Players.Count);
-            Assert.Equal(8, teamB.Players.Count);
+            Assert.Equal(MatchFormat.TeamSize, teamA.Players.Count);
+            Assert.Equal(MatchFormat.TeamSize, teamB.Players.Count);
 
             Assert.Empty(teamA.Players.Intersect(teamB.Players));
         }
