@@ -114,6 +114,7 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 ### 13. Help
 
 57. `!help` — command list.
+58. `!version` / `!v` — bot version, when this copy was built (changes on every deploy) and how long it has been online. Use it to confirm an update went live.
 
 ---
 

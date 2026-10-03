@@ -107,6 +107,7 @@ commandService.AddModule(typeof(SeasonCommands));
 commandService.AddModule(typeof(GameCommands));
 commandService.AddModule(typeof(FactionCommands));
 commandService.AddModule(typeof(DebugCommands));
+commandService.AddModule(typeof(InfoCommands));
 
 client.MessageCreate += async message =>
 {

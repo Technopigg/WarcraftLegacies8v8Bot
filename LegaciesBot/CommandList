@@ -1,6 +1,7 @@
 GENERAL / PLAYER COMMANDS
 
 !bothelp / !h — show this command list
+!version / !v — show which version of the bot is running and when it was last updated
 !register / !reg — register yourself and get a starting Elo
 !recent — show the last 5 recorded matches
 !nickname <nickname> — set your own display nickname

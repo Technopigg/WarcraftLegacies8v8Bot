@@ -19,7 +19,7 @@ namespace LegaciesBot.Discord
         {
             "join", "leave", "lobby", "prefs", "factions", "top", "leaderboard", "stats",
             "compare", "recent", "register", "nickname", "captain", "captains", "uncaptain",
-            "draft", "pass", "mode", "games", "season", "bothelp", "link", "unlink",
+            "draft", "pass", "mode", "games", "season", "bothelp", "link", "unlink", "version",
         };
 
         public static string? Suggest(string? token)
