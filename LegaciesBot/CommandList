@@ -11,6 +11,7 @@ LOBBY COMMANDS
 !join / !j — join the lobby (already in? !j refreshes your spot so you aren't dropped for inactivity)
 !leave / !l — leave the lobby
 !lobby — show current lobby members
+!forcejoin <player> / !fj <player> — (mod/admin) add a player to the lobby as if they typed !j
 
 CAPTAIN DRAFT COMMANDS
 

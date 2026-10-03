@@ -117,6 +117,82 @@ public async Task JoinLobby()
             await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([suggestion]));
     }
 
+    await StartDraftIfFull();
+}
+
+        // Mods/admins add someone to the lobby on their behalf (e.g. they're in voice but
+        // away from the keyboard). Behaves exactly like that player typing !j, including
+        // kicking off the draft if this fills the lobby.
+        [Command("forcejoin")]
+        [Command("fj")]
+        public async Task ForceJoin([CommandParameter(Remainder = true)] string? target = null)
+        {
+            var ctx = this.Context;
+
+            if (!GlobalServices.PermissionService.IsModeratorOrAdmin(ctx.Message.Author.Id))
+            {
+                await ctx.Message.ReplyAsync("Only moderators and admins can force-join players.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(target) && ctx.Message.MentionedUsers.Count == 0)
+            {
+                await ctx.Message.ReplyAsync("Usage: `!forcejoin <@player | nickname | userId>` (short: `!fj`).");
+                return;
+            }
+
+            // A @mention works for anyone (Discord gives us their username). Name, nickname or
+            // raw ID must match someone the bot already knows, so a typo can't create a ghost player.
+            ulong targetId;
+            string? username = null;
+            if (ctx.Message.MentionedUsers.Count > 0)
+            {
+                targetId = ctx.Message.MentionedUsers[0].Id;
+                username = ctx.Message.MentionedUsers[0].Username;
+            }
+            else
+            {
+                var known = _playerRegistry.Resolve(target!.Trim());
+                if (known == null)
+                {
+                    await ctx.Message.ReplyAsync(
+                        $"No registered player matches **{target!.Trim()}**. @mention them instead.");
+                    return;
+                }
+                targetId = known.DiscordId;
+            }
+
+            if (_moderation.IsBanned(targetId))
+            {
+                await ctx.Message.ReplyAsync($"<@{targetId}> is banned and cannot be added to the lobby.");
+                return;
+            }
+
+            var existing = _lobbyService.CurrentLobby.Players.FirstOrDefault(p => p.DiscordId == targetId);
+            if (existing != null)
+            {
+                _lobbyService.KeepAlive(targetId);
+                await ctx.Message.ReplyAsync($"{existing.DisplayName()} is already in the lobby. Their spot has been refreshed.");
+                return;
+            }
+
+            var player = _lobbyService.JoinLobby(targetId, username);
+            _lobbyService.CurrentLobby.LastActiveChannelId = ctx.Message.ChannelId;
+
+            var savedPrefs = FactionParser.OnlyCurrent(_playerData.GetPreferences(player.DiscordId));
+            if (savedPrefs.Count > 0)
+                player.FactionPreferences = savedPrefs.ToList();
+
+            int lobbyCount = _lobbyService.CurrentLobby.Players.Count;
+            await ctx.Message.ReplyAsync(
+                $"<@{targetId}> was added to the lobby by {ctx.Message.Author.Username}. Lobby: {lobbyCount}/{MatchFormat.LobbySize}.");
+
+            await StartDraftIfFull();
+        }
+
+private async Task StartDraftIfFull()
+{
+    var ctx = this.Context;
     var lobby = _lobbyService.CurrentLobby;
 
     if (lobby.IsFull && !lobby.DraftStarted)

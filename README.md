@@ -29,6 +29,7 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 4. `!join` / `!j` — join the lobby. At 14/14, the draft starts automatically.
 5. `!leave` / `!l` — leave the lobby. ⚠️ Has no effect after `IsLocked`, but the command still replies "has left".
 6. `!lobby` — show the player list and their Elo at join time.
+   - `!forcejoin <player>` / `!fj <player>` — add a player to the lobby as if they typed `!j` (mention, nickname or ID). Can fill the lobby and start the draft. Permission: mod/admin.
 
 ### 3. Faction preferences
 
