@@ -52,9 +52,11 @@ DRAFT MODE COMMANDS
 
 GAME COMMANDS
 
-Results are recorded by uploading the replay to warcraftlegacies.com, not by a command.
+Site rankings come from uploading the replay to warcraftlegacies.com. !forcescore records the result in the bot only.
 
 !games / !g — list ongoing games
+!forcescore 1 0 / !fs 1 0 — (mod or captain) Team A won; 0 1 = Team B won; 0 0 = draw. Ends the game and clears the lobby
+!forcescore <gameId> 1 0 — same, when multiple games are ongoing
 !kill — (mod/admin) end the ongoing game and clear the lobby (no result recorded)
 !kill <gameId> — same, when multiple games are ongoing
 

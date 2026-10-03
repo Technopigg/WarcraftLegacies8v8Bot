@@ -112,6 +112,95 @@ namespace LegaciesBot.Discord
             return $"{(int)span.TotalDays} days ago";
         }
 
+        // Records a result in the bot only: ends the game, saves it to the bot's match history
+        // and faction win/loss records, and clears roles/lobby. Site rankings still come from the
+        // replay upload, since the site has no way to receive a result from the bot yet, so local
+        // Elo stays off and nothing is counted twice.
+        [Command("forcescore")]
+        [Command("fs")]
+        public async Task ForceScore(params int[] args)
+        {
+            var ctx = this.Context;
+            ulong userId = ctx.Message.Author.Id;
+
+            if (!TryParseForceScore(args, out int? gameId, out int scoreA, out int scoreB, out string error))
+            {
+                await ctx.Message.ReplyAsync(error);
+                return;
+            }
+
+            var ongoing = _gameService.GetOngoingGames();
+            Game? game;
+            if (gameId != null)
+            {
+                game = ongoing.FirstOrDefault(g => g.Id == gameId.Value);
+                if (game == null)
+                {
+                    await ctx.Message.ReplyAsync($"No ongoing game #{gameId}. `!games` lists them.");
+                    return;
+                }
+            }
+            else if (ongoing.Count == 1)
+            {
+                game = ongoing[0];
+            }
+            else
+            {
+                await ctx.Message.ReplyAsync(ongoing.Count == 0
+                    ? "There are no ongoing games."
+                    : "Multiple games active. Use `!forcescore <gameId> <scoreA> <scoreB>`.");
+                return;
+            }
+
+            bool isMod = _permissions.IsMod(userId);
+            bool isCaptain = game.Lobby.CaptainA == userId || game.Lobby.CaptainB == userId;
+            if (!isMod && !isCaptain)
+            {
+                await ctx.Message.ReplyAsync("Only mods or this game's captains can score it.");
+                return;
+            }
+
+            if (!game.IsActive || game.TeamA == null || game.TeamB == null)
+            {
+                await ctx.Message.ReplyAsync("That game hasn't started yet (factions must be locked first). Use `!kill` to cancel it instead.");
+                return;
+            }
+
+            await _gameService.SubmitScore(game, scoreA, scoreB, _stats);
+
+            string result = scoreA == scoreB ? "It's a draw." : scoreA > scoreB ? "**Team A wins!**" : "**Team B wins!**";
+            string Roster(Team t) => string.Join("\n", t.Players.Select(p => $"• {p.DisplayName()} [{p.AssignedFaction}]"));
+            string desc =
+                $"{result}\n\n**Team A**\n{Roster(game.TeamA)}\n\n**Team B**\n{Roster(game.TeamB)}\n\n" +
+                "Recorded in the bot. For site rankings, upload the replay to [warcraftlegacies.com](https://warcraftlegacies.com).";
+
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                EmbedFactory.Success($"Game #{game.Id} scored", desc)]));
+        }
+
+        // `!forcescore 1 0` (only game) or `!forcescore 3 1 0` (game #3). 1 0 = Team A won,
+        // 0 1 = Team B won, 0 0 = draw. Pure so it can be unit-tested.
+        public static bool TryParseForceScore(int[] args, out int? gameId, out int scoreA, out int scoreB, out string error)
+        {
+            gameId = null;
+            scoreA = scoreB = 0;
+            error = "Usage: `!forcescore 1 0` (Team A won), `!forcescore 0 1` (Team B won), `!forcescore 0 0` (draw). " +
+                    "Add the game number first if several games are running, e.g. `!forcescore 3 1 0`.";
+
+            if (args.Length == 3)
+                gameId = args[0];
+            else if (args.Length != 2)
+                return false;
+
+            scoreA = args[^2];
+            scoreB = args[^1];
+            if (scoreA is not (0 or 1) || scoreB is not (0 or 1) || (scoreA == 1 && scoreB == 1))
+                return false;
+
+            error = "";
+            return true;
+        }
+
         [Command("kill")]
         public async Task KillGame(int? gameId = null)
         {

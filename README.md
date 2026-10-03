@@ -12,7 +12,7 @@ Bootstrap: if `Admins[]` is empty — add the first admin manually to `permissio
 
 **Season 5 architecture:** match results and ratings (Elo) are stored exclusively on **warcraftlegacies.com**.
 The bot manages lobby, draft, factions, and Discord roles. The winner is determined on the site via replay.
-`!score`, `!scores`, `!forcescore` are disabled — they contradict this architecture.
+`!forcescore` records a result in the bot only (its match history and faction win/loss records); it does not touch site ratings, and local Elo stays off so nothing is counted twice. `!score` / `!scores` are disabled.
 `!stats` and `!leaderboard` fetch live data from the site API and reply with an embed in Discord.
 `!compare` and `!recent` are disabled (pending implementation — site endpoint for match history not yet built).
 
@@ -65,6 +65,7 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 ### 7. Game
 
 26. `!games` / `!g` — list active and unfinished games.
+   - `!forcescore [gameId] <1 0 | 0 1 | 0 0>` / `!fs` — record Team A win / Team B win / draw in the bot, end the game, remove Discord roles and reset the lobby. Site rankings still need the replay upload. Permission: mod/admin or that game's captains.
 27. `!kill [gameId]` — emergency termination: removes Discord roles, resets lobby. No result recorded. Permission: mod/admin.
 28. `!sub <out> <in>` — substitute a player in an active game. `out` = leaving player (@mention or nickname), `in` = replacement. Faction is transferred; Discord team roles are reassigned. Permission: mod/admin.
 
