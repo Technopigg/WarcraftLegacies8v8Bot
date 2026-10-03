@@ -6,14 +6,14 @@ public class TeamGroupServiceTests
 {
     private static readonly HashSet<HashSet<TeamGroup>> ValidCombos = new()
     {
-        new HashSet<TeamGroup> { TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.Kalimdor },
-        new HashSet<TeamGroup> { TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.OldGods },
-        new HashSet<TeamGroup> { TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.Kalimdor },
-        new HashSet<TeamGroup> { TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.OldGods }
+        new HashSet<TeamGroup> { TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.Horde },
+        new HashSet<TeamGroup> { TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.NightElves },
+        new HashSet<TeamGroup> { TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.Horde },
+        new HashSet<TeamGroup> { TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.NightElves }
     };
 
     [Fact]
-    public void GenerateValidSplit_EachTeamHasExactlyEightFactionSlots()
+    public void GenerateValidSplit_EachTeamHasExactlyTeamSizeFactionSlots()
     {
         var (teamA, teamB) = TeamGroupService.GenerateValidSplit();
 
@@ -27,8 +27,8 @@ public class TeamGroupServiceTests
         int slotsA = CountSlots(teamA);
         int slotsB = CountSlots(teamB);
 
-        Assert.Equal(8, slotsA);
-        Assert.Equal(8, slotsB);
+        Assert.Equal(MatchFormat.TeamSize, slotsA);
+        Assert.Equal(MatchFormat.TeamSize, slotsB);
     }
 
     [Fact]

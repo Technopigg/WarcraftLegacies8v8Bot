@@ -1,6 +1,7 @@
 ﻿using LegaciesBot;
 using LegaciesBot.Commands;
 using LegaciesBot.Config;
+using LegaciesBot.Core;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Services.Commands;
@@ -284,7 +285,7 @@ _ = Task.Run(async () =>
 
                 string text = notice.Kind == LobbyAfkKind.Reminder
                     ? $"⏰ <@{notice.DiscordId}>, still in the lobby? You'll be dropped for inactivity soon. Type `!j` to stay."
-                    : $"<@{notice.DiscordId}> was dropped from the lobby for inactivity. Lobby: {notice.LobbyCount}/16.";
+                    : $"<@{notice.DiscordId}> was dropped from the lobby for inactivity. Lobby: {notice.LobbyCount}/{MatchFormat.LobbySize}.";
 
                 await client.Rest.SendMessageAsync(notice.ChannelId, text);
             }

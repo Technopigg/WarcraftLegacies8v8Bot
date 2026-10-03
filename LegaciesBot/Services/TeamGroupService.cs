@@ -8,10 +8,10 @@ namespace LegaciesBot.Services
         private static readonly List<(TeamGroup, TeamGroup, TeamGroup)> ValidTeamACombos =
             new()
             {
-                (TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.Kalimdor),
-                (TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.OldGods),
-                (TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.Kalimdor),
-                (TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.OldGods)
+                (TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.Horde),
+                (TeamGroup.BurningLegion, TeamGroup.SouthAlliance, TeamGroup.NightElves),
+                (TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.Horde),
+                (TeamGroup.FelHorde, TeamGroup.NorthAlliance, TeamGroup.NightElves)
             };
 
         private static int CountSlots(TeamGroup g)
@@ -36,7 +36,7 @@ namespace LegaciesBot.Services
                     var slotsA = teamA.Sum(CountSlots);
                     var slotsB = teamB.Sum(CountSlots);
 
-                    return slotsA == 8 && slotsB == 8;
+                    return slotsA == MatchFormat.TeamSize && slotsB == MatchFormat.TeamSize;
                 })
                 .ToList();
 

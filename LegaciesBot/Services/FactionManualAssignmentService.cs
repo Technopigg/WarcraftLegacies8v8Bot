@@ -26,15 +26,12 @@ namespace LegaciesBot.Services
             ["illi"] = "Illidari",
             ["sun"]  = "Sunfury",
 
-            ["ws"]   = "Warsong",
-            ["fw"]   = "Frostwolf",
-            ["sents"] = "Sentinels",
-            ["exo"]  = "The Exodar",
-            ["dru"]  = "Druids",
+            ["orc"]  = "Orcish Horde",
+            ["tt"]   = "Tauren Tribes",
+            ["tauren"] = "Tauren Tribes",
 
-            ["aq"]   = "An'qiraj",
-            ["be"]   = "Black Empire",
-            ["sky"]  = "Skywall"
+            ["sents"] = "Sentinels",
+            ["dru"]  = "Druids"
         };
 
 
@@ -217,16 +214,16 @@ namespace LegaciesBot.Services
             }
 
             var teamPlayers = GetTeamPlayers(lobby, captainId).ToList();
-            if (teamPlayers.Count != 8)
+            if (teamPlayers.Count != MatchFormat.TeamSize)
             {
-                message = "Your team does not have exactly 8 players.";
+                message = $"Your team does not have exactly {MatchFormat.TeamSize} players.";
                 return false;
             }
 
             var missing = teamPlayers.Where(p => !lobby.ManualFactionAssignments.ContainsKey(p)).ToList();
             if (missing.Any())
             {
-                message = "You must assign all 8 factions before locking.";
+                message = $"You must assign all {MatchFormat.TeamSize} factions before locking.";
                 return false;
             }
 

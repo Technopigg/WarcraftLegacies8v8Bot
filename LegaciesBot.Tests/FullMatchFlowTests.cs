@@ -1,3 +1,4 @@
+using LegaciesBot.Core;
 using LegaciesBot.Services;
 
 public class FullMatchFlowTests
@@ -40,9 +41,7 @@ public class FullMatchFlowTests
         (11, "Lukas"),
         (12, "Alan"),
         (13, "Royce"),
-        (14, "Petertros"),
-        (15, "Dragozer"),
-        (16, "Madsen")
+        (14, "Petertros")
     };
 
     [Fact]
@@ -80,7 +79,7 @@ public class FullMatchFlowTests
 
         var lobby = lobbyService.CurrentLobby;
 
-        Assert.Equal(16, lobby.Players.Count);
+        Assert.Equal(MatchFormat.LobbySize, lobby.Players.Count);
 
         gameService.StartDraft(lobby, 123).GetAwaiter().GetResult();
 
@@ -92,8 +91,8 @@ public class FullMatchFlowTests
 
         Assert.NotNull(lobby.TeamA);
         Assert.NotNull(lobby.TeamB);
-        Assert.Equal(8, lobby.TeamA!.Players.Count);
-        Assert.Equal(8, lobby.TeamB!.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, lobby.TeamA!.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, lobby.TeamB!.Players.Count);
 
         foreach (var p in lobby.TeamA!.Players)
             Assert.False(string.IsNullOrWhiteSpace(p.AssignedFaction));

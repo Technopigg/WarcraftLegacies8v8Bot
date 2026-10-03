@@ -15,7 +15,7 @@ public sealed record FactionParseResult(IReadOnlyList<string> Accepted, IReadOnl
 /// full-name match, so "Fel Horde", commas, quotes and abbreviations were all
 /// dropped without a word to the player. This one:
 ///  - tolerates commas and quotes,
-///  - matches multi-word names ("Fel Horde", "The Exodar", "Black Empire"),
+///  - matches multi-word names ("Fel Horde", "Orcish Horde", "Tauren Tribes"),
 ///  - accepts common aliases and abbreviations (illidan, draenei, quel, fel...),
 ///  - forgives a one-character typo (iroforge -> Ironforge),
 ///  - and reports whatever it could not understand.
@@ -28,9 +28,6 @@ public static class FactionParser
         ["illidan"] = "Illidari",
         ["illidani"] = "Illidari",
         ["illidary"] = "Illidari",
-        ["exodar"] = "The Exodar",
-        ["draenei"] = "The Exodar",
-        ["draenai"] = "The Exodar",
         ["quel"] = "Quel'thalas",
         ["belf"] = "Quel'thalas",
         ["bloodelf"] = "Quel'thalas",
@@ -39,9 +36,11 @@ public static class FactionParser
         ["kt"] = "Kul'tiras",
         ["kul"] = "Kul'tiras",
         ["tiras"] = "Kul'tiras",
-        ["aq"] = "An'qiraj",
-        ["qiraj"] = "An'qiraj",
-        ["fw"] = "Frostwolf",
+        ["orc"] = "Orcish Horde",
+        ["orcs"] = "Orcish Horde",
+        ["tauren"] = "Tauren Tribes",
+        ["sents"] = "Sentinels",
+        ["nelf"] = "Sentinels",
         ["iron"] = "Ironforge",
         ["druid"] = "Druids",
     };
@@ -63,6 +62,13 @@ public static class FactionParser
     public static IReadOnlyList<string> CanonicalNames =>
         FactionRegistry.All.Select(f => f.Name).ToList();
 
+    /// <summary>
+    /// Drops saved preferences for factions no longer in the game (Season 5 removed the
+    /// Old Gods, The Exodar, Warsong and Frostwolf), so players never see or get them.
+    /// </summary>
+    public static List<string> OnlyCurrent(IEnumerable<string> prefs) =>
+        prefs.Where(p => FactionRegistry.All.Any(f => f.Name.Equals(p, StringComparison.OrdinalIgnoreCase))).ToList();
+
     public static FactionParseResult Parse(string? input)
     {
         var accepted = new List<string>();
@@ -82,7 +88,7 @@ public static class FactionParser
         {
             var matched = false;
 
-            // Greedy: try the longest multi-word name first ("The Exodar" before "The").
+            // Greedy: try the longest multi-word name first ("Orcish Horde" before "Orcish").
             for (var span = Math.Min(3, tokens.Length - i); span >= 1 && !matched; span--)
             {
                 var key = Normalize(string.Concat(tokens.Skip(i).Take(span)));

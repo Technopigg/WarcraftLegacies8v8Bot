@@ -122,7 +122,7 @@ public class GameServiceTests
             rng
         );
 
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
 
         await service.StartDraft(lobby, 123UL);
 
@@ -156,7 +156,7 @@ public class GameServiceTests
             rng
         );
 
-        var lobby = CreateLobbyWithPlayers(15);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize - 1);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.StartDraft(lobby, 123UL)
@@ -185,7 +185,7 @@ public class GameServiceTests
             rng
         );
 
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
 
         await service.StartDraft(lobby, 0);
 
@@ -222,7 +222,7 @@ public class GameServiceTests
             rng
         );
 
-        var lobby = CreateLobbyWithPlayers(16);
+        var lobby = CreateLobbyWithPlayers(MatchFormat.LobbySize);
 
         var (teamA, teamB) = DraftService.CreateBalancedTeams(lobby.Players, rng);
 

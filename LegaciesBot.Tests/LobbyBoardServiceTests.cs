@@ -23,7 +23,7 @@ public class LobbyBoardServiceTests
     public void Populated_lobby_lists_every_player_and_the_count()
     {
         var embed = LobbyBoardService.Render(LobbyWith((1, "Alice"), (2, "Bob")));
-        Assert.Contains("2/16", embed.Title);
+        Assert.Contains($"2/{MatchFormat.LobbySize}", embed.Title);
         Assert.Contains("Alice", embed.Description);
         Assert.Contains("Bob", embed.Description);
     }

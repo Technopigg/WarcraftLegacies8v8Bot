@@ -84,7 +84,7 @@ public async Task JoinLobby()
     var player = _lobbyService.JoinLobby(discordId, username);
     _lobbyService.CurrentLobby.LastActiveChannelId = ctx.Message.ChannelId;
 
-    var savedPrefs = _playerData.GetPreferences(player.DiscordId);
+    var savedPrefs = FactionParser.OnlyCurrent(_playerData.GetPreferences(player.DiscordId));
     if (savedPrefs.Count > 0)
         player.FactionPreferences = savedPrefs.ToList();
 
@@ -93,7 +93,7 @@ public async Task JoinLobby()
     string display = string.IsNullOrEmpty(rating) ? name : $"{name} ({rating})";
 
     int lobbyCount = _lobbyService.CurrentLobby.Players.Count;
-    string lobbyLine = $"\nLobby: {lobbyCount}/16.";
+    string lobbyLine = $"\nLobby: {lobbyCount}/{MatchFormat.LobbySize}.";
 
     if (savedPrefs.Count > 0)
     {
@@ -105,7 +105,7 @@ public async Task JoinLobby()
     else
     {
         await ctx.Message.ReplyAsync(
-            $"Welcome {display}! Lobby: {lobbyCount}/16.\n" +
+            $"Welcome {display}! Lobby: {lobbyCount}/{MatchFormat.LobbySize}.\n" +
             "Set your factions: `!prefs Scourge Dalaran ...` (first = top priority). `!factions` lists them all."
         );
     }
@@ -175,8 +175,8 @@ public async Task JoinLobby()
             }
 
             string title = lobby.GameNumber > 0
-                ? $"Lobby #{lobby.GameNumber} — {lobby.Players.Count}/16"
-                : $"Lobby — {lobby.Players.Count}/16";
+                ? $"Lobby #{lobby.GameNumber} — {lobby.Players.Count}/{MatchFormat.LobbySize}"
+                : $"Lobby — {lobby.Players.Count}/{MatchFormat.LobbySize}";
 
             var lines = lobby.Players.Select((p, i) => $"`{i + 1,2}.` {p.DisplayName()}");
             var embed = EmbedFactory.Info(title, string.Join("\n", lines));
@@ -204,7 +204,7 @@ public async Task JoinLobby()
             _lobbyService.RemovePlayer(userId);
 
             int remaining = _lobbyService.CurrentLobby.Players.Count;
-            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Neutral("Left lobby", $"{display} has left. ({remaining}/16)")]));
+            await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([EmbedFactory.Neutral("Left lobby", $"{display} has left. ({remaining}/{MatchFormat.LobbySize})")]));
         }
 
         [Command("prefs")]
@@ -280,7 +280,7 @@ public async Task JoinLobby()
 
         private async Task ShowPreferencesForUser(ulong userId, string displayName)
         {
-            var prefs = _playerData.GetPreferences(userId);
+            var prefs = FactionParser.OnlyCurrent(_playerData.GetPreferences(userId));
 
             if (prefs.Count == 0)
             {
@@ -332,8 +332,8 @@ public async Task JoinLobby()
                 (Group: TeamGroup.SouthAlliance, Label: "South Alliance"),
                 (Group: TeamGroup.BurningLegion, Label: "Burning Legion"),
                 (Group: TeamGroup.FelHorde,      Label: "Fel Horde"),
-                (Group: TeamGroup.Kalimdor,      Label: "Kalimdor"),
-                (Group: TeamGroup.OldGods,       Label: "Old Gods"),
+                (Group: TeamGroup.Horde,         Label: "The Horde"),
+                (Group: TeamGroup.NightElves,    Label: "The Night Elves"),
             };
 
             var lines = groups
@@ -360,7 +360,7 @@ public async Task JoinLobby()
                 return;
             }
 
-            var prefs = _playerData.GetPreferences(userId);
+            var prefs = FactionParser.OnlyCurrent(_playerData.GetPreferences(userId));
             var added = new List<string>();
             foreach (var faction in result.Accepted)
             {
@@ -396,7 +396,7 @@ public async Task JoinLobby()
                 return;
             }
 
-            var prefs = _playerData.GetPreferences(userId);
+            var prefs = FactionParser.OnlyCurrent(_playerData.GetPreferences(userId));
             var removed = result.Accepted
                 .Where(faction => prefs.RemoveAll(p => p.Equals(faction, StringComparison.OrdinalIgnoreCase)) > 0)
                 .ToList();

@@ -65,9 +65,9 @@ namespace LegaciesBot.Services
             var lines = l.Players.Select((p, i) => $"`{i + 1,2}.` {p.DisplayName()}");
             string state = l.IsLocked ? " (drafting)" : "";
             string body = string.Join("\n", lines)
-                + $"\n\n**{l.Players.Count}/16**{state}. Type `!j` to join, `!l` to leave.";
+                + $"\n\n**{l.Players.Count}/{MatchFormat.LobbySize}**{state}. Type `!j` to join, `!l` to leave.";
 
-            return EmbedFactory.Info($"{BoardTitle} ({l.Players.Count}/16)", body);
+            return EmbedFactory.Info($"{BoardTitle} ({l.Players.Count}/{MatchFormat.LobbySize})", body);
         }
 
         private async Task EnsureMessageAsync(EmbedProperties embed)

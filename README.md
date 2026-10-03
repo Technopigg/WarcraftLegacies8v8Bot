@@ -1,7 +1,7 @@
 # LegaciesBot — Commands
 
-Discord bot for 8v8 Warcraft III: Legacies matches.
-Cycle: `!join` × 16 → team draft → faction assignment → upload replay to site → Elo on site.
+Discord bot for 7v7 Warcraft III: Legacies matches (8v8 until Season 5 removed the Old Gods team).
+Cycle: `!join` × 14 → team draft → faction assignment → upload replay to site → Elo on site.
 
 **Env vars:** `WL8v8_BOT_TOKEN` (required), `WL_DISCORD_GUILD_ID`, `WL_DISCORD_DRAFT_CHANNEL_ID`,
 `WL_DISCORD_TEAM1/2_ROLE_ID`, `WL_DISCORD_COMMAND_CHANNEL_ID`, `WL_DISCORD_REPLAY_CHANNEL_ID`.
@@ -26,7 +26,7 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 
 ### 2. Lobby
 
-4. `!join` / `!j` — join the lobby. At 16/16, the draft starts automatically.
+4. `!join` / `!j` — join the lobby. At 14/14, the draft starts automatically.
 5. `!leave` / `!l` — leave the lobby. ⚠️ Has no effect after `IsLocked`, but the command still replies "has left".
 6. `!lobby` — show the player list and their Elo at join time.
 
@@ -51,7 +51,7 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 
 18. `!assignf <player> <faction>` — assign one faction to a player on your team. Short codes: `lord`, `sc`, `fel`, `sw`, `ws`, etc.
 19. `!assignfactions <...>` — bulk assignment, one `<player> <faction>` per line. Partial success is not rolled back.
-20. `!lockfactions` — lock your team's factions. Requires 8 players and 8 assigned factions. When both teams lock — the game becomes active.
+20. `!lockfactions` — lock your team's factions. Requires 7 players and 7 assigned factions. When both teams lock — the game becomes active.
 
 ### 6. Draft mode
 
@@ -102,7 +102,7 @@ The bot manages lobby, draft, factions, and Discord roles. The winner is determi
 
 ### 12. Debug (mod/admin)
 
-50. `!debugfill` — fill the lobby with 16 fake players (clears current players).
+50. `!debugfill` — fill the lobby with 14 fake players (clears current players).
 51. `!debugcaptains [gameId]` — assign Captain A/B to the first two players.
 52. `!debugdraft [gameId]` — run the draft engine with seed 12345.
 53. `!debugfactions [gameId]` — auto-assign factions.

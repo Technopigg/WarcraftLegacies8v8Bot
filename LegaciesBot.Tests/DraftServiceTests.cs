@@ -13,7 +13,7 @@ public class DraftServiceTests
         var lobby = new Lobby();
         var registry = new PlayerRegistryService(null);
 
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < MatchFormat.LobbySize; i++)
         {
             ulong id = (ulong)i;
 
@@ -28,7 +28,7 @@ public class DraftServiceTests
     }
 
     [Fact]
-    public async Task DraftService_FullFlow_16Players_ProducesTwoValidTeams()
+    public async Task DraftService_FullFlow_FullLobby_ProducesTwoValidTeams()
     {
         var lobby = CreateLobbyWith16Players();
 
@@ -63,20 +63,20 @@ public class DraftServiceTests
         Assert.NotNull(lobby.TeamA);
         Assert.NotNull(lobby.TeamB);
 
-        Assert.Equal(8, lobby.TeamA!.Players.Count);
-        Assert.Equal(8, lobby.TeamB!.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, lobby.TeamA!.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, lobby.TeamB!.Players.Count);
 
         var game = service.GetOngoingGames().Single();
 
         Assert.NotNull(game.TeamA);
         Assert.NotNull(game.TeamB);
 
-        Assert.Equal(8, game.TeamA!.Players.Count);
-        Assert.Equal(8, game.TeamB!.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, game.TeamA!.Players.Count);
+        Assert.Equal(MatchFormat.TeamSize, game.TeamB!.Players.Count);
 
         var allPlayers = game.TeamA.Players.Concat(game.TeamB.Players).ToList();
-        Assert.Equal(16, allPlayers.Count);
-        Assert.Equal(16, allPlayers.Select(p => p.DiscordId).Distinct().Count());
+        Assert.Equal(MatchFormat.LobbySize, allPlayers.Count);
+        Assert.Equal(MatchFormat.LobbySize, allPlayers.Select(p => p.DiscordId).Distinct().Count());
 
         channel.Verify(c => c.SendMessageAsync(It.IsAny<NetCord.Rest.MessageProperties>()), Times.Once);
     }

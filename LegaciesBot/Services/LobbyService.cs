@@ -44,9 +44,9 @@ namespace LegaciesBot.Services
         {
             var lobby = CurrentLobby;
 
-            if (lobby.IsLocked || lobby.Players.Count >= 16)
+            if (lobby.IsLocked || lobby.Players.Count >= MatchFormat.LobbySize)
             {
-                if (lobby.Players.Count >= 16)
+                if (lobby.Players.Count >= MatchFormat.LobbySize)
                     _gameService.CreatePendingGameIfMissing(lobby);
 
                 lobby = CreateLobby();
@@ -67,7 +67,7 @@ namespace LegaciesBot.Services
             lobby.AfkPingedAt[player.DiscordId] = DateTime.UtcNow.Add(AfkReminderDelay);
             lobby.AfkReminded.Remove(player.DiscordId);
 
-            if (lobby.Players.Count == 16)
+            if (lobby.Players.Count == MatchFormat.LobbySize)
             {
                 lobby.IsLocked = true;
                 _gameService.CreatePendingGameIfMissing(lobby);

@@ -10,7 +10,7 @@ namespace LegaciesBot.GameData
             "Ironforge",
             "Kul'tiras",
             "Lordaeron",
-            "Skywall",
+            "Tauren Tribes",
             "Druids",
             "Gilneas",
             "Illidari"

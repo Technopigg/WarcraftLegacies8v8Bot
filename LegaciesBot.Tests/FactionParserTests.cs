@@ -17,8 +17,8 @@ public class FactionParserTests
 
     [Theory]
     [InlineData("Fel Horde", "Fel Horde")]
-    [InlineData("The Exodar", "The Exodar")]
-    [InlineData("Black Empire", "Black Empire")]
+    [InlineData("Orcish Horde", "Orcish Horde")]
+    [InlineData("Tauren Tribes", "Tauren Tribes")]
     [InlineData("\"Fel Horde\"", "Fel Horde")]
     public void Parse_MatchesMultiWordNames(string input, string expected)
     {
@@ -30,7 +30,7 @@ public class FactionParserTests
     [Theory]
     [InlineData("illidan", "Illidari")]
     [InlineData("illidani", "Illidari")]
-    [InlineData("draenei", "The Exodar")]
+    [InlineData("orc", "Orcish Horde")]
     [InlineData("quel", "Quel'thalas")]
     [InlineData("fel", "Fel Horde")]
     public void Parse_ResolvesAliases(string input, string expected)
@@ -113,9 +113,9 @@ public class FactionParserTests
     [Fact]
     public void Parse_HandlesFiveMultiWordAndApostropheFactionsAtOnce()
     {
-        var result = FactionParser.Parse("kul'tiras an'qiraj black empire the exodar fel horde");
+        var result = FactionParser.Parse("kul'tiras quel'thalas orcish horde tauren tribes fel horde");
         Assert.Equal(
-            new[] { "Kul'tiras", "An'qiraj", "Black Empire", "The Exodar", "Fel Horde" },
+            new[] { "Kul'tiras", "Quel'thalas", "Orcish Horde", "Tauren Tribes", "Fel Horde" },
             result.Accepted);
         Assert.Empty(result.Unknown);
     }

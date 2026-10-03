@@ -79,7 +79,7 @@ namespace LegaciesBot.Services.CaptainDraft
 
         public bool DraftComplete(Lobby lobby)
         {
-            return lobby.TeamAPicks.Count == 8 && lobby.TeamBPicks.Count == 8;
+            return lobby.TeamAPicks.Count == MatchFormat.TeamSize && lobby.TeamBPicks.Count == MatchFormat.TeamSize;
         }
     }
 }

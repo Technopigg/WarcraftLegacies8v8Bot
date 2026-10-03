@@ -15,7 +15,7 @@ public class FactionListTests
     public void Groups_factions_under_readable_headers()
     {
         var text = LobbyCommands.BuildFactionList();
-        foreach (var label in new[] { "North Alliance", "South Alliance", "Burning Legion", "Fel Horde", "Kalimdor", "Old Gods" })
+        foreach (var label in new[] { "North Alliance", "South Alliance", "Burning Legion", "Fel Horde", "The Horde", "The Night Elves" })
             Assert.Contains(label, text);
     }
 

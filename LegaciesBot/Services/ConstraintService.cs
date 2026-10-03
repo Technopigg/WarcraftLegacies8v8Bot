@@ -11,8 +11,8 @@ namespace LegaciesBot.Services
             { TeamGroup.NorthAlliance, new() { TeamGroup.BurningLegion, TeamGroup.SouthAlliance } },
             { TeamGroup.FelHorde, new() { TeamGroup.BurningLegion, TeamGroup.SouthAlliance } },
             { TeamGroup.SouthAlliance, new() { TeamGroup.FelHorde, TeamGroup.NorthAlliance } },
-            { TeamGroup.OldGods, new() { TeamGroup.Kalimdor } },
-            { TeamGroup.Kalimdor, new() { TeamGroup.OldGods } }
+            { TeamGroup.Horde, new() { TeamGroup.NightElves } },
+            { TeamGroup.NightElves, new() { TeamGroup.Horde } }
         };
 
         private static bool Incompat(TeamGroup a, TeamGroup b)

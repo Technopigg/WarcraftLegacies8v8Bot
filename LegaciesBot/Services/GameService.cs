@@ -66,8 +66,8 @@ namespace LegaciesBot.Services
 
         public async Task StartDraft(Lobby lobby, ulong channelId)
         {
-            if (lobby.Players.Count != 16)
-                throw new ArgumentException("Draft requires exactly 16 players.");
+            if (lobby.Players.Count != MatchFormat.LobbySize)
+                throw new ArgumentException($"Draft requires exactly {MatchFormat.LobbySize} players.");
 
             if (lobby.IsCaptainDraft)
                 return;
@@ -128,8 +128,8 @@ namespace LegaciesBot.Services
 
         public async Task StartCaptainDraft(Lobby lobby, ulong channelId)
         {
-            if (lobby.Players.Count != 16)
-                throw new ArgumentException("Draft requires exactly 16 players.");
+            if (lobby.Players.Count != MatchFormat.LobbySize)
+                throw new ArgumentException($"Draft requires exactly {MatchFormat.LobbySize} players.");
 
             if (!lobby.IsCaptainDraft)
                 return;

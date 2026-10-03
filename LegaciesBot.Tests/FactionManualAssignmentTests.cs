@@ -11,7 +11,7 @@ public class FactionManualAssignmentTests
     {
         var lobby = new Lobby();
 
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < MatchFormat.LobbySize; i++)
         {
             ulong id = (ulong)(i + 1);
             var p = registry.GetOrCreate(id);
@@ -26,8 +26,8 @@ public class FactionManualAssignmentTests
         lobby.CaptainA = 1;
         lobby.CaptainB = 2;
 
-        lobby.TeamAPicks.AddRange(Enumerable.Range(1, 8).Select(i => (ulong)i));
-        lobby.TeamBPicks.AddRange(Enumerable.Range(9, 8).Select(i => (ulong)i));
+        lobby.TeamAPicks.AddRange(Enumerable.Range(1, MatchFormat.TeamSize).Select(i => (ulong)i));
+        lobby.TeamBPicks.AddRange(Enumerable.Range(MatchFormat.TeamSize + 1, MatchFormat.TeamSize).Select(i => (ulong)i));
 
         return lobby;
     }
@@ -126,6 +126,6 @@ public class FactionManualAssignmentTests
         var result = service.TryLockFactions(lobby, lobby.CaptainA!.Value, out var message);
 
         Assert.False(result);
-        Assert.Contains("assign all 8 factions", message);
+        Assert.Contains($"assign all {MatchFormat.TeamSize} factions", message);
     }
 }

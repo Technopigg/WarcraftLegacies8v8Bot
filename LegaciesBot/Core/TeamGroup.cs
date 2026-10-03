@@ -1,4 +1,4 @@
-﻿namespace LegaciesBot.Core;
+namespace LegaciesBot.Core;
 
 public enum TeamGroup
 {
@@ -6,6 +6,6 @@ public enum TeamGroup
     BurningLegion,
     SouthAlliance,
     FelHorde,
-    Kalimdor,
-    OldGods
+    Horde,
+    NightElves
 }

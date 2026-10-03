@@ -43,7 +43,7 @@ namespace LegaciesBot.Discord
 
             lobby.Players.Clear();
 
-            for (int i = 1; i <= 16; i++)
+            for (int i = 1; i <= MatchFormat.LobbySize; i++)
             {
                 ulong id = (ulong)(100000 + i);
 
@@ -57,7 +57,7 @@ namespace LegaciesBot.Discord
 
             GlobalServices.GameService.CreatePendingGameIfMissing(lobby);
 
-            await ctx.Message.ReplyAsync("Lobby filled with 16 debug players.");
+            await ctx.Message.ReplyAsync($"Lobby filled with {MatchFormat.LobbySize} debug players.");
         }
 
         [Command("debugcaptains")]
@@ -110,17 +110,17 @@ namespace LegaciesBot.Discord
                 return;
             }
 
-            if (lobby.Players.Count < 16)
+            if (lobby.Players.Count < MatchFormat.LobbySize)
             {
                 await ctx.Message.ReplyAsync($"Lobby has {lobby.Players.Count} players. Use !debugfill first.");
                 return;
             }
 
             if (lobby.TeamAPicks.Count == 0)
-                lobby.TeamAPicks = lobby.Players.Take(8).Select(p => p.DiscordId).ToList();
+                lobby.TeamAPicks = lobby.Players.Take(MatchFormat.TeamSize).Select(p => p.DiscordId).ToList();
 
             if (lobby.TeamBPicks.Count == 0)
-                lobby.TeamBPicks = lobby.Players.Skip(8).Take(8).Select(p => p.DiscordId).ToList();
+                lobby.TeamBPicks = lobby.Players.Skip(MatchFormat.TeamSize).Take(MatchFormat.TeamSize).Select(p => p.DiscordId).ToList();
 
             if (lobby.CaptainA == null)
                 lobby.CaptainA = lobby.TeamAPicks.First();

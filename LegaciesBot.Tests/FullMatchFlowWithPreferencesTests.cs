@@ -1,3 +1,4 @@
+using LegaciesBot.Core;
 using LegaciesBot.GameData;
 using LegaciesBot.Services;
 
@@ -40,9 +41,7 @@ public class FullMatchFlowWithPreferencesTests
         (11, "Lukas"),
         (12, "Alan"),
         (13, "Royce"),
-        (14, "Petertros"),
-        (15, "Dragozer"),
-        (16, "Madsen")
+        (14, "Petertros")
     };
 
     private readonly Dictionary<ulong, List<string>> Prefs;
@@ -53,22 +52,20 @@ public class FullMatchFlowWithPreferencesTests
 
         Prefs = new()
         {
-            [1] = new() { "Fel Horde", "An'qiraj", "Stormwind", "Lordaeron", "Druids", "Scourge" },
-            [2] = new() { "Warsong", "An'qiraj", "Illidari", "Sentinels", "Scourge", "Fel Horde", "Kul'tiras" },
+            [1] = new() { "Fel Horde", "Tauren Tribes", "Stormwind", "Lordaeron", "Druids", "Scourge" },
+            [2] = new() { "Orcish Horde", "Tauren Tribes", "Illidari", "Sentinels", "Scourge", "Fel Horde", "Kul'tiras" },
             [3] = all.Where(f => f != "Scourge" && f != "Gilneas" && f != "Sunfury").ToList(),
-            [4] = new() { "Lordaeron", "Skywall", "Stormwind" },
+            [4] = new() { "Lordaeron", "Druids", "Stormwind" },
             [5] = new() { "Dalaran", "Legion", "Druids" },
-            [6] = new() { "Ironforge", "Stormwind", "The Exodar", "Druids", "Lordaeron", "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Black Empire", "Legion" },
-            [7] = new() { "Skywall", "Scourge", "An'qiraj", "Sentinels", "The Exodar", "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras" },
+            [6] = new() { "Ironforge", "Stormwind", "Orcish Horde", "Druids", "Lordaeron", "Kul'tiras", "Illidari", "Gilneas", "Sentinels", "Tauren Tribes", "Legion" },
+            [7] = new() { "Druids", "Scourge", "Tauren Tribes", "Sentinels", "Orcish Horde", "Quel'thalas", "Illidari", "Fel Horde", "Dalaran", "Ironforge", "Kul'tiras" },
             [8] = new() { "Lordaeron", "Sentinels", "Ironforge" },
             [9] = new() { "Dalaran", "Quel'thalas", "Kul'tiras", "Illidari", "Stormwind" },
-            [10] = new() { "Warsong", "Skywall", "Dalaran", "Scourge", "Kul'tiras" },
-            [11] = new() { "Gilneas", "Lordaeron", "Quel'thalas", "Frostwolf", "Fel Horde", "Kul'tiras" },
+            [10] = new() { "Orcish Horde", "Druids", "Dalaran", "Scourge", "Kul'tiras" },
+            [11] = new() { "Gilneas", "Lordaeron", "Quel'thalas", "Orcish Horde", "Fel Horde", "Kul'tiras" },
             [12] = new() { "Illidari", "Legion", "Druids", "Quel'thalas", "Lordaeron" },
-            [13] = new() { "Fel Horde", "Scourge", "Frostwolf", "Kul'tiras", "Lordaeron" },
-            [14] = new() { "Kul'tiras", "Lordaeron", "Stormwind", "The Exodar", "Quel'thalas" },
-            [15] = new() { "Dalaran", "Scourge", "Fel Horde", "Warsong", "Sentinels", "Stormwind", "Sunfury" },
-            [16] = new() { "Lordaeron", "Stormwind", "Warsong", "Sunfury", "Gilneas", "Skywall", "The Exodar" }
+            [13] = new() { "Fel Horde", "Scourge", "Tauren Tribes", "Kul'tiras", "Lordaeron" },
+            [14] = new() { "Kul'tiras", "Lordaeron", "Stormwind", "Sentinels", "Quel'thalas" }
         };
     }
 

@@ -1,3 +1,4 @@
+using LegaciesBot.Core;
 using LegaciesBot.Services;
 
 public class LobbyLockingTests
@@ -31,16 +32,16 @@ public class LobbyLockingTests
     }
 
     [Fact]
-    public void Lobby_Locks_At_16_Players_And_Spawns_New_Lobby()
+    public void Lobby_Locks_When_Full_And_Spawns_New_Lobby()
     {
         var service = CreateService();
 
-        for (int i = 1; i <= 16; i++)
+        for (int i = 1; i <= MatchFormat.LobbySize; i++)
             service.JoinLobby((ulong)i);
 
         var firstLobby = service.CurrentLobby;
         Assert.True(firstLobby.IsLocked);
-        Assert.Equal(16, firstLobby.Players.Count);
+        Assert.Equal(MatchFormat.LobbySize, firstLobby.Players.Count);
 
         service.JoinLobby(999);
 
@@ -56,7 +57,7 @@ public class LobbyLockingTests
     {
         var service = CreateService();
 
-        for (int i = 1; i <= 16; i++)
+        for (int i = 1; i <= MatchFormat.LobbySize; i++)
             service.JoinLobby((ulong)i);
 
         var lobby = service.CurrentLobby;
@@ -64,7 +65,7 @@ public class LobbyLockingTests
 
         var removed = service.RemovePlayer(1);
         Assert.False(removed);
-        Assert.Equal(16, lobby.Players.Count);
+        Assert.Equal(MatchFormat.LobbySize, lobby.Players.Count);
     }
 
     [Fact]
@@ -72,7 +73,7 @@ public class LobbyLockingTests
     {
         var service = CreateService();
 
-        for (int i = 1; i <= 16; i++)
+        for (int i = 1; i <= MatchFormat.LobbySize; i++)
             service.JoinLobby((ulong)i);
 
         var lobby = service.CurrentLobby;
@@ -83,6 +84,6 @@ public class LobbyLockingTests
 
         service.CheckAfk();
 
-        Assert.Equal(16, lobby.Players.Count);
+        Assert.Equal(MatchFormat.LobbySize, lobby.Players.Count);
     }
 }

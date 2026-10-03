@@ -23,14 +23,10 @@ public static class FactionRegistry
         new("Illidari", TeamGroup.FelHorde, "IllidariSlot"),
         new("Sunfury", TeamGroup.FelHorde, "IllidariSlot"),
 
-        new("Warsong", TeamGroup.Kalimdor, "FrostwolfSlot"),
-        new("Frostwolf", TeamGroup.Kalimdor, "FrostwolfSlot"),
-        new("Sentinels", TeamGroup.Kalimdor, "SentinelsSlot"),
-        new("The Exodar", TeamGroup.Kalimdor, "SentinelsSlot"),
-        new("Druids", TeamGroup.Kalimdor),
+        new("Orcish Horde", TeamGroup.Horde),
+        new("Tauren Tribes", TeamGroup.Horde),
 
-        new("An'qiraj", TeamGroup.OldGods),
-        new("Black Empire", TeamGroup.OldGods),
-        new("Skywall", TeamGroup.OldGods)
+        new("Sentinels", TeamGroup.NightElves),
+        new("Druids", TeamGroup.NightElves)
     };
 }

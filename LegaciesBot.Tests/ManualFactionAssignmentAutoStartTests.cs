@@ -11,7 +11,7 @@ public class ManualFactionAssignmentAutoStartTests
         lobby.DraftMode = DraftMode.CaptainDraft_ManualFaction;
         lobby.IsCaptainDraft = true;
 
-        for (int i = 1; i <= 16; i++)
+        for (int i = 1; i <= MatchFormat.LobbySize; i++)
         {
             var p = registry.GetOrCreate((ulong)i);
             p.Name = $"P{i}";
@@ -22,8 +22,8 @@ public class ManualFactionAssignmentAutoStartTests
         lobby.CaptainA = 1;
         lobby.CaptainB = 2;
 
-        lobby.TeamAPicks = Enumerable.Range(1, 8).Select(i => (ulong)i).ToList();
-        lobby.TeamBPicks = Enumerable.Range(9, 8).Select(i => (ulong)i).ToList();
+        lobby.TeamAPicks = Enumerable.Range(1, MatchFormat.TeamSize).Select(i => (ulong)i).ToList();
+        lobby.TeamBPicks = Enumerable.Range(MatchFormat.TeamSize + 1, MatchFormat.TeamSize).Select(i => (ulong)i).ToList();
 
         return lobby;
     }
@@ -64,7 +64,7 @@ public class ManualFactionAssignmentAutoStartTests
         foreach (var id in lobby.TeamBPicks)
             lobby.TeamB.AddPlayer(registry.GetPlayer(id));
 
-        var aFactions = new[] { "sw", "dala", "sc", "fel", "sents", "if", "leg", "quel" };
+        var aFactions = new[] { "sw", "if", "kt", "sc", "leg", "orc", "tt" };
         int ai = 0;
         foreach (var id in lobby.TeamAPicks)
         {
@@ -72,7 +72,7 @@ public class ManualFactionAssignmentAutoStartTests
             ai++;
         }
 
-        var bFactions = new[] { "aq", "exo", "ws", "fw", "sun", "dru", "kt", "be" };
+        var bFactions = new[] { "lord", "quel", "dala", "fel", "illi", "sents", "dru" };
         int bi = 0;
         foreach (var id in lobby.TeamBPicks)
         {
