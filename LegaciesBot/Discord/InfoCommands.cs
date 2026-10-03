@@ -27,7 +27,7 @@ namespace LegaciesBot.Discord
         {
             long built = new DateTimeOffset(builtAtUtc, TimeSpan.Zero).ToUnixTimeSeconds();
             long started = new DateTimeOffset(startedAtUtc, TimeSpan.Zero).ToUnixTimeSeconds();
-            return $"🤖 **{Version}**\n" +
+            return $"**{Version}**\n" +
                    $"Built: <t:{built}:f> (<t:{built}:R>)\n" +
                    $"Online since: <t:{started}:f> (<t:{started}:R>)";
         }
