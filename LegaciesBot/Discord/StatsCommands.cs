@@ -125,10 +125,22 @@ namespace LegaciesBot.Discord
 
             var result = await _site.GetLeaderboardAsync(limit: count);
 
-            if (result == null || result.Entries.Count == 0)
+            // An empty board and an unreachable site are different things, and saying the
+            // site is down when it answered perfectly well sends players chasing a problem
+            // that does not exist. A season starts empty, and it stays empty until the
+            // first match is reviewed.
+            if (result == null)
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
                     EmbedFactory.Warning("Leaderboard unavailable", "Could not reach warcraftlegacies.com — try again later.")]));
+                return;
+            }
+
+            if (result.Entries.Count == 0)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("No ratings yet",
+                        $"The season has no reviewed matches yet, so nobody is on the board.\n\n[Rankings]({RankingsUrl})")]));
                 return;
             }
 

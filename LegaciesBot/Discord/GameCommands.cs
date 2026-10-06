@@ -60,10 +60,18 @@ namespace LegaciesBot.Discord
             var site = GlobalServices.SiteApiService;
             var result = await site.GetRecentMatchesAsync(limit: 5);
 
-            if (result == null || result.Matches.Count == 0)
+            // Same distinction as !leaderboard: "nothing to show yet" is not a fault.
+            if (result == null)
             {
                 await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
-                    EmbedFactory.Warning("No recent matches", "No ranked matches found yet, or the site is unavailable.")]));
+                    EmbedFactory.Warning("Recent matches unavailable", "Could not reach warcraftlegacies.com — try again later.")]));
+                return;
+            }
+
+            if (result.Matches.Count == 0)
+            {
+                await ctx.Message.ReplyAsync(new ReplyMessageProperties().WithEmbeds([
+                    EmbedFactory.Info("No recent matches", "No match has been reviewed yet this season.")]));
                 return;
             }
 
