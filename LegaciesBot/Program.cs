@@ -127,11 +127,26 @@ client.MessageCreate += async message =>
     // typo (e.g. `!leaderbord` -> `!leaderboard`). Gated on NotFound so a valid command is
     // never intercepted; CommandSuggester stays quiet for anything that isn't a near-miss of
     // our own player commands, so other bots' `!` commands don't get a reply.
-    if (result?.GetType().Name == "NotFoundResult")
+    var resultName = result?.GetType().Name;
+    if (resultName == "NotFoundResult" || resultName == "ParameterCountMismatchResult")
     {
         var rest = message.Content.Substring(1).TrimStart();
         int sp = rest.IndexOfAny(new[] { ' ', '\n', '\t' });
         var word = sp < 0 ? rest : rest.Substring(0, sp);
+
+        if (resultName == "ParameterCountMismatchResult")
+        {
+            // The command exists but was called without the arguments it needs. This used
+            // to produce total silence, which reads as "the bot is down" rather than "you
+            // typed it wrong": nine commands behaved that way. The usage line comes from
+            // the same CommandList that !bothelp prints, so there is one copy of it.
+            var usage = CommandUsage.For(word);
+            await client.Rest.SendMessageAsync(message.ChannelId,
+                new MessageProperties().WithContent(usage is null
+                    ? $"`!{word}` needs more arguments than that. Type `!bothelp` for the full list."
+                    : $"Usage:\n{usage}"));
+            return;
+        }
 
         var suggestion = CommandSuggester.Suggest(word);
         if (suggestion != null)

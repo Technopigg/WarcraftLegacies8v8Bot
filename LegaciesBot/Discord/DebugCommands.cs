@@ -232,6 +232,14 @@ namespace LegaciesBot.Discord
         [Command("debugstate")]
         public async Task DebugState(int? gameId = null)
         {
+            // Every other debug command checks this; this one did not, so any player could
+            // dump the lobby's internal state. Verified live on 2026-10-08.
+            if (!IsAllowed(this.Context.User.Id))
+            {
+                await this.Context.Message.ReplyAsync("You do not have permission to use debug commands.");
+                return;
+            }
+
             var lobby = ResolveLobby(gameId);
             if (lobby == null)
             {
